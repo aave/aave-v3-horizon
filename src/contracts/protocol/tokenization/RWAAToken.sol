@@ -7,10 +7,11 @@ import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCa
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
+import {IRWAAToken} from 'src/contracts/interfaces/IRWAAToken.sol';
 import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
-abstract contract RWAAToken is AToken {
+abstract contract RWAAToken is AToken, IRWAAToken {
   using SafeCast for uint256;
 
   bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
@@ -35,10 +36,8 @@ abstract contract RWAAToken is AToken {
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
-   * @param name The name of the token
-   * @param symbol The symbol of the token
    */
-  constructor(IPool pool, string memory name, string memory symbol) AToken(pool, name, symbol) {
+  constructor(IPool pool) AToken(pool) {
     // Intentionally left blank
   }
 
@@ -88,14 +87,21 @@ abstract contract RWAAToken is AToken {
   }
 
   /// @inheritdoc IERC20
-  /// @dev transferFrom is available only to AToken Transfer Admin
-  /// @dev the function is overridden such that it does not rely on allowances
   function transferFrom(
     address sender,
     address recipient,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20) onlyATokenTransferAdmin returns (bool) {
-    _transfer(sender, recipient, amount.toUint128());
+  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+    revert(Errors.OPERATION_NOT_SUPPORTED);
+  }
+
+  /// @inheritdoc IRWAAToken
+  function forceTransfer(
+    address from,
+    address to,
+    uint256 amount
+  ) external virtual override onlyATokenTransferAdmin returns (bool) {
+    _transfer(from, to, amount.toUint128());
   }
 
   /// @inheritdoc IAToken

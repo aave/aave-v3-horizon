@@ -18,7 +18,7 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
   }
 
   function test_rwaAToken_permit_fuzz_revertsWith_OperationNotSupported(
-    address from,
+    address sender,
     address owner,
     address spender,
     uint256 value,
@@ -29,65 +29,77 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
   ) public {
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(from);
+    vm.prank(sender);
     aBuidl.permit(owner, spender, value, deadline, v, r, s);
   }
 
   function test_rwaAToken_permit_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_permit_fuzz_revertsWith_OperationNotSupported(
-      alice,
-      alice,
-      bob,
-      100e6,
-      block.timestamp + 1,
-      0,
-      bytes32(0),
-      bytes32(0)
-    );
+    test_rwaAToken_permit_fuzz_revertsWith_OperationNotSupported({
+      sender: alice,
+      owner: alice,
+      spender: bob,
+      value: 100e6,
+      deadline: block.timestamp + 1,
+      v: 0,
+      r: bytes32(0),
+      s: bytes32(0)
+    });
   }
 
   function test_rwaAToken_approve_fuzz_revertsWith_OperationNotSupported(
-    address from,
+    address sender,
     address spender,
     uint256 amount
   ) public {
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(from);
+    vm.prank(sender);
     aBuidl.approve(spender, amount);
   }
 
   function test_rwaAToken_approve_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_approve_fuzz_revertsWith_OperationNotSupported(alice, bob, 100e6);
+    test_rwaAToken_approve_fuzz_revertsWith_OperationNotSupported({
+      sender: alice,
+      spender: bob,
+      amount: 100e6
+    });
   }
 
   function test_rwaAToken_increaseAllowance_fuzz_revertsWith_OperationNotSupported(
-    address from,
+    address sender,
     address spender,
     uint256 addedValue
   ) public {
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(from);
+    vm.prank(sender);
     aBuidl.increaseAllowance(spender, addedValue);
   }
 
   function test_rwaAToken_increaseAllowance_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_increaseAllowance_fuzz_revertsWith_OperationNotSupported(alice, bob, 100e6);
+    test_rwaAToken_increaseAllowance_fuzz_revertsWith_OperationNotSupported({
+      sender: alice,
+      spender: bob,
+      addedValue: 100e6
+    });
   }
 
   function test_rwaAToken_decreaseAllowance_fuzz_revertsWith_OperationNotSupported(
-    address from,
+    address sender,
     address spender,
     uint256 subtractedValue
   ) public {
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(from);
+    vm.prank(sender);
     aBuidl.decreaseAllowance(spender, subtractedValue);
   }
 
   function test_rwaAToken_decreaseAllowance_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_decreaseAllowance_fuzz_revertsWith_OperationNotSupported(alice, bob, 100e6);
+    test_rwaAToken_decreaseAllowance_fuzz_revertsWith_OperationNotSupported({
+      sender: alice,
+      spender: bob,
+      subtractedValue: 100e6
+    });
   }
 }

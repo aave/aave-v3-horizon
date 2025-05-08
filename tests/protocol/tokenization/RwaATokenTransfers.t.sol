@@ -38,122 +38,174 @@ contract RwaATokenTransferTests is TestnetProcedures {
     buidl.approve(report.poolProxy, UINT256_MAX);
     contracts.poolProxy.supply(tokenList.buidl, 1e6, carol, 0);
     vm.stopPrank();
-
-    vm.startPrank(aTokenTransferAdmin);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.buidl, 50e6, aTokenTransferAdmin, 0);
-    vm.stopPrank();
   }
 
-  function test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported(address from) public {
+  function test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported(
+    address sender,
+    address to,
+    uint256 amount
+  ) public {
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(from);
-    aBuidl.transfer(alice, 0);
+    vm.prank(sender);
+    aBuidl.transfer(to, amount);
   }
 
   function test_rwaAToken_transfer_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported(carol);
+    test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported({
+      sender: alice,
+      to: bob,
+      amount: 0
+    });
   }
 
-  function test_rwaAToken_transferFrom_fuzz_by_aTokenTransferAdmin(uint256 amount) public {
-    uint256 aliceBalanceBefore = aBuidl.balanceOf(alice);
-    amount = bound(amount, 0, aliceBalanceBefore);
+  function test_rwaAToken_transferFrom_fuzz_revertsWith_OperationNotSupported(
+    address sender,
+    address from,
+    address to,
+    uint256 amount
+  ) public {
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    uint256 bobBalanceBefore = aBuidl.balanceOf(bob);
+    vm.prank(sender);
+    aBuidl.transferFrom(from, to, amount);
+  }
+
+  function test_rwaAToken_transferFrom_revertsWith_OperationNotSupported() public {
+    test_rwaAToken_transferFrom_fuzz_revertsWith_OperationNotSupported({
+      sender: aTokenTransferAdmin,
+      from: alice,
+      to: bob,
+      amount: 0
+    });
+  }
+
+  function test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin(
+    address from,
+    address to,
+    uint256 amount
+  ) public {
+    uint256 fromBalanceBefore = aBuidl.balanceOf(from);
+    amount = bound(amount, 0, fromBalanceBefore);
+
+    uint256 toBalanceBefore = aBuidl.balanceOf(to);
 
     vm.expectEmit(address(aBuidl));
-    emit IERC20.Transfer(alice, bob, amount);
+    emit IERC20.Transfer(from, to, amount);
 
     vm.prank(aTokenTransferAdmin);
-    aBuidl.transferFrom(alice, bob, amount);
+    aBuidl.forceTransfer(from, to, amount);
 
-    assertEq(aBuidl.balanceOf(alice), aliceBalanceBefore - amount);
-    assertEq(aBuidl.balanceOf(bob), bobBalanceBefore + amount);
+    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
+    assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount);
   }
 
-  function test_rwaAToken_transferFrom_by_aTokenTransferAdmin_all() public {
-    test_rwaAToken_transferFrom_fuzz_by_aTokenTransferAdmin(aBuidl.balanceOf(alice));
+  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_all() public {
+    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({
+      from: alice,
+      to: bob,
+      amount: aBuidl.balanceOf(alice)
+    });
   }
 
-  function test_rwaAToken_transferFrom_by_aTokenTransferAdmin_partial() public {
-    test_rwaAToken_transferFrom_fuzz_by_aTokenTransferAdmin(1);
+  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_partial() public {
+    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({from: alice, to: bob, amount: 1});
   }
 
-  function test_rwaAToken_transferFrom_by_aTokenTransferAdmin_zero() public {
-    test_rwaAToken_transferFrom_fuzz_by_aTokenTransferAdmin(0);
+  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_zero() public {
+    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({from: alice, to: bob, amount: 0});
   }
 
-  function test_rwaAToken_transferFrom_fuzz_revertsWith_CallerNotATokenTransferAdmin(
-    address from
+  function test_rwaAToken_forceTransfer_fuzz_revertsWith_CallerNotATokenTransferAdmin(
+    address sender,
+    address from,
+    address to,
+    uint256 amount
   ) public {
-    vm.assume(from != aTokenTransferAdmin);
+    vm.assume(sender != aTokenTransferAdmin);
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
 
-    vm.prank(from);
-    aBuidl.transferFrom(alice, bob, 0);
+    vm.prank(sender);
+    aBuidl.forceTransfer(from, to, amount);
   }
 
-  function test_rwaAToken_transferFrom_revertsWith_CallerNotATokenTransferAdmin() public {
-    test_rwaAToken_transferFrom_fuzz_revertsWith_CallerNotATokenTransferAdmin(carol);
+  function test_rwaAToken_forceTransfer_revertsWith_CallerNotATokenTransferAdmin() public {
+    test_rwaAToken_forceTransfer_fuzz_revertsWith_CallerNotATokenTransferAdmin({
+      sender: carol,
+      from: alice,
+      to: bob,
+      amount: 0
+    });
   }
 
   function test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_RecipientNotTreasury(
-    address to
+    address from,
+    address to,
+    uint256 amount
   ) public {
     vm.assume(to != report.treasury);
 
     vm.expectRevert(bytes(Errors.RECIPIENT_NOT_TREASURY));
 
     vm.prank(report.poolProxy);
-    aBuidl.transferOnLiquidation(alice, to, 0);
+    aBuidl.transferOnLiquidation(from, to, amount);
   }
 
   function test_rwaAToken_transferOnLiquidation_revertsWith_RecipientNotTreasury() public {
-    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_RecipientNotTreasury(carol);
+    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_RecipientNotTreasury({
+      from: alice,
+      to: bob,
+      amount: 0
+    });
   }
 
   function test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_CallerNotPool(
-    address from
+    address sender,
+    address from,
+    uint256 amount
   ) public {
-    vm.assume(from != report.poolProxy);
+    vm.assume(sender != report.poolProxy);
 
     vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
 
-    vm.prank(from);
-    aBuidl.transferOnLiquidation(alice, report.treasury, 0);
+    vm.prank(sender);
+    aBuidl.transferOnLiquidation(from, report.treasury, amount);
   }
 
   function test_rwaAToken_transferOnLiquidation_revertsWith_CallerNotPool() public {
-    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_CallerNotPool(carol);
+    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_CallerNotPool({
+      sender: carol,
+      from: alice,
+      amount: 0
+    });
   }
 
-  function test_rwaAToken_transferOnLiquidation_fuzz(uint256 amount) public {
-    uint256 aliceBalanceBefore = aBuidl.balanceOf(alice);
-    amount = bound(amount, 0, aliceBalanceBefore);
+  function test_rwaAToken_transferOnLiquidation_fuzz(address from, uint256 amount) public {
+    uint256 fromBalanceBefore = aBuidl.balanceOf(from);
+    amount = bound(amount, 0, fromBalanceBefore);
 
     uint256 treasuryBalanceBefore = aBuidl.balanceOf(report.treasury);
 
     vm.expectEmit(address(aBuidl));
-    emit IERC20.Transfer(alice, report.treasury, amount);
+    emit IERC20.Transfer(from, report.treasury, amount);
 
     vm.prank(report.poolProxy);
-    aBuidl.transferOnLiquidation(alice, report.treasury, amount);
+    aBuidl.transferOnLiquidation(from, report.treasury, amount);
 
-    assertEq(aBuidl.balanceOf(alice), aliceBalanceBefore - amount);
+    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
     assertEq(aBuidl.balanceOf(report.treasury), treasuryBalanceBefore + amount);
   }
 
   function test_rwaAToken_transferOnLiqudation_all() public {
-    test_rwaAToken_transferOnLiquidation_fuzz(aBuidl.balanceOf(alice));
+    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: aBuidl.balanceOf(alice)});
   }
 
   function test_rwaAToken_transferOnLiquidation_partial() public {
-    test_rwaAToken_transferOnLiquidation_fuzz(1);
+    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: 1});
   }
 
   function test_rwaAToken_transferOnLiquidation_zero() public {
-    test_rwaAToken_transferOnLiquidation_fuzz(0);
+    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: 0});
   }
 }

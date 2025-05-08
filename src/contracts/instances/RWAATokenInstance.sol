@@ -7,7 +7,7 @@ import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, Versione
 contract RWAATokenInstance is RWAAToken {
   uint256 public constant RWA_ATOKEN_REVISION = 1;
 
-  constructor(IPool pool) RWAAToken(pool, 'RWA_ATOKEN_IMPL', 'RWA_ATOKEN_IMPL') {}
+  constructor(IPool pool) RWAAToken(pool) {}
 
   /// @inheritdoc VersionedInitializable
   function getRevision() internal pure virtual override returns (uint256) {

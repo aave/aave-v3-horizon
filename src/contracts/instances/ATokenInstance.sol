@@ -6,7 +6,7 @@ import {AToken, IPool, IAaveIncentivesController, IInitializableAToken, Errors, 
 contract ATokenInstance is AToken {
   uint256 public constant ATOKEN_REVISION = 1;
 
-  constructor(IPool pool) AToken(pool, 'ATOKEN_IMPL', 'ATOKEN_IMPL') {}
+  constructor(IPool pool) AToken(pool) {}
 
   /// @inheritdoc VersionedInitializable
   function getRevision() internal pure virtual override returns (uint256) {

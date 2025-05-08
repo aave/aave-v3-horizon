@@ -34,14 +34,10 @@ abstract contract AToken is VersionedInitializable, ScaledBalanceTokenBase, EIP7
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
-   * @param name The name of the token
-   * @param symbol The symbol of the token
    */
   constructor(
-    IPool pool,
-    string memory name,
-    string memory symbol
-  ) ScaledBalanceTokenBase(pool, name, symbol, 0) EIP712Base() {
+    IPool pool
+  ) ScaledBalanceTokenBase(pool, 'ATOKEN_IMPL', 'ATOKEN_IMPL', 0) EIP712Base() {
     // Intentionally left blank
   }
 
