@@ -102,6 +102,7 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     uint256 amount
   ) external virtual override onlyATokenTransferAdmin returns (bool) {
     _transfer(from, to, amount.toUint128());
+    return true;
   }
 
   /// @inheritdoc IAToken

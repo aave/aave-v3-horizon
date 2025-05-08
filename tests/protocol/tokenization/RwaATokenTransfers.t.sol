@@ -94,7 +94,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(from, to, amount);
 
     vm.prank(aTokenTransferAdmin);
-    aBuidl.forceTransfer(from, to, amount);
+    bool success = aBuidl.forceTransfer(from, to, amount);
+    assertTrue(success, 'forceTransfer returned false');
 
     assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
     assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount);
