@@ -88,7 +88,7 @@ abstract contract RWAAToken is AToken {
   }
 
   /// @inheritdoc IERC20
-  /// @dev transferFrom is available only for AToken Transfer Admin
+  /// @dev transferFrom is available only to AToken Transfer Admin
   /// @dev the function is overridden such that it does not rely on allowances
   function transferFrom(
     address sender,
