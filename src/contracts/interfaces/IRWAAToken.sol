@@ -8,13 +8,17 @@ pragma solidity ^0.8.0;
  */
 interface IRWAAToken {
   /**
-   * @dev Moves `amount` tokens from `sender` to `recipient`. It does
+   * @dev Moves `amount` tokens from `from` to `to`. It does
    * not use any allowance mechanism, and is only callable by the
    * transfer role admin.
    *
    * Returns a boolean value indicating whether the operation succeeded.
    *
    * Emits a {Transfer} event.
+   * @param from The address to transfer from.
+   * @param to The address to transfer to.
+   * @param amount The amount to be transferred.
+   * @return True if the transfer was successful, false otherwise.
    */
   function forceTransfer(address from, address to, uint256 amount) external returns (bool);
 }
