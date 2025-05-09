@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+
+contract TestnetRWAERC20 is TestnetERC20 {
+  mapping(address holder => bool isAuthorized) public authorized;
+
+  modifier onlyAuthorized(address potentialHolder) {
+    require(authorized[potentialHolder], 'UNAUTHORIZED_RWA_HOLDER');
+    _;
+  }
+
+  constructor(
+    string memory name,
+    string memory symbol,
+    uint8 decimals,
+    address owner
+  ) TestnetERC20(name, symbol, decimals, owner) {}
+
+  function authorize(address holder) public {
+    authorized[holder] = true;
+  }
+
+  function _mint(
+    address account,
+    uint256 amount
+  ) internal virtual override onlyAuthorized(account) {
+    super._mint(account, amount);
+  }
+
+  function _transfer(
+    address sender,
+    address recipient,
+    uint256 amount
+  ) internal virtual override onlyAuthorized(recipient) {
+    super._transfer(sender, recipient, amount);
+  }
+}

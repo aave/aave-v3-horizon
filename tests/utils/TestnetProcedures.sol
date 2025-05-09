@@ -3,23 +3,24 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 
-import '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
-import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
-import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
-import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
-import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
-import {AaveV3TestListing} from '../mocks/AaveV3TestListing.sol';
-import {ACLManager, Errors} from '../../src/contracts/protocol/configuration/ACLManager.sol';
-import {WETH9} from '../../src/contracts/dependencies/weth/WETH9.sol';
-import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {PoolConfigurator} from '../../src/contracts/protocol/pool/PoolConfigurator.sol';
-import {DefaultReserveInterestRateStrategyV2} from '../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
-import {AaveProtocolDataProvider} from '../../src/contracts/helpers/AaveProtocolDataProvider.sol';
-import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import 'src/deployments/interfaces/IMarketReportTypes.sol';
+import {DeployUtils} from 'src/deployments/contracts/utilities/DeployUtils.sol';
+import {FfiUtils} from 'src/deployments/contracts/utilities/FfiUtils.sol';
+import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol';
+import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
+import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
+import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
+import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
+import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
+import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
+import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
+import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -72,9 +73,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   TestnetERC20 internal usdx;
   TestnetERC20 internal wbtc;
-  TestnetERC20 internal buidl;
-  TestnetERC20 internal ustb;
-  TestnetERC20 internal usdy;
+  TestnetRWAERC20 internal buidl;
+  TestnetRWAERC20 internal ustb;
+  TestnetRWAERC20 internal wtgxx;
   WETH9 internal weth;
 
   struct TokenList {
@@ -83,7 +84,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address usdx;
     address buidl;
     address ustb;
-    address usdy;
+    address wtgxx;
     address gho;
   }
 
@@ -137,9 +138,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     usdx = TestnetERC20(tokenList.usdx);
     wbtc = TestnetERC20(tokenList.wbtc);
-    buidl = TestnetERC20(tokenList.buidl);
-    ustb = TestnetERC20(tokenList.ustb);
-    usdy = TestnetERC20(tokenList.usdy);
+    buidl = TestnetRWAERC20(tokenList.buidl);
+    ustb = TestnetRWAERC20(tokenList.ustb);
+    wtgxx = TestnetRWAERC20(tokenList.wtgxx);
     weth = WETH9(payable(tokenList.weth));
 
     vm.label(tokenList.usdx, 'USDX');
@@ -147,7 +148,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.label(tokenList.weth, 'WETH');
     vm.label(tokenList.buidl, 'BUIDL');
     vm.label(tokenList.ustb, 'USTB');
-    vm.label(tokenList.usdy, 'USDY');
+    vm.label(tokenList.wtgxx, 'WTGXX');
 
     aclManagerAddress = address(contracts.aclManager);
 
@@ -248,7 +249,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     assetsList.usdx = testnetListingPayload.USDX_ADDRESS();
     assetsList.buidl = testnetListingPayload.BUIDL_ADDRESS();
     assetsList.ustb = testnetListingPayload.USTB_ADDRESS();
-    assetsList.usdy = testnetListingPayload.USDY_ADDRESS();
+    assetsList.wtgxx = testnetListingPayload.WTGXX_ADDRESS();
     assetsList.gho = testnetListingPayload.GHO_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);

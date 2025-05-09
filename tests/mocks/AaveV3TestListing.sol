@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import '../../src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
-import {TestnetERC20} from '../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
-import {MockAggregator} from '../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
-import {ACLManager} from '../../src/contracts/protocol/configuration/ACLManager.sol';
-import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {IPoolConfigurator, ConfiguratorInputTypes} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
+import 'src/contracts/extensions/v3-config-engine/AaveV3Payload.sol';
+import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {MockAggregator} from 'src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
+import {ACLManager} from 'src/contracts/protocol/configuration/ACLManager.sol';
+import {MarketReport} from 'src/deployments/interfaces/IMarketReportTypes.sol';
+import {IPoolConfigurator, ConfiguratorInputTypes} from 'src/contracts/interfaces/IPoolConfigurator.sol';
 
 /**
  * @dev Smart contract for token listing, for testing purposes
@@ -32,8 +33,8 @@ contract AaveV3TestListing is AaveV3Payload {
   address public immutable USTB_ADDRESS;
   address public immutable USTB_MOCK_PRICE_FEED;
 
-  address public immutable USDY_ADDRESS;
-  address public immutable USDY_MOCK_PRICE_FEED;
+  address public immutable WTGXX_ADDRESS;
+  address public immutable WTGXX_MOCK_PRICE_FEED;
 
   address public immutable GHO_ADDRESS;
   address public immutable GHO_MOCK_PRICE_FEED;
@@ -60,14 +61,14 @@ contract AaveV3TestListing is AaveV3Payload {
     WETH_ADDRESS = weth9;
     WETH_MOCK_PRICE_FEED = address(new MockAggregator(1800e8));
 
-    BUIDL_ADDRESS = address(new TestnetERC20('BUIDL', 'BUIDL', 6, erc20Owner));
+    BUIDL_ADDRESS = address(new TestnetRWAERC20('BUIDL', 'BUIDL', 6, erc20Owner));
     BUIDL_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
-    USTB_ADDRESS = address(new TestnetERC20('USTB', 'USTB', 6, erc20Owner));
-    USTB_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+    USTB_ADDRESS = address(new TestnetRWAERC20('USTB', 'USTB', 6, erc20Owner));
+    USTB_MOCK_PRICE_FEED = address(new MockAggregator(10e8));
 
-    USDY_ADDRESS = address(new TestnetERC20('USDY', 'USDY', 18, erc20Owner));
-    USDY_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+    WTGXX_ADDRESS = address(new TestnetRWAERC20('WTGXX', 'WTGXX', 18, erc20Owner));
+    WTGXX_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
     GHO_ADDRESS = address(new TestnetERC20('GHO', 'GHO', 18, erc20Owner));
     GHO_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
@@ -269,9 +270,9 @@ contract AaveV3TestListing is AaveV3Payload {
 
     listingsCustom[5] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
-        asset: USDY_ADDRESS,
-        assetSymbol: 'USDY',
-        priceFeed: USDY_MOCK_PRICE_FEED,
+        asset: WTGXX_ADDRESS,
+        assetSymbol: 'WTGXX',
+        priceFeed: WTGXX_MOCK_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
