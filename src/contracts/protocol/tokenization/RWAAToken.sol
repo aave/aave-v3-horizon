@@ -33,6 +33,11 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     _;
   }
 
+  modifier onlyOnBehalfOfCaller(address caller, address onBehalfOf) {
+    require(caller == onBehalfOf, Errors.ON_BEHALF_OF_MUST_MATCH_CALLER);
+    _;
+  }
+
   /**
    * @dev Constructor.
    * @param pool The address of the Pool contract
@@ -103,6 +108,14 @@ abstract contract RWAAToken is AToken, IRWAAToken {
   ) external virtual override onlyATokenTransferAdmin returns (bool) {
     _transfer(from, to, amount.toUint128());
     return true;
+  }
+  function mint(
+    address caller,
+    address onBehalfOf,
+    uint256 amount,
+    uint256 index
+  ) public virtual override onlyOnBehalfOfCaller(caller, onBehalfOf) returns (bool) {
+    return super.mint(caller, onBehalfOf, amount, index);
   }
 
   /// @inheritdoc IAToken

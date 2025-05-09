@@ -106,4 +106,5 @@ library Errors {
   string public constant USER_CANNOT_HAVE_DEBT = '104'; // Thrown when a user tries to interact with a method that requires a position without debt
   string public constant CALLER_NOT_ATOKEN_TRANSFER_ADMIN = '300'; // The caller of the function is not the RWA force transfer admin
   string public constant RECIPIENT_NOT_TREASURY = '301'; // The recipient is not the treasury
+  string public constant ON_BEHALF_OF_MUST_MATCH_CALLER = '302'; // The supply on behalf of address must match the caller
 }
