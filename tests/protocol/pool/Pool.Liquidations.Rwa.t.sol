@@ -24,12 +24,6 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     address liquidator;
   }
 
-  address aTokenTransferAdmin;
-
-  RwaTokenInfo[] public rwaTokenInfos;
-
-  LiquidationDataProvider internal liquidationDataProvider;
-
   struct LiquidationCheck {
     address user;
     address supplyToken;
@@ -45,6 +39,12 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     bytes expectedRevertData;
     bool expectFullLiquidation;
   }
+
+  address internal aTokenTransferAdmin;
+
+  RwaTokenInfo[] internal rwaTokenInfos;
+
+  LiquidationDataProvider internal liquidationDataProvider;
 
   function setUp() public {
     initTestEnvironment();
@@ -68,10 +68,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
     // authorize & mint BUIDL to alice
-    buidl.authorize(alice);
+    buidl.authorize(alice, true);
     buidl.mint(alice, 100000e6);
     // authorize & mint WTGXX to carol
-    wtgxx.authorize(carol);
+    wtgxx.authorize(carol, true);
     wtgxx.mint(carol, 100000e18);
     // grant Transfer Role to the aToken Transfer Admin
     AccessControl(aclManagerAddress).grantRole(
@@ -79,13 +79,13 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
       aTokenTransferAdmin
     );
     // authorize aBUIDL to hold BUIDL
-    buidl.authorize(aBuidlAddress);
+    buidl.authorize(aBuidlAddress, true);
     // authorize aWTGXX to hold WTGXX
-    wtgxx.authorize(aWtgxxAddress);
+    wtgxx.authorize(aWtgxxAddress, true);
     // authorize the BUIDL Liquidator to hold BUIDL
-    buidl.authorize(buidlLiquidator);
+    buidl.authorize(buidlLiquidator, true);
     // authorize the WTGXX Liquidator to hold WTGXX
-    wtgxx.authorize(wtgxxLiquidator);
+    wtgxx.authorize(wtgxxLiquidator, true);
     // mint USDX to liquidators
     usdx.mint(buidlLiquidator, 100000e6);
     usdx.mint(wtgxxLiquidator, 100000e6);
@@ -127,7 +127,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function mockPrice(address token, int256 priceImpactPercent) internal {
+  function _mockPrice(address token, int256 priceImpactPercent) internal {
     int256 currentPrice = int256(IAaveOracle(report.aaveOracle).getAssetPrice(token));
     int256 priceDelta = (currentPrice * priceImpactPercent) / 100_00;
     int256 newPrice = currentPrice + priceDelta;
@@ -157,7 +157,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     return IERC20(rewardToken).balanceOf(user);
   }
 
-  function check_liquidation(
+  function _checkLiquidation(
     LiquidationCheck memory input
   ) internal returns (LiquidationDataProvider.LiquidationInfo memory liquidationInfo) {
     vm.startPrank(input.user);
@@ -166,7 +166,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.stopPrank();
 
     skip(input.timeToSkip);
-    mockPrice(input.priceImpactToken, input.priceImpactPercent);
+    _mockPrice(input.priceImpactToken, input.priceImpactPercent);
 
     uint256 liquidatorBalanceBefore = getRewardTokenBalance(
       input.liquidator,
@@ -234,14 +234,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     }
   }
 
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_SupplyTokenPriceDrop_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 85% price drop -> supply = $1500
-    // aim for ~98% health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    // aim for 0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -270,14 +273,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
   function test_liquidation_fuzz_SupplyTokenPriceDrop_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~94% health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    // aim for ~0.94 health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -285,7 +291,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         borrowToken: tokenList.usdx,
         borrowAmount: 2287.23e6,
         timeToSkip: 0,
-        liquidationAmount: 2288e6,
+        liquidationAmount: 2287.23e6,
         receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         priceImpactPercent: -75_00,
@@ -306,15 +312,18 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
-  // partial due to limited liquidator power
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
+  /// User is partially liquidated due to limited liquidator power.
   function test_liquidation_fuzz_SupplyTokenPriceDrop_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~94% health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    // aim for ~0.94 health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -344,14 +353,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Supply token price drops, which makes user half liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_SupplyTokenPriceDrop_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~98% health at liquidation time -> $2500 * 0.86 / 0.98 = ~$2193.87
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    // aim for ~0.98 health at liquidation time -> $2500 * 0.86 / 0.98 = ~$2193.87
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -380,14 +392,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow token price increases, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_BorrowTokenPriceIncrease_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~98% health at liquidation time -> $100 * 0.86 / 0.98 = ~$87.75
+    // aim for ~0.98 health at liquidation time -> $100 * 0.86 / 0.98 = ~$87.75
     // 87.75 / 82.5 = ~1.063 -> ~6.3% price increase in borrow token
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -416,14 +431,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow token price increases, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
   function test_liquidation_fuzz_BorrowTokenPriceIncrease_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~90% health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
+    // aim for ~0.9 health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
     // 4777.77 / 4000 = ~1.194 -> ~19.4% price increase in borrow token
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -452,15 +470,18 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
-  // partial due to limited liquidator power
+  /// @dev Borrow token price increases, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
+  /// User is partially liquidated due to limited liquidator power.
   function test_liquidation_fuzz_BorrowTokenPriceIncrease_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~90% health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
+    // aim for ~0.9 health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
     // 4777.77 / 4000 = ~1.194 -> ~19.4% price increase in borrow token
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -490,14 +511,17 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow token price increases, which makes user half liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_Borrow_TokenPriceIncrease_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~98% health at liquidation time -> $5000 * 0.86 / 0.98 = ~$4387.75
+    // aim for ~0.98 health at liquidation time -> $5000 * 0.86 / 0.98 = ~$4387.75
     // 4387.75 / 4000 = ~1.096 -> ~9.6% price increase in borrow token
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -526,19 +550,22 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow interest accrues, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_BorrowInterestAccrued_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // bob withdraw 95000 USDX -> 5000 USDX are still suplied
+    // bob withdraw 95000 USDX -> 5000 USDX are still supplied
     vm.prank(bob);
     contracts.poolProxy.withdraw(tokenList.usdx, 95000e6, bob);
 
     // borrow 1125 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
     // after 8 years, borrow debt = ~1125 * (1 + 0.02/31536000) ^ (8 * 31536000) = ~1320.2
     // health factor = 1500 * 0.86 / 1320.2 = 97.7%
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -567,19 +594,22 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow interest accrues, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
   function test_liquidation_fuzz_BorrowInterestAccrued_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // bob withdraw 50000 USDX -> 50000 USDX are still suplied
+    // bob withdraw 50000 USDX -> 50000 USDX are still supplied
     vm.prank(bob);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, bob);
 
     // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
     // after 10 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (10 * 31536000) = ~13740.78
     // health factor = 15000 * 0.86 / 13740.78 = 93.8%
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -608,20 +638,23 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
-  // partial due to limited liquidator power
+  /// @dev Borrow interest accrues, which makes user fully liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is bad (below the 0.95 close factor threshold).
+  /// User is partially liquidated due to limited liquidator power.
   function test_liquidation_fuzz_BorrowInterestAccrued_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // bob withdraw 50000 USDX -> 50000 USDX are still suplied
+    // bob withdraw 50000 USDX -> 50000 USDX are still supplied
     vm.prank(bob);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, bob);
 
     // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
     // after 10 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (10 * 31536000) = ~13740.78
     // health factor = 15000 * 0.86 / 13740.78 = 93.8%
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -651,19 +684,22 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertLe(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
+  /// @dev Borrow interest accrues, which makes user half liquidatable.
+  /// It is a big liquidation (over the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
   function test_liquidation_fuzz_BorrowInterestAccrued_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // bob withdraw 50000 USDX -> 50000 USDX are still suplied
+    // bob withdraw 50000 USDX -> 50000 USDX are still supplied
     vm.prank(bob);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, bob);
 
     // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
     // after 8 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (8 * 31536000) = ~13201.99
     // health factor = 15000 * 0.86 / 13201.99 = 97.7%
-    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = check_liquidation(
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -692,8 +728,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     assertGt(liquidationInfo.userInfo.healthFactor, LiquidationLogic.CLOSE_FACTOR_HF_THRESHOLD);
   }
 
-  // supply token price drop, small liquidation, good health
-  // liquidator opts for aToken instead of native token
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
+  /// Liquidator opts for aToken instead of native token.
   function test_liquidation_fuzz_revertsWith_OnlyTreasuryRecipient(
     uint256 rwaTokenIndex,
     address liquidator
@@ -703,8 +741,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.assume(liquidator != report.treasury);
 
     // 85% price drop -> supply = $1500
-    // aim for ~98% health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
-    check_liquidation(
+    // aim for ~0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
+    _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
@@ -728,7 +766,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     test_liquidation_fuzz_revertsWith_OnlyTreasuryRecipient(1, rwaTokenInfos[1].liquidator);
   }
 
-  // supply token price drop, small liquidation, good health
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
+  /// Liquidator is not authorized to hold the RWA token.
   function test_liquidation_fuzz_revertsWith_UnauthorizedRwaHolder(
     uint256 rwaTokenIndex,
     address liquidator
@@ -740,8 +781,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].rwaAToken);
 
     // 85% price drop -> supply = $1500
-    // aim for ~98% health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
-    check_liquidation(
+    // aim for ~0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
+    _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,

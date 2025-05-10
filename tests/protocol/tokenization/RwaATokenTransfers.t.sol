@@ -24,15 +24,15 @@ contract RwaATokenTransferTests is TestnetProcedures {
 
     vm.startPrank(poolAdmin);
     // authorize & mint BUIDL to alice
-    buidl.authorize(alice);
+    buidl.authorize(alice, true);
     buidl.mint(alice, 100e6);
     // authorize & mint BUIDL to carol
-    buidl.authorize(carol);
+    buidl.authorize(carol, true);
     buidl.mint(carol, 1e6);
     // grant Transfer Role to the aToken Transfer Admin
     AccessControl(aclManagerAddress).grantRole(aBuidl.ATOKEN_TRANSFER_ROLE(), aTokenTransferAdmin);
     // authorize aBUIDL contract to hold BUIDL
-    buidl.authorize(aBuidlAddress);
+    buidl.authorize(aBuidlAddress, true);
     vm.stopPrank();
 
     vm.startPrank(alice);

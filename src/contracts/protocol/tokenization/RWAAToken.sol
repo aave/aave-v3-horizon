@@ -8,30 +8,12 @@ import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.s
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
 import {IRWAAToken} from 'src/contracts/interfaces/IRWAAToken.sol';
-import {IAToken} from 'src/contracts/interfaces/IAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
 abstract contract RWAAToken is AToken, IRWAAToken {
   using SafeCast for uint256;
 
   bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
-
-  /**
-   * @dev Only AToken Transfer Admin can call functions marked by this modifier.
-   */
-  modifier onlyATokenTransferAdmin() {
-    AccessControl aclManager = AccessControl(_addressesProvider.getACLManager());
-    require(
-      aclManager.hasRole(ATOKEN_TRANSFER_ROLE, msg.sender),
-      Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
-    );
-    _;
-  }
-
-  modifier onlyTreasuryRecipient(address recipient) {
-    require(recipient == _treasury, Errors.RECIPIENT_NOT_TREASURY);
-    _;
-  }
 
   /**
    * @dev Constructor.
@@ -41,7 +23,7 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     // Intentionally left blank
   }
 
-  /// @inheritdoc AToken
+  /// @inheritdoc IRWAAToken
   function permit(
     address owner,
     address spender,
@@ -50,49 +32,59 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external virtual override {
+  ) external virtual override(AToken, IRWAAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IERC20
+  /// @inheritdoc IRWAAToken
   function approve(
     address spender,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IncentivizedERC20
+  /// @inheritdoc IRWAAToken
   function increaseAllowance(
     address spender,
     uint256 addedValue
-  ) external virtual override returns (bool) {
+  ) external virtual override(IncentivizedERC20, IRWAAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IncentivizedERC20
+  /// @inheritdoc IRWAAToken
   function decreaseAllowance(
     address spender,
     uint256 subtractedValue
-  ) external virtual override returns (bool) {
+  ) external virtual override(IncentivizedERC20, IRWAAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IERC20
+  /// @inheritdoc IRWAAToken
   function transfer(
     address recipient,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IERC20
+  /// @inheritdoc IRWAAToken
   function transferFrom(
     address sender,
     address recipient,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
+  }
+
+  /// @inheritdoc IRWAAToken
+  function transferOnLiquidation(
+    address from,
+    address to,
+    uint256 value
+  ) public virtual override(AToken, IRWAAToken) {
+    require(to == _treasury, Errors.RECIPIENT_NOT_TREASURY);
+    super.transferOnLiquidation(from, to, value);
   }
 
   /// @inheritdoc IRWAAToken
@@ -100,17 +92,14 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     address from,
     address to,
     uint256 amount
-  ) external virtual override onlyATokenTransferAdmin returns (bool) {
+  ) external virtual override returns (bool) {
+    AccessControl aclManager = AccessControl(_addressesProvider.getACLManager());
+    require(
+      aclManager.hasRole(ATOKEN_TRANSFER_ROLE, msg.sender),
+      Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
+    );
+
     _transfer(from, to, amount.toUint128());
     return true;
-  }
-
-  /// @inheritdoc IAToken
-  function transferOnLiquidation(
-    address from,
-    address to,
-    uint256 value
-  ) public virtual override onlyTreasuryRecipient(to) {
-    super.transferOnLiquidation(from, to, value);
   }
 }

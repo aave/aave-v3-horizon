@@ -8,6 +8,59 @@ pragma solidity ^0.8.0;
  */
 interface IRWAAToken {
   /**
+   * @notice ERC-20 Permits are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function permit(
+    address owner,
+    address spender,
+    uint256 value,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external;
+
+  /**
+   * @notice ERC-20 Approvals are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function approve(address spender, uint256 amount) external returns (bool);
+
+  /**
+   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
+
+  /**
+   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
+
+  /**
+   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function transfer(address recipient, uint256 amount) external returns (bool);
+
+  /**
+   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+
+  /**
+   * @notice Transfers liquidation fees to the treasury, in the event of a borrow being liquidated
+   * @notice Liquidators must receive liquidated collateral in the underlying (not in aTokens)
+   * @param from The address getting liquidated, current owner of the aTokens
+   * @param to The recipient (must be treasury)
+   * @param value The amount of tokens getting transferred
+   */
+  function transferOnLiquidation(address from, address to, uint256 value) external;
+
+  /**
    * @notice Transfers an amount of aTokens between two users.
    * @dev It checks for valid HF after the tranfer.
    * @dev Only callable by transfer role admin.
