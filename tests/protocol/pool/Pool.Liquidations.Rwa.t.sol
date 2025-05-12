@@ -9,7 +9,7 @@ import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AggregatorInterface} from 'src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
-import {RWAAToken} from 'src/contracts/protocol/tokenization/RWAAToken.sol';
+import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {LiquidationDataProvider} from 'src/contracts/helpers/LiquidationDataProvider.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 

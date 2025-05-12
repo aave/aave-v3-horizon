@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {RWAAToken} from 'src/contracts/protocol/tokenization/RWAAToken.sol';
+import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract RwaATokenAllowanceTests is TestnetProcedures {
-  RWAAToken public aBuidl;
+  RwaAToken public aBuidl;
 
   function setUp() public {
     initTestEnvironment();
@@ -14,7 +14,7 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
     );
-    aBuidl = RWAAToken(aBuidlAddress);
+    aBuidl = RwaAToken(aBuidlAddress);
   }
 
   function test_fuzz_reverts_rwaAToken_permit_OperationNotSupported(

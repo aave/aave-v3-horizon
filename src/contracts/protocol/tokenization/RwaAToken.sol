@@ -7,10 +7,10 @@ import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCa
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
-import {IRWAAToken} from 'src/contracts/interfaces/IRWAAToken.sol';
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
-abstract contract RWAAToken is AToken, IRWAAToken {
+abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
   bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
@@ -23,7 +23,7 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     // Intentionally left blank
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function permit(
     address owner,
     address spender,
@@ -32,62 +32,62 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     uint8 v,
     bytes32 r,
     bytes32 s
-  ) external virtual override(AToken, IRWAAToken) {
+  ) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function approve(
     address spender,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function increaseAllowance(
     address spender,
     uint256 addedValue
-  ) external virtual override(IncentivizedERC20, IRWAAToken) returns (bool) {
+  ) external virtual override(IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function decreaseAllowance(
     address spender,
     uint256 subtractedValue
-  ) external virtual override(IncentivizedERC20, IRWAAToken) returns (bool) {
+  ) external virtual override(IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function transfer(
     address recipient,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function transferFrom(
     address sender,
     address recipient,
     uint256 amount
-  ) external virtual override(IERC20, IncentivizedERC20, IRWAAToken) returns (bool) {
+  ) external virtual override(IERC20, IncentivizedERC20, IRwaAToken) returns (bool) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function transferOnLiquidation(
     address from,
     address to,
     uint256 value
-  ) public virtual override(AToken, IRWAAToken) {
+  ) public virtual override(AToken, IRwaAToken) {
     require(to == _treasury, Errors.RECIPIENT_NOT_TREASURY);
     super.transferOnLiquidation(from, to, value);
   }
 
-  /// @inheritdoc IRWAAToken
+  /// @inheritdoc IRwaAToken
   function forceTransfer(
     address from,
     address to,

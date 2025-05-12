@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {RWAAToken} from 'src/contracts/protocol/tokenization/RWAAToken.sol';
+import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract RwaATokenTransferTests is TestnetProcedures {
-  RWAAToken public aBuidl;
+  RwaAToken public aBuidl;
 
   address aTokenTransferAdmin;
 
@@ -20,7 +20,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
     );
-    aBuidl = RWAAToken(aBuidlAddress);
+    aBuidl = RwaAToken(aBuidlAddress);
 
     vm.startPrank(poolAdmin);
     // authorize & mint BUIDL to alice

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {ATokenInstance} from '../../../contracts/instances/ATokenInstance.sol';
-import {RWAATokenInstance} from '../../../contracts/instances/RWAATokenInstance.sol';
+import {RwaATokenInstance} from '../../../contracts/instances/RwaATokenInstance.sol';
 import {VariableDebtTokenInstance} from '../../../contracts/instances/VariableDebtTokenInstance.sol';
 import {IPool} from '../../../contracts/interfaces/IPool.sol';
 import {IAaveIncentivesController} from '../../../contracts/interfaces/IAaveIncentivesController.sol';
@@ -21,7 +21,7 @@ contract AaveV3TokensProcedure {
     bytes memory empty;
 
     ATokenInstance aToken = new ATokenInstance(IPool(poolProxy));
-    RWAATokenInstance rwaAToken = new RWAATokenInstance(IPool(poolProxy));
+    RwaATokenInstance rwaAToken = new RwaATokenInstance(IPool(poolProxy));
     VariableDebtTokenInstance variableDebtToken = new VariableDebtTokenInstance(IPool(poolProxy));
 
     aToken.initialize(

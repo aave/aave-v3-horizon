@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title IRWAAToken
+ * @title IRwaAToken
  * @author Aave
- * @notice Defines the basic interface for an RWAAToken.
+ * @notice Defines the basic interface for an RwaAToken.
  */
-interface IRWAAToken {
+interface IRwaAToken {
   /**
    * @notice ERC-20 Permits are not supported for RWA aTokens.
    * @dev Reverts if called.
