@@ -109,7 +109,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     uint256 amount,
     uint256 index
   ) public virtual override(AToken, IRwaAToken) returns (bool) {
-    require(caller == onBehalfOf, Errors.ON_BEHALF_OF_NOT_SUPPORTED);
+    require(caller == onBehalfOf, Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED);
     return super.mint(caller, onBehalfOf, amount, index);
   }
 }

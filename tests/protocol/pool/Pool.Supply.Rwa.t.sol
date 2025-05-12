@@ -74,7 +74,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
     vm.assume(onBehalfOf != alice && onBehalfOf != aBuidl);
 
-    vm.expectRevert(bytes(Errors.ON_BEHALF_OF_NOT_SUPPORTED));
+    vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, onBehalfOf, 0);
@@ -184,7 +184,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     // permit succeeds, but reverts due to onBehalfOf
-    vm.expectRevert(bytes(Errors.ON_BEHALF_OF_NOT_SUPPORTED));
+    vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
     vm.prank(user);
     contracts.poolProxy.supplyWithPermit(
@@ -249,7 +249,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     // permit fails gracefully, but reverts due to onBehalfOf
-    vm.expectRevert(bytes(Errors.ON_BEHALF_OF_NOT_SUPPORTED));
+    vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
     vm.prank(relayer);
     contracts.poolProxy.supplyWithPermit(
@@ -441,7 +441,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
     vm.assume(onBehalfOf != alice && onBehalfOf != aBuidl);
 
-    vm.expectRevert(bytes(Errors.ON_BEHALF_OF_NOT_SUPPORTED));
+    vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
     vm.prank(alice);
     contracts.poolProxy.deposit(tokenList.buidl, supplyAmount, onBehalfOf, 0);
