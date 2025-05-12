@@ -52,8 +52,7 @@ interface IRWAAToken {
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice Transfers liquidation fees to the treasury, in the event of a borrow being liquidated
-   * @notice Liquidators must receive liquidated collateral in the underlying (not in aTokens)
+   * @notice Transfers liquidation fees in form of aTokens to the treasury
    * @param from The address getting liquidated, current owner of the aTokens
    * @param to The recipient (must be treasury)
    * @param value The amount of tokens getting transferred
