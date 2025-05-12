@@ -96,6 +96,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     assertEq(IAToken(aBuidl).scaledBalanceOf(alice), scaledBalanceTokenBase + supplyAmount);
   }
 
+  // supply with permit for themselves
   function test_supplyWithPermit(
     uint128 userPk,
     uint128 supplyAmount,
@@ -104,7 +105,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(userPk != 0);
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
-    vm.assume(user != alice);
+    vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -146,6 +147,70 @@ contract PoolSupplyRwaTests is TestnetProcedures {
 
     assertEq(IERC20(tokenList.buidl).balanceOf(user), underlyingBalance - supplyAmount);
     assertEq(IAToken(aBuidl).scaledBalanceOf(user), supplyAmount);
+  }
+
+  // supply with permit fails if relayer is not user which signed the tx
+  function test_supplyWithPermit_should_revert_with_relayer() public {
+    test_fuzz_supplyWithPermit_should_revert_with_relayer({
+      userPk: 0x1,
+      supplyAmount: 1e6,
+      underlyingBalance: 1e6,
+      relayer: bob
+    });
+  }
+
+  // fuzz - supply with permit fails if relayer is not user which signed the tx
+  function test_fuzz_supplyWithPermit_should_revert_with_relayer(
+    uint128 userPk,
+    uint128 supplyAmount,
+    uint128 underlyingBalance,
+    address relayer
+  ) public {
+    vm.assume(userPk != 0);
+    vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
+    address user = vm.addr(userPk);
+    vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
+    vm.assume(relayer != user && relayer != poolAdmin && relayer != address(0));
+
+    vm.startPrank(poolAdmin);
+    buidl.authorize(user, true);
+    buidl.mint(user, underlyingBalance);
+    buidl.authorize(relayer, true);
+    buidl.mint(relayer, underlyingBalance);
+    vm.stopPrank();
+
+    vm.prank(relayer);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+
+    EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
+      owner: user,
+      spender: address(contracts.poolProxy),
+      value: supplyAmount,
+      nonce: 0,
+      deadline: block.timestamp + 1 days
+    });
+    bytes32 digest = EIP712SigUtils.getTypedDataHash(
+      permit,
+      bytes(TestnetERC20(tokenList.buidl).name()),
+      bytes('1'),
+      tokenList.buidl
+    );
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
+
+    vm.expectRevert(bytes(Errors.ON_BEHALF_OF_NOT_SUPPORTED));
+
+    vm.prank(relayer);
+    contracts.poolProxy.supplyWithPermit(
+      tokenList.buidl,
+      supplyAmount,
+      user,
+      0,
+      permit.deadline,
+      v,
+      r,
+      s
+    );
   }
 
   function test_supplyWithPermit_not_failing_if_permit_was_used(
