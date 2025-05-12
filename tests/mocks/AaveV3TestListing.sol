@@ -36,6 +36,9 @@ contract AaveV3TestListing is AaveV3Payload {
   address public immutable WTGXX_ADDRESS;
   address public immutable WTGXX_MOCK_PRICE_FEED;
 
+  address public immutable BORROWABLE_BUIDL_ADDRESS;
+  address public immutable BORROWABLE_BUIDL_MOCK_PRICE_FEED;
+
   address public immutable GHO_ADDRESS;
   address public immutable GHO_MOCK_PRICE_FEED;
 
@@ -63,6 +66,11 @@ contract AaveV3TestListing is AaveV3Payload {
 
     BUIDL_ADDRESS = address(new TestnetRWAERC20('BUIDL', 'BUIDL', 6, erc20Owner));
     BUIDL_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+
+    BORROWABLE_BUIDL_ADDRESS = address(
+      new TestnetRWAERC20('BORROWABLE_BUIDL', 'BORROWABLE_BUIDL', 6, erc20Owner)
+    );
+    BORROWABLE_BUIDL_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
 
     USTB_ADDRESS = address(new TestnetRWAERC20('USTB', 'USTB', 6, erc20Owner));
     USTB_MOCK_PRICE_FEED = address(new MockAggregator(10e8));
@@ -134,7 +142,7 @@ contract AaveV3TestListing is AaveV3Payload {
     override
     returns (IEngine.ListingWithCustomImpl[] memory)
   {
-    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](6);
+    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](7);
 
     IEngine.InterestRateInputData memory rateParams = IEngine.InterestRateInputData({
       optimalUsageRatio: 45_00,
@@ -282,6 +290,31 @@ contract AaveV3TestListing is AaveV3Payload {
         liqThreshold: 86_00,
         liqBonus: 5_00,
         reserveFactor: EngineFlags.KEEP_CURRENT,
+        supplyCap: 0,
+        borrowCap: 0,
+        debtCeiling: 0,
+        liqProtocolFee: 0
+      }),
+      IEngine.TokenImplementations({
+        aToken: RWA_ATOKEN_IMPLEMENTATION,
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      })
+    );
+
+    listingsCustom[6] = IEngine.ListingWithCustomImpl(
+      IEngine.Listing({
+        asset: BORROWABLE_BUIDL_ADDRESS,
+        assetSymbol: 'BORROWABLE_BUIDL',
+        priceFeed: BORROWABLE_BUIDL_MOCK_PRICE_FEED,
+        rateStrategyParams: rateParams,
+        enabledToBorrow: EngineFlags.ENABLED,
+        borrowableInIsolation: EngineFlags.ENABLED,
+        withSiloedBorrowing: EngineFlags.DISABLED,
+        flashloanable: EngineFlags.DISABLED,
+        ltv: 82_50,
+        liqThreshold: 86_00,
+        liqBonus: 5_00,
+        reserveFactor: 10_00,
         supplyCap: 0,
         borrowCap: 0,
         debtCeiling: 0,

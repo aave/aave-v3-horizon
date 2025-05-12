@@ -82,6 +82,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   TestnetRWAERC20 internal buidl;
   TestnetRWAERC20 internal ustb;
   TestnetRWAERC20 internal wtgxx;
+  TestnetRWAERC20 internal borrowableBuidl;
   WETH9 internal weth;
 
   address internal rwaATokenTransferAdmin;
@@ -94,6 +95,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address ustb;
     address wtgxx;
     address gho;
+    address borrowableBuidl;
   }
 
   struct RwaATokenList {
@@ -149,6 +151,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     ustb = TestnetRWAERC20(tokenList.ustb);
     wtgxx = TestnetRWAERC20(tokenList.wtgxx);
     weth = WETH9(payable(tokenList.weth));
+    borrowableBuidl = TestnetRWAERC20(tokenList.borrowableBuidl);
 
     vm.label(tokenList.usdx, 'USDX');
     vm.label(tokenList.wbtc, 'WBTC');
@@ -156,6 +159,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.label(tokenList.buidl, 'BUIDL');
     vm.label(tokenList.ustb, 'USTB');
     vm.label(tokenList.wtgxx, 'WTGXX');
+    vm.label(tokenList.borrowableBuidl, 'BBUIDL');
 
     aclManagerAddress = address(contracts.aclManager);
 
@@ -291,6 +295,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     assetsList.ustb = testnetListingPayload.USTB_ADDRESS();
     assetsList.wtgxx = testnetListingPayload.WTGXX_ADDRESS();
     assetsList.gho = testnetListingPayload.GHO_ADDRESS();
+    assetsList.borrowableBuidl = testnetListingPayload.BORROWABLE_BUIDL_ADDRESS();
 
     ACLManager manager = ACLManager(r.aclManager);
 

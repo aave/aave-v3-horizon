@@ -52,6 +52,12 @@ interface IRwaAToken {
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
+   * @notice Not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function mintToTreasury(uint256 amount, uint256 index) external;
+
+  /**
    * @notice Transfers are not supported in liquidations.
    * @dev Reverts if called.
    */
