@@ -101,4 +101,14 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     _transfer(from, to, amount.toUint128());
     return true;
   }
+
+  function mint(
+    address caller,
+    address onBehalfOf,
+    uint256 amount,
+    uint256 index
+  ) public virtual override returns (bool) {
+    require(caller == onBehalfOf, Errors.ON_BEHALF_OF_NOT_SUPPORTED);
+    return super.mint(caller, onBehalfOf, amount, index);
+  }
 }
