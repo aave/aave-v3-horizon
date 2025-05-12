@@ -46,7 +46,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_transfer_OperationNotSupported(
     address sender,
     address to,
     uint256 amount
@@ -57,15 +57,11 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.transfer(to, amount);
   }
 
-  function test_rwaAToken_transfer_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_transfer_fuzz_revertsWith_OperationNotSupported({
-      sender: alice,
-      to: bob,
-      amount: 0
-    });
+  function test_reverts_rwaAToken_transfer_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_transfer_OperationNotSupported({sender: alice, to: bob, amount: 0});
   }
 
-  function test_rwaAToken_transferFrom_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_transferFrom_OperationNotSupported(
     address sender,
     address from,
     address to,
@@ -77,8 +73,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.transferFrom(from, to, amount);
   }
 
-  function test_rwaAToken_transferFrom_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_transferFrom_fuzz_revertsWith_OperationNotSupported({
+  function test_reverts_rwaAToken_transferFrom_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_transferFrom_OperationNotSupported({
       sender: aTokenTransferAdmin,
       from: alice,
       to: bob,
@@ -86,7 +82,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     });
   }
 
-  function test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin(
+  function test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin(
     address from,
     address to,
     uint256 amount
@@ -108,7 +104,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
   }
 
   function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_all() public {
-    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({
+    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({
       from: alice,
       to: bob,
       amount: aBuidl.balanceOf(alice)
@@ -116,14 +112,14 @@ contract RwaATokenTransferTests is TestnetProcedures {
   }
 
   function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_partial() public {
-    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({from: alice, to: bob, amount: 1});
+    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 1});
   }
 
   function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_zero() public {
-    test_rwaAToken_forceTransfer_fuzz_by_aTokenTransferAdmin({from: alice, to: bob, amount: 0});
+    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 0});
   }
 
-  function test_rwaAToken_forceTransfer_fuzz_revertsWith_CallerNotATokenTransferAdmin(
+  function test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin(
     address sender,
     address from,
     address to,
@@ -137,8 +133,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.forceTransfer(from, to, amount);
   }
 
-  function test_rwaAToken_forceTransfer_revertsWith_CallerNotATokenTransferAdmin() public {
-    test_rwaAToken_forceTransfer_fuzz_revertsWith_CallerNotATokenTransferAdmin({
+  function test_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin() public {
+    test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin({
       sender: carol,
       from: alice,
       to: bob,
@@ -146,7 +142,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     });
   }
 
-  function test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_RecipientNotTreasury(
+  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury(
     address from,
     address to,
     uint256 amount
@@ -159,15 +155,15 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.transferOnLiquidation(from, to, amount);
   }
 
-  function test_rwaAToken_transferOnLiquidation_revertsWith_RecipientNotTreasury() public {
-    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_RecipientNotTreasury({
+  function test_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury() public {
+    test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury({
       from: alice,
       to: bob,
       amount: 0
     });
   }
 
-  function test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_CallerNotPool(
+  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool(
     address sender,
     address from,
     uint256 amount
@@ -180,15 +176,15 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.transferOnLiquidation(from, report.treasury, amount);
   }
 
-  function test_rwaAToken_transferOnLiquidation_revertsWith_CallerNotPool() public {
-    test_rwaAToken_transferOnLiquidation_fuzz_revertsWith_CallerNotPool({
+  function test_reverts_rwaAToken_transferOnLiquidation_CallerNotPool() public {
+    test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool({
       sender: carol,
       from: alice,
       amount: 0
     });
   }
 
-  function test_rwaAToken_transferOnLiquidation_fuzz(address from, uint256 amount) public {
+  function test_fuzz_rwaAToken_transferOnLiquidation(address from, uint256 amount) public {
     uint256 fromBalanceBefore = aBuidl.balanceOf(from);
     amount = bound(amount, 0, fromBalanceBefore);
 
@@ -205,14 +201,14 @@ contract RwaATokenTransferTests is TestnetProcedures {
   }
 
   function test_rwaAToken_transferOnLiqudation_all() public {
-    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: aBuidl.balanceOf(alice)});
+    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: aBuidl.balanceOf(alice)});
   }
 
   function test_rwaAToken_transferOnLiquidation_partial() public {
-    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: 1});
+    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 1});
   }
 
   function test_rwaAToken_transferOnLiquidation_zero() public {
-    test_rwaAToken_transferOnLiquidation_fuzz({from: alice, amount: 0});
+    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 0});
   }
 }

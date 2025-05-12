@@ -17,7 +17,7 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     aBuidl = RWAAToken(aBuidlAddress);
   }
 
-  function test_rwaAToken_permit_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_permit_OperationNotSupported(
     address sender,
     address owner,
     address spender,
@@ -33,8 +33,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     aBuidl.permit(owner, spender, value, deadline, v, r, s);
   }
 
-  function test_rwaAToken_permit_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_permit_fuzz_revertsWith_OperationNotSupported({
+  function test_reverts_rwaAToken_permit_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_permit_OperationNotSupported({
       sender: alice,
       owner: alice,
       spender: bob,
@@ -46,7 +46,7 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     });
   }
 
-  function test_rwaAToken_approve_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_approve_OperationNotSupported(
     address sender,
     address spender,
     uint256 amount
@@ -57,15 +57,15 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     aBuidl.approve(spender, amount);
   }
 
-  function test_rwaAToken_approve_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_approve_fuzz_revertsWith_OperationNotSupported({
+  function test_reverts_rwaAToken_approve_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_approve_OperationNotSupported({
       sender: alice,
       spender: bob,
       amount: 100e6
     });
   }
 
-  function test_rwaAToken_increaseAllowance_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_increaseAllowance_OperationNotSupported(
     address sender,
     address spender,
     uint256 addedValue
@@ -76,15 +76,15 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     aBuidl.increaseAllowance(spender, addedValue);
   }
 
-  function test_rwaAToken_increaseAllowance_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_increaseAllowance_fuzz_revertsWith_OperationNotSupported({
+  function test_reverts_rwaAToken_increaseAllowance_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_increaseAllowance_OperationNotSupported({
       sender: alice,
       spender: bob,
       addedValue: 100e6
     });
   }
 
-  function test_rwaAToken_decreaseAllowance_fuzz_revertsWith_OperationNotSupported(
+  function test_fuzz_reverts_rwaAToken_decreaseAllowance_OperationNotSupported(
     address sender,
     address spender,
     uint256 subtractedValue
@@ -95,8 +95,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     aBuidl.decreaseAllowance(spender, subtractedValue);
   }
 
-  function test_rwaAToken_decreaseAllowance_revertsWith_OperationNotSupported() public {
-    test_rwaAToken_decreaseAllowance_fuzz_revertsWith_OperationNotSupported({
+  function test_reverts_rwaAToken_decreaseAllowance_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_decreaseAllowance_OperationNotSupported({
       sender: alice,
       spender: bob,
       subtractedValue: 100e6

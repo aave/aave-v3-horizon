@@ -276,7 +276,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_SupplyTokenPriceDrop_Full_SmallLiquidation_GoodHealth(
+  function test_fuzz_liquidation_SupplyTokenPriceDrop_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -315,7 +315,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
-  function test_liquidation_fuzz_SupplyTokenPriceDrop_Full_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_SupplyTokenPriceDrop_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -355,7 +355,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
   /// User is partially liquidated due to limited liquidator power.
-  function test_liquidation_fuzz_SupplyTokenPriceDrop_Partial_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_SupplyTokenPriceDrop_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -395,7 +395,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user half liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_SupplyTokenPriceDrop_Partial_BigLiquidation_GoodHealth(
+  function test_fuzz_liquidation_SupplyTokenPriceDrop_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -434,7 +434,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow token price increases, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_BorrowTokenPriceIncrease_Full_SmallLiquidation_GoodHealth(
+  function test_fuzz_liquidation_BorrowTokenPriceIncrease_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -473,7 +473,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow token price increases, which makes user fully liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
-  function test_liquidation_fuzz_BorrowTokenPriceIncrease_Full_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_BorrowTokenPriceIncrease_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -513,7 +513,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
   /// User is partially liquidated due to limited liquidator power.
-  function test_liquidation_fuzz_BorrowTokenPriceIncrease_Partial_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_BorrowTokenPriceIncrease_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -553,7 +553,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow token price increases, which makes user half liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_Borrow_TokenPriceIncrease_Partial_BigLiquidation_GoodHealth(
+  function test_fuzz_liquidation_Borrow_TokenPriceIncrease_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -592,7 +592,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow interest accrues, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_BorrowInterestAccrued_Full_SmallLiquidation_GoodHealth(
+  function test_fuzz_liquidation_BorrowInterestAccrued_Full_SmallLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -636,7 +636,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow interest accrues, which makes user fully liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
-  function test_liquidation_fuzz_BorrowInterestAccrued_Full_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_BorrowInterestAccrued_Full_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -681,7 +681,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is bad (below the 0.95 close factor threshold).
   /// User is partially liquidated due to limited liquidator power.
-  function test_liquidation_fuzz_BorrowInterestAccrued_Partial_BigLiquidation_BadHealth(
+  function test_fuzz_liquidation_BorrowInterestAccrued_Partial_BigLiquidation_BadHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -726,7 +726,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow interest accrues, which makes user half liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_liquidation_fuzz_BorrowInterestAccrued_Partial_BigLiquidation_GoodHealth(
+  function test_fuzz_liquidation_BorrowInterestAccrued_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -771,7 +771,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
   /// Liquidator opts for aToken instead of native token.
-  function test_liquidation_fuzz_revertsWith_OnlyTreasuryRecipient(
+  function test_fuzz_reverts_liquidation_OnlyTreasuryRecipient(
     uint256 rwaTokenIndex,
     address liquidator
   ) public {
@@ -800,9 +800,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function test_liquidation_revertsWith_OnlyTreasuryRecipient() public {
+  function test_reverts_liquidation_OnlyTreasuryRecipient() public {
     for (uint256 i = 0; i < rwaTokenInfos.length; i++) {
-      test_liquidation_fuzz_revertsWith_OnlyTreasuryRecipient(i, rwaTokenInfos[i].liquidator);
+      test_fuzz_reverts_liquidation_OnlyTreasuryRecipient(i, rwaTokenInfos[i].liquidator);
     }
   }
 
@@ -810,7 +810,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
   /// Liquidator is not authorized to hold the RWA token.
-  function test_liquidation_fuzz_revertsWith_UnauthorizedRwaHolder(
+  function test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(
     uint256 rwaTokenIndex,
     address liquidator
   ) public {
@@ -841,9 +841,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function test_liquidation_revertsWith_UnauthorizedRwaHolder() public {
-    test_liquidation_fuzz_revertsWith_UnauthorizedRwaHolder(0, rwaTokenInfos[1].liquidator);
-    test_liquidation_fuzz_revertsWith_UnauthorizedRwaHolder(1, rwaTokenInfos[0].liquidator);
-    test_liquidation_fuzz_revertsWith_UnauthorizedRwaHolder(2, rwaTokenInfos[0].liquidator);
+  function test_reverts_liquidation_UnauthorizedRwaHolder() public {
+    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(0, rwaTokenInfos[1].liquidator);
+    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(1, rwaTokenInfos[0].liquidator);
+    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(2, rwaTokenInfos[0].liquidator);
   }
 }
