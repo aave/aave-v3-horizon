@@ -9,21 +9,12 @@ import {IAToken, IERC20} from 'src/contracts/interfaces/IAToken.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {EIP712SigUtils} from 'tests/utils/EIP712SigUtils.sol';
+import {SupplyLogic} from 'src/contracts/protocol/libraries/logic/SupplyLogic.sol';
 
 contract PoolSupplyRwaTests is TestnetProcedures {
   address internal aUSDX;
   address internal aBuidl;
   address aTokenTransferAdmin;
-
-  event Supply(
-    address indexed reserve,
-    address user,
-    address indexed onBehalfOf,
-    uint256 amount,
-    uint16 indexed referralCode
-  );
-
-  event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
 
   function setUp() public {
     initTestEnvironment();
@@ -51,8 +42,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   function test_first_supply() public {
-    uint256 supplyAmount = 1e6;
-    test_fuzz_first_supply(supplyAmount);
+    test_fuzz_first_supply(1e6);
   }
 
   function test_fuzz_first_supply(uint256 supplyAmount) public {
@@ -60,9 +50,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     supplyAmount = bound(supplyAmount, 1, underlyingBalanceBefore);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
+    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
@@ -72,13 +62,12 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   // supply fails if onBehalfOf does not match caller
-  function test_reverts_supply_onBehalfOfMustMatchCaller() public {
-    uint256 supplyAmount = 1e6;
-    test_fuzz_reverts_supply_onBehalfOfMustMatchCaller(supplyAmount, bob);
+  function test_reverts_supply_onBehalfOfNotSupported() public {
+    test_fuzz_reverts_supply_onBehalfOfNotSupported({supplyAmount: 1e6, onBehalfOf: bob});
   }
 
   // fuzz - supply fails if onBehalfOf does not match caller
-  function test_fuzz_reverts_supply_onBehalfOfMustMatchCaller(
+  function test_fuzz_reverts_supply_onBehalfOfNotSupported(
     uint256 supplyAmount,
     address onBehalfOf
   ) public {
@@ -98,7 +87,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     uint256 scaledBalanceTokenBase = IAToken(aBuidl).scaledBalanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
@@ -139,9 +128,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.buidl, user);
+    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, user);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.buidl, user, user, supplyAmount, 0);
+    emit SupplyLogic.Supply(tokenList.buidl, user, user, supplyAmount, 0);
 
     vm.prank(user);
     contracts.poolProxy.supplyWithPermit(
@@ -255,9 +244,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     uint256 underlyingBalanceBefore = IERC20(tokenList.buidl).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
+    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
     vm.expectEmit(report.poolProxy);
-    emit Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.deposit(tokenList.buidl, supplyAmount, alice, 0);
@@ -267,13 +256,13 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   // deposit fails if onBehalfOf does not match caller
-  function test_reverts_deprecated_deposit_onBehalfOfMustMatchCaller() public {
+  function test_reverts_deprecated_deposit_onBehalfOfNotSupported() public {
     uint256 supplyAmount = 1e6;
-    test_fuzz_reverts_deposit_onBehalfOfMustMatchCaller(supplyAmount, bob);
+    test_fuzz_reverts_deposit_onBehalfOfNotSupported(supplyAmount, bob);
   }
 
-  // fuzz - deposit fails if onBehalfOf does not match caller
-  function test_fuzz_reverts_deposit_onBehalfOfMustMatchCaller(
+  // fuzz - deposit fails
+  function test_fuzz_reverts_deposit_onBehalfOfNotSupported(
     uint256 supplyAmount,
     address onBehalfOf
   ) public {
@@ -287,58 +276,82 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   function test_reverts_supply_invalidAmount() public {
+    test_fuzz_reverts_supply_invalidAmount(alice);
+  }
+
+  function test_fuzz_reverts_supply_invalidAmount(address onBehalfOf) public {
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.buidl, 0, alice, 0);
+    contracts.poolProxy.supply(tokenList.buidl, 0, onBehalfOf, 0);
   }
 
   function test_reverts_supply_to_aToken() public {
+    test_fuzz_reverts_supply_to_aToken(alice);
+  }
+
+  function test_fuzz_reverts_supply_to_aToken(address caller) public {
     uint256 supplyAmount = 0.2e6;
 
     vm.expectRevert(bytes(Errors.SUPPLY_TO_ATOKEN));
 
-    vm.prank(alice);
+    vm.prank(caller);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, aBuidl, 0);
   }
 
   function test_reverts_supply_reserveInactive() public {
+    test_fuzz_reverts_supply_reserveInactive(alice);
+  }
+
+  function test_fuzz_reverts_supply_reserveInactive(address onBehalfOf) public {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveActive(tokenList.buidl, false);
 
     vm.expectRevert(bytes(Errors.RESERVE_INACTIVE));
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, onBehalfOf, 0);
   }
 
   function test_reverts_supply_reservePaused() public {
+    test_fuzz_reverts_supply_reservePaused(alice);
+  }
+
+  function test_fuzz_reverts_supply_reservePaused(address onBehalfOf) public {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReservePause(tokenList.buidl, true, 0);
 
     vm.expectRevert(bytes(Errors.RESERVE_PAUSED));
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, onBehalfOf, 0);
   }
 
   function test_reverts_supply_reserveFrozen() public {
+    test_fuzz_reverts_supply_reserveFrozen(alice);
+  }
+
+  function test_fuzz_reverts_supply_reserveFrozen(address onBehalfOf) public {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFreeze(tokenList.buidl, true);
 
     vm.expectRevert(bytes(Errors.RESERVE_FROZEN));
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.buidl, 0.2e6, onBehalfOf, 0);
   }
 
   function test_reverts_supply_cap() public {
+    test_fuzz_reverts_supply_cap(alice);
+  }
+
+  function test_fuzz_reverts_supply_cap(address onBehalfOf) public {
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setSupplyCap(tokenList.buidl, 1);
 
     vm.expectRevert(bytes(Errors.SUPPLY_CAP_EXCEEDED));
 
     vm.prank(alice);
-    contracts.poolProxy.supply(tokenList.buidl, 2e6, alice, 0);
+    contracts.poolProxy.supply(tokenList.buidl, 2e6, onBehalfOf, 0);
   }
 }
