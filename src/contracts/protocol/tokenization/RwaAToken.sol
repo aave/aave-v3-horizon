@@ -102,6 +102,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     return true;
   }
 
+  /// @inheritdoc IRwaAToken
   function mint(
     address caller,
     address onBehalfOf,
