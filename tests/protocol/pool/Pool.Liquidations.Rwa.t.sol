@@ -8,6 +8,7 @@ import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AggregatorInterface} from 'src/contracts/dependencies/chainlink/AggregatorInterface.sol';
+import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
 import {RWAAToken} from 'src/contracts/protocol/tokenization/RWAAToken.sol';
 import {LiquidationDataProvider} from 'src/contracts/helpers/LiquidationDataProvider.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
@@ -36,6 +37,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     address liquidator;
     bytes expectedRevertData;
     bool expectFullLiquidation;
+    bytes beforeLiquidationCallbackCalldata;
   }
 
   address david;
@@ -203,6 +205,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
       input.receiveAToken
     );
 
+    if (input.beforeLiquidationCallbackCalldata.length > 0) {
+      address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
+    }
+
     if (input.expectedRevertData.length != 0) {
       vm.expectRevert(input.expectedRevertData);
     } else {
@@ -224,6 +230,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         input.receiveAToken
       );
     }
+
     vm.prank(input.liquidator);
     contracts.poolProxy.liquidationCall({
       collateralAsset: input.supplyToken,
@@ -273,6 +280,11 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     return (amountInBaseCurrency * tokenUnits) / tokenPrice;
   }
 
+  function removeRwaHolderAuthorization(address rwaToken, address holder) public {
+    vm.prank(poolAdmin);
+    TestnetRWAERC20(rwaToken).authorize(holder, false);
+  }
+
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
@@ -297,7 +309,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -85_00,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -336,7 +349,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -75_00,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -377,7 +391,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -75_00,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -416,7 +431,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -75_00,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -455,7 +471,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 6_30,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -494,7 +511,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 19_40,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -535,7 +553,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 19_40,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -574,7 +593,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 9_60,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -618,7 +638,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 0,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -662,7 +683,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 0,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true
+        expectFullLiquidation: true,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -708,7 +730,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 0,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -752,7 +775,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: 0,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
 
@@ -795,7 +819,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -85_00,
         liquidator: liquidator,
         expectedRevertData: bytes(Errors.RECIPIENT_NOT_TREASURY),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
   }
@@ -836,7 +861,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         priceImpactPercent: -85_00,
         liquidator: liquidator,
         expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
-        expectFullLiquidation: false
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
   }
@@ -845,5 +871,36 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(0, rwaTokenInfos[1].liquidator);
     test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(1, rwaTokenInfos[0].liquidator);
     test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(2, rwaTokenInfos[0].liquidator);
+  }
+
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
+  function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaHolder(uint256 rwaTokenIndex) public {
+    rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
+
+    // 85% price drop -> supply = $1500
+    // aim for 0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
+    LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
+      LiquidationCheck({
+        user: rwaTokenInfos[rwaTokenIndex].user,
+        supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
+        borrowToken: tokenList.usdx,
+        borrowAmount: 1316.32e6,
+        timeToSkip: 0,
+        liquidationAmount: 1316.32e6,
+        receiveAToken: false,
+        priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
+        priceImpactPercent: -85_00,
+        liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
+        expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encodeCall(
+          this.removeRwaHolderAuthorization,
+          (rwaTokenInfos[rwaTokenIndex].rwaToken, rwaTokenInfos[rwaTokenIndex].rwaAToken)
+        )
+      })
+    );
   }
 }

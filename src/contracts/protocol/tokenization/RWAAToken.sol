@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
+import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
@@ -93,9 +93,8 @@ abstract contract RWAAToken is AToken, IRWAAToken {
     address to,
     uint256 amount
   ) external virtual override returns (bool) {
-    AccessControl aclManager = AccessControl(_addressesProvider.getACLManager());
     require(
-      aclManager.hasRole(ATOKEN_TRANSFER_ROLE, msg.sender),
+      IAccessControl(_addressesProvider.getACLManager()).hasRole(ATOKEN_TRANSFER_ROLE, msg.sender),
       Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
     );
 

@@ -33,7 +33,7 @@ contract TestnetRWAERC20 is TestnetERC20 {
     address sender,
     address recipient,
     uint256 amount
-  ) internal virtual override onlyAuthorized(recipient) {
+  ) internal virtual override onlyAuthorized(sender) onlyAuthorized(recipient) {
     super._transfer(sender, recipient, amount);
   }
 }
