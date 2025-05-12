@@ -61,12 +61,12 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     assertEq(IAToken(aBuidl).scaledBalanceOf(alice), supplyAmount);
   }
 
-  // supply fails if onBehalfOf does not match caller
+  // supply fails because onBehalfOf is not supported
   function test_reverts_supply_onBehalfOfNotSupported() public {
     test_fuzz_reverts_supply_onBehalfOfNotSupported({supplyAmount: 1e6, onBehalfOf: bob});
   }
 
-  // fuzz - supply fails if onBehalfOf does not match caller
+  // fuzz - supply fails because onBehalfOf is not supported
   function test_fuzz_reverts_supply_onBehalfOfNotSupported(
     uint256 supplyAmount,
     address onBehalfOf
