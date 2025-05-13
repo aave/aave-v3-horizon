@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol'
+import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {stdError} from 'forge-std/Test.sol';
 
 contract RwaATokenTransferTests is TestnetProcedures {
   RwaAToken public aBuidl;
@@ -44,7 +45,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     uint256 amount
   ) public {
     vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
-    
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -103,7 +104,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     address to,
     uint256 amount
   ) public {
-    vm.assume(sender != aTokenTransferAdmin);
+    vm.assume(sender != rwaATokenTransferAdmin);
     vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
@@ -119,6 +120,23 @@ contract RwaATokenTransferTests is TestnetProcedures {
       to: bob,
       amount: 0
     });
+  }
+
+  function test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(
+    address from,
+    address to,
+    uint256 amount
+  ) public {
+    amount = bound(amount, aBuidl.balanceOf(from) + 1, type(uint128).max);
+
+    vm.expectRevert(stdError.arithmeticError);
+
+    vm.prank(rwaATokenTransferAdmin);
+    aBuidl.forceTransfer(from, to, amount);
+  }
+
+  function test_reverts_rwaAToken_forceTransfer_NotEnoughBalance() public {
+    test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(alice, bob, 101e6);
   }
 
   function test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury(
