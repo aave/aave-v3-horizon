@@ -38,9 +38,6 @@ contract PoolRwaTests is TestnetProcedures {
     buidl.authorize(aBuidlAddress, true);
     vm.stopPrank();
 
-    vm.prank(bob);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
     pool = PoolInstance(report.poolProxy);
   }
 
@@ -55,6 +52,7 @@ contract PoolRwaTests is TestnetProcedures {
     pool.supply(tokenList.wbtc, 0.4e8, bob, 0);
     pool.borrow(tokenList.buidl, 2000e6, 2, 0, bob);
     vm.warp(block.timestamp + 30 days);
+    buidl.approve(report.poolProxy, UINT256_MAX);
     pool.repay(tokenList.buidl, IERC20(varDebtBuidl).balanceOf(bob), 2, bob);
     vm.stopPrank();
 
