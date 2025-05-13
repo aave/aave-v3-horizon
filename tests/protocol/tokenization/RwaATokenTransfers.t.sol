@@ -139,74 +139,26 @@ contract RwaATokenTransferTests is TestnetProcedures {
     test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(alice, bob, 101e6);
   }
 
-  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury(
+  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported(
+    address sender,
     address from,
     address to,
     uint256 amount
   ) public {
-    vm.assume(to != report.treasury);
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
-    vm.expectRevert(bytes(Errors.RECIPIENT_NOT_TREASURY));
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
-    vm.prank(report.poolProxy);
+    vm.prank(sender);
     aBuidl.transferOnLiquidation(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury() public {
-    test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury({
+  function test_reverts_rwaAtoken_transferOnLiquidation_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported({
+      sender: report.poolProxy,
       from: alice,
       to: bob,
-      amount: 0
+      amount: 1e6
     });
-  }
-
-  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool(
-    address sender,
-    address from,
-    uint256 amount
-  ) public {
-    vm.assume(sender != report.poolProxy);
-    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
-
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
-
-    vm.prank(sender);
-    aBuidl.transferOnLiquidation(from, report.treasury, amount);
-  }
-
-  function test_reverts_rwaAToken_transferOnLiquidation_CallerNotPool() public {
-    test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool({
-      sender: carol,
-      from: alice,
-      amount: 0
-    });
-  }
-
-  function test_fuzz_rwaAToken_transferOnLiquidation(address from, uint256 amount) public {
-    uint256 fromBalanceBefore = aBuidl.balanceOf(from);
-    amount = bound(amount, 0, fromBalanceBefore);
-
-    uint256 treasuryBalanceBefore = aBuidl.balanceOf(report.treasury);
-
-    vm.expectEmit(address(aBuidl));
-    emit IERC20.Transfer(from, report.treasury, amount);
-
-    vm.prank(report.poolProxy);
-    aBuidl.transferOnLiquidation(from, report.treasury, amount);
-
-    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
-    assertEq(aBuidl.balanceOf(report.treasury), treasuryBalanceBefore + amount);
-  }
-
-  function test_rwaAToken_transferOnLiqudation_all() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: aBuidl.balanceOf(alice)});
-  }
-
-  function test_rwaAToken_transferOnLiquidation_partial() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 1});
-  }
-
-  function test_rwaAToken_transferOnLiquidation_zero() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 0});
   }
 }

@@ -806,13 +806,12 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
   /// Liquidator opts for aToken instead of native token.
-  function test_fuzz_reverts_liquidation_OnlyTreasuryRecipient(
+  function test_fuzz_reverts_liquidation_ReceiveATokens_OperationNotSupported(
     uint256 rwaTokenIndex,
     address liquidator
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    vm.assume(liquidator != report.treasury);
     vm.assume(liquidator != poolAdmin); // otherwise the pool proxy will not fallback
 
     _checkLiquidation(
@@ -826,16 +825,19 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         liquidationType: LiquidationType.Full,
         receiveAToken: true,
         liquidator: liquidator,
-        expectedRevertData: bytes(Errors.RECIPIENT_NOT_TREASURY),
+        expectedRevertData: bytes(Errors.OPERATION_NOT_SUPPORTED),
         expectFullLiquidation: false,
         beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
   }
 
-  function test_reverts_liquidation_OnlyTreasuryRecipient() public {
+  function test_reverts_liquidation_ReceiveATokens_OperationNotSupported() public {
     for (uint256 i = 0; i < rwaTokenInfos.length; i++) {
-      test_fuzz_reverts_liquidation_OnlyTreasuryRecipient(i, rwaTokenInfos[i].liquidator);
+      test_fuzz_reverts_liquidation_ReceiveATokens_OperationNotSupported(
+        i,
+        rwaTokenInfos[i].liquidator
+      );
     }
   }
 

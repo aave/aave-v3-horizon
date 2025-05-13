@@ -93,8 +93,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     address to,
     uint256 value
   ) public virtual override(AToken, IRwaAToken) {
-    require(to == _treasury, Errors.RECIPIENT_NOT_TREASURY);
-    super.transferOnLiquidation(from, to, value);
+    revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken

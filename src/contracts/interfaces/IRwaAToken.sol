@@ -52,10 +52,8 @@ interface IRwaAToken {
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice Transfers liquidation fees in form of aTokens to the treasury
-   * @param from The address getting liquidated, current owner of the aTokens
-   * @param to The recipient (must be treasury)
-   * @param value The amount of tokens getting transferred
+   * @notice RWA aToken transfers are not supported in liquidations.
+   * @dev Reverts if called.
    */
   function transferOnLiquidation(address from, address to, uint256 value) external;
 
