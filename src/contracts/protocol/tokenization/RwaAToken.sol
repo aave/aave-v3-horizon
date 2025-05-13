@@ -10,9 +10,19 @@ import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
+/**
+ * @title Aave ERC20 RWA AToken
+ * @author Aave
+ * @notice Implementation of the interest bearing token
+ * for Real-World Assets (RWAs) within the Aave protocol
+ */
 abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
+  /**
+   * @dev The role that can force transfer RWA aTokens
+   * This role should be granted in the ACLManager
+   */
   bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
 
   /**
