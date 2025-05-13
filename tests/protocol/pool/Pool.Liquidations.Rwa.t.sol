@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from 'src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {LiquidationLogic} from 'src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
@@ -23,21 +24,39 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     address liquidator;
   }
 
+  enum LiquidationType {
+    Partial,
+    Full // Full means the maximum liquidatable amount (even if that is half of the position)
+  }
+
+  /// @dev if priceImpactToken is non-zero, then its price must be changed
+  /// such that the healthFactorTarget is reached. otherwise, time must be
+  /// skipped such that the target is reached through borrow interest accrued.
   struct LiquidationCheck {
     address user;
     address supplyToken;
     uint256 supplyAmount;
     address borrowToken;
-    uint256 borrowAmount;
-    uint256 timeToSkip;
-    uint256 liquidationAmount;
-    bool receiveAToken;
     address priceImpactToken;
-    int256 priceImpactPercent;
+    uint256 healthFactorTarget;
+    LiquidationType liquidationType;
+    bool receiveAToken;
     address liquidator;
     bytes expectedRevertData;
     bool expectFullLiquidation;
     bytes beforeLiquidationCallbackCalldata;
+  }
+
+  struct CheckLiquidationVars {
+    uint256 borrowAmount;
+    uint256 avgLiqThreshold;
+    uint256 totalCollateralInBaseCurrency;
+    uint256 totalDebtInBaseCurrency;
+    int256 priceImpactPercent;
+    uint256 timeToSkip;
+    uint256 totalCollateralInBaseCurrencyTarget;
+    uint256 totalDebtInBaseCurrencyTarget;
+    uint256 liquidationAmount;
   }
 
   address david;
@@ -172,7 +191,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function getRewardTokenBalance(
+  function _getRewardTokenBalance(
     address user,
     address underlyingToken,
     bool receiveAToken
@@ -188,18 +207,99 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     return IERC20Detailed(rewardToken).balanceOf(user);
   }
 
+  function _getLiquidationThreshold(address token) internal view returns (uint256) {
+    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
+      .poolProxy
+      .getConfiguration(token);
+    return ReserveConfiguration.getLiquidationThreshold(supplyReserveConfig);
+  }
+
+  function _getLtv(address token) internal view returns (uint256) {
+    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
+      .poolProxy
+      .getConfiguration(token);
+    return ReserveConfiguration.getLtv(supplyReserveConfig);
+  }
+
+  function _convertTokenAmount(
+    address fromToken,
+    address toToken,
+    uint256 amount
+  ) internal view returns (uint256) {
+    uint256 fromTokenUnits = 10 ** IERC20Detailed(fromToken).decimals();
+    uint256 toTokenUnits = 10 ** IERC20Detailed(toToken).decimals();
+    uint256 fromTokenPrice = contracts.aaveOracle.getAssetPrice(fromToken);
+    uint256 toTokenPrice = contracts.aaveOracle.getAssetPrice(toToken);
+    return (amount * toTokenUnits * fromTokenPrice) / (fromTokenUnits * toTokenPrice);
+  }
+
+  function _getTokenAmount(
+    address token,
+    uint256 amountInBaseCurrency
+  ) internal view returns (uint256) {
+    uint256 tokenUnits = 10 ** IERC20Detailed(token).decimals();
+    uint256 tokenPrice = contracts.aaveOracle.getAssetPrice(token);
+    return (amountInBaseCurrency * tokenUnits) / tokenPrice;
+  }
+
   function _checkLiquidation(
     LiquidationCheck memory input
   ) internal returns (LiquidationDataProvider.LiquidationInfo memory liquidationInfo) {
+    CheckLiquidationVars memory vars;
+
+    vars.borrowAmount = _convertTokenAmount(
+      input.supplyToken,
+      input.borrowToken,
+      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50
+    );
+
     vm.startPrank(input.user);
     contracts.poolProxy.supply(input.supplyToken, input.supplyAmount, input.user, 0);
-    contracts.poolProxy.borrow(input.borrowToken, input.borrowAmount, 2, 0, input.user);
+    contracts.poolProxy.borrow(input.borrowToken, vars.borrowAmount, 2, 0, input.user);
     vm.stopPrank();
 
-    skip(input.timeToSkip);
-    _mockPrice(input.priceImpactToken, input.priceImpactPercent);
+    vars.avgLiqThreshold = _getLiquidationThreshold(input.supplyToken);
+    (vars.totalCollateralInBaseCurrency, vars.totalDebtInBaseCurrency, , , , ) = contracts
+      .poolProxy
+      .getUserAccountData(input.user);
 
-    uint256 liquidatorBalanceBefore = getRewardTokenBalance(
+    if (input.priceImpactToken == input.supplyToken) {
+      vars.totalCollateralInBaseCurrencyTarget =
+        (vars.totalDebtInBaseCurrency * input.healthFactorTarget) /
+        vars.avgLiqThreshold;
+      vars.priceImpactPercent =
+        (int256(
+          (vars.totalCollateralInBaseCurrencyTarget * 1e8) / vars.totalCollateralInBaseCurrency
+        ) - 1e8) /
+        1e4;
+    } else {
+      vars.totalDebtInBaseCurrencyTarget =
+        (vars.totalCollateralInBaseCurrency * vars.avgLiqThreshold) /
+        input.healthFactorTarget;
+      if (input.priceImpactToken == input.borrowToken) {
+        vars.priceImpactPercent =
+          (int256((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency) -
+            1e8) /
+          1e4;
+      } else {
+        DataTypes.ReserveDataLegacy memory borrowReserveData = contracts.poolProxy.getReserveData(
+          input.borrowToken
+        );
+        vars.timeToSkip =
+          (((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency - 1e8) *
+            365 days *
+            1e19) /
+          borrowReserveData.currentVariableBorrowRate;
+      }
+    }
+
+    if (input.priceImpactToken != address(0)) {
+      _mockPrice(input.priceImpactToken, vars.priceImpactPercent);
+    } else {
+      skip(vars.timeToSkip);
+    }
+
+    uint256 liquidatorBalanceBefore = _getRewardTokenBalance(
       input.liquidator,
       input.supplyToken,
       input.receiveAToken
@@ -209,6 +309,13 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
       address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
     }
 
+    vars.liquidationAmount = IERC20Detailed(
+      contracts.poolProxy.getReserveVariableDebtToken(input.borrowToken)
+    ).balanceOf(input.user);
+    if (input.liquidationType == LiquidationType.Partial) {
+      vars.liquidationAmount = vars.liquidationAmount / 2;
+    }
+
     if (input.expectedRevertData.length != 0) {
       vm.expectRevert(input.expectedRevertData);
     } else {
@@ -216,7 +323,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         user: input.user,
         collateralAsset: input.supplyToken,
         debtAsset: input.borrowToken,
-        debtLiquidationAmount: input.liquidationAmount
+        debtLiquidationAmount: vars.liquidationAmount
       });
 
       vm.expectEmit(address(contracts.poolProxy));
@@ -236,7 +343,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
       collateralAsset: input.supplyToken,
       debtAsset: input.borrowToken,
       user: input.user,
-      debtToCover: input.liquidationAmount,
+      debtToCover: vars.liquidationAmount,
       receiveAToken: input.receiveAToken
     });
 
@@ -244,7 +351,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     if (input.expectedRevertData.length == 0) {
       // check that the liquidator received the correct amount of collateral
       assertEq(
-        getRewardTokenBalance(input.liquidator, input.supplyToken, input.receiveAToken),
+        _getRewardTokenBalance(input.liquidator, input.supplyToken, input.receiveAToken),
         liquidatorBalanceBefore + liquidationInfo.maxCollateralToLiquidate
       );
 
@@ -271,15 +378,6 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     }
   }
 
-  function _getTokenAmount(
-    address token,
-    uint256 amountInBaseCurrency
-  ) internal view returns (uint256) {
-    uint256 tokenUnits = 10 ** IERC20Detailed(token).decimals();
-    uint256 tokenPrice = contracts.aaveOracle.getAssetPrice(token);
-    return (amountInBaseCurrency * tokenUnits) / tokenPrice;
-  }
-
   function removeRwaHolderAuthorization(address rwaToken, address holder) public {
     vm.prank(poolAdmin);
     TestnetRWAERC20(rwaToken).authorize(holder, false);
@@ -293,20 +391,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // 85% price drop -> supply = $1500
-    // aim for 0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 2001e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 1316.32e6,
-        timeToSkip: 0,
-        liquidationAmount: 1316.32e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -85_00,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -334,19 +428,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~0.94 health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 2287.23e6,
-        timeToSkip: 0,
-        liquidationAmount: 2287.23e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -75_00,
+        healthFactorTarget: 94_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -375,20 +466,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~0.94 health at liquidation time -> $2500 * 0.86 / 0.94 = ~$2287.23
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 2287.23e6,
-        timeToSkip: 0,
-        // liquidator can only provide 1000 usdx
-        liquidationAmount: 1000e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -75_00,
+        healthFactorTarget: 94_00,
+        liquidationType: LiquidationType.Partial,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: false,
@@ -416,19 +503,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     // 75% price drop -> supply = $2500
-    // aim for ~0.98 health at liquidation time -> $2500 * 0.86 / 0.98 = ~$2193.87
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 2193.87e6,
-        timeToSkip: 0,
-        liquidationAmount: 2193.87e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -75_00,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: false,
@@ -455,20 +539,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~0.98 health at liquidation time -> $100 * 0.86 / 0.98 = ~$87.75
-    // 87.75 / 82.5 = ~1.063 -> ~6.3% price increase in borrow token
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 100e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 82.5e6,
-        timeToSkip: 0,
-        liquidationAmount: 82.5e6,
-        receiveAToken: false,
         priceImpactToken: tokenList.usdx,
-        priceImpactPercent: 6_30,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -495,20 +575,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~0.9 health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
-    // 4777.77 / 4000 = ~1.194 -> ~19.4% price increase in borrow token
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 5000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 4000e6,
-        timeToSkip: 0,
-        liquidationAmount: 4000e6,
-        receiveAToken: false,
         priceImpactToken: tokenList.usdx,
-        priceImpactPercent: 19_40,
+        healthFactorTarget: 90_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -536,24 +612,19 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // aim for ~0.9 health at liquidation time -> $5000 * 0.86 / 0.9 = ~$4777.77
-    // 4777.77 / 4000 = ~1.194 -> ~19.4% price increase in borrow token
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 5000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 4000e6,
-        timeToSkip: 0,
-        // liquidator can only provide 4000 usdx
-        liquidationAmount: 4000e6,
-        receiveAToken: false,
         priceImpactToken: tokenList.usdx,
-        priceImpactPercent: 19_40,
+        healthFactorTarget: 90_00,
+        liquidationType: LiquidationType.Partial,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
-        expectFullLiquidation: true,
+        expectFullLiquidation: false,
         beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
@@ -572,7 +643,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Borrow token price increases, which makes user half liquidatable.
   /// It is a big liquidation (over the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  function test_fuzz_liquidation_Borrow_TokenPriceIncrease_Partial_BigLiquidation_GoodHealth(
+  function test_fuzz_liquidation_BorrowTokenPriceIncrease_Partial_BigLiquidation_GoodHealth(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
@@ -585,12 +656,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 5000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 4000e6,
-        timeToSkip: 0,
-        liquidationAmount: 4000e6,
-        receiveAToken: false,
         priceImpactToken: tokenList.usdx,
-        priceImpactPercent: 9_60,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: false,
@@ -621,21 +690,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.prank(david);
     contracts.poolProxy.withdraw(tokenList.usdx, 95000e6, david);
 
-    // borrow 1125 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
-    // after 8 years, borrow debt = ~1125 * (1 + 0.02/31536000) ^ (8 * 31536000) = ~1320.2
-    // health factor = 1500 * 0.86 / 1320.2 = 97.7%
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 1500e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 1125e6,
-        timeToSkip: 8 * 365 days,
-        liquidationAmount: 1321e6,
+        priceImpactToken: address(0),
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
         receiveAToken: false,
-        priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: 0,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -666,21 +730,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.prank(david);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
 
-    // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
-    // after 10 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (10 * 31536000) = ~13740.78
-    // health factor = 15000 * 0.86 / 13740.78 = 93.8%
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 15000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 11250e6,
-        timeToSkip: 10 * 365 days,
-        liquidationAmount: 13741e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: 0,
+        healthFactorTarget: 93_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: true,
@@ -712,22 +771,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.prank(david);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
 
-    // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
-    // after 10 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (10 * 31536000) = ~13740.78
-    // health factor = 15000 * 0.86 / 13740.78 = 93.8%
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 15000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 11250e6,
-        timeToSkip: 10 * 365 days,
-        // liquidator can only provide 12000 usdx
-        liquidationAmount: 12000e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: 0,
+        healthFactorTarget: 93_00,
+        liquidationType: LiquidationType.Partial,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: false,
@@ -758,21 +811,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.prank(david);
     contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
 
-    // borrow 11250 USDX -> utilization ratio for slope 1 is 22.5%/45% = 50% -> borrow rate is 2%
-    // after 8 years, borrow debt = ~11250 * (1 + 0.02/31536000) ^ (8 * 31536000) = ~13201.99
-    // health factor = 15000 * 0.86 / 13201.99 = 97.7%
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
         supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 15000e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 11250e6,
-        timeToSkip: 8 * 365 days,
-        liquidationAmount: 13202e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: 0,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: new bytes(0),
         expectFullLiquidation: false,
@@ -802,21 +850,18 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     vm.assume(liquidator != report.treasury);
+    vm.assume(liquidator != poolAdmin); // otherwise the pool proxy will not fallback
 
-    // 85% price drop -> supply = $1500
-    // aim for ~0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
     _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 1500e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 1316.32e6,
-        timeToSkip: 0,
-        liquidationAmount: 1316.32e6,
-        receiveAToken: true,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -85_00,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: true,
         liquidator: liquidator,
         expectedRevertData: bytes(Errors.RECIPIENT_NOT_TREASURY),
         expectFullLiquidation: false,
@@ -844,21 +889,18 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].liquidator);
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].user);
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].rwaAToken);
+    vm.assume(liquidator != poolAdmin); // otherwise the pool proxy will not fallback
 
-    // 85% price drop -> supply = $1500
-    // aim for ~0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
     _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 1500e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 1316.32e6,
-        timeToSkip: 0,
-        liquidationAmount: 1316.32e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -85_00,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: liquidator,
         expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
         expectFullLiquidation: false,
@@ -879,20 +921,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaHolder(uint256 rwaTokenIndex) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // 85% price drop -> supply = $1500
-    // aim for 0.98 health at liquidation time -> $1500 * 0.86 / 0.98 = ~$1316.32
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
         user: rwaTokenInfos[rwaTokenIndex].user,
         supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 10000e8),
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 1500e8),
         borrowToken: tokenList.usdx,
-        borrowAmount: 1316.32e6,
-        timeToSkip: 0,
-        liquidationAmount: 1316.32e6,
-        receiveAToken: false,
         priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
-        priceImpactPercent: -85_00,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
         expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
         expectFullLiquidation: false,
