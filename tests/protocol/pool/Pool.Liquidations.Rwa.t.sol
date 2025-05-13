@@ -5,6 +5,8 @@ import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configurati
 import {UserConfiguration} from 'src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {LiquidationLogic} from 'src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
+import {WadRayMath} from 'src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AggregatorInterface} from 'src/contracts/dependencies/chainlink/AggregatorInterface.sol';
@@ -231,27 +233,27 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         (vars.totalDebtInBaseCurrency * input.healthFactorTarget) /
         vars.avgLiqThreshold;
       vars.priceImpactPercent =
-        (int256(
+        ((int256(
           (vars.totalCollateralInBaseCurrencyTarget * 1e8) / vars.totalCollateralInBaseCurrency
-        ) - 1e8) /
-        1e4;
+        ) - 1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
+        1e8;
     } else {
       vars.totalDebtInBaseCurrencyTarget =
         (vars.totalCollateralInBaseCurrency * vars.avgLiqThreshold) /
         input.healthFactorTarget;
       if (input.priceImpactToken == input.borrowToken) {
         vars.priceImpactPercent =
-          (int256((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency) -
-            1e8) /
-          1e4;
+          ((int256((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency) -
+            1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
+          1e8;
       } else {
         DataTypes.ReserveDataLegacy memory borrowReserveData = contracts.poolProxy.getReserveData(
           input.borrowToken
         );
         vars.timeToSkip =
-          (((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency - 1e8) *
+          ((((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency - 1e8) *
             365 days *
-            1e19) /
+            WadRayMath.RAY) / 1e8) /
           borrowReserveData.currentVariableBorrowRate;
       }
     }
@@ -805,7 +807,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// Liquidator opts for aToken instead of native token.
+  /// Liquidator opts to receive aTokens, which is not supported for RWAs.
   function test_fuzz_reverts_liquidation_ReceiveATokens_OperationNotSupported(
     uint256 rwaTokenIndex,
     address liquidator
@@ -841,10 +843,16 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     }
   }
 
+  function test_reverts_liquidation_ReceiveATokens_Treasury_OperationNotSupported() public {
+    for (uint256 i = 0; i < rwaTokenInfos.length; i++) {
+      test_fuzz_reverts_liquidation_ReceiveATokens_OperationNotSupported(i, report.treasury);
+    }
+  }
+
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// Liquidator is not authorized to hold the RWA token.
+  /// Liquidator is not an authorized RWA holder.
   function test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(
     uint256 rwaTokenIndex,
     address liquidator
@@ -883,6 +891,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
+  /// Liquidator is no longer an authorized RWA holder.
   function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaHolder(uint256 rwaTokenIndex) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
@@ -903,6 +912,46 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
           this.removeRwaHolderAuthorization,
           (rwaTokenInfos[rwaTokenIndex].rwaToken, rwaTokenInfos[rwaTokenIndex].rwaAToken)
         )
+      })
+    );
+  }
+
+  /// @dev Supply token price drops, which makes user fully liquidatable.
+  /// It is a small liquidation (under the $2000 base value threshold),
+  /// and health factor is good (above the 0.95 close factor threshold).
+  /// Fees are turned on, and aTokens cannot be sent to treasury.
+  function test_fuzz_reverts_liquidation_TreasuryFees_OperationNotSupported(
+    uint256 rwaTokenIndex
+  ) public {
+    rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
+
+    vm.prank(poolAdmin);
+    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(
+      rwaTokenInfos[rwaTokenIndex].rwaToken,
+      10_00
+    );
+
+    // expect call by matching the selector only
+    // given that receiveAToken is false, it must be a call for fees transfer
+    vm.expectCall(
+      rwaTokenInfos[rwaTokenIndex].rwaAToken,
+      abi.encodeWithSelector(RwaAToken.transferOnLiquidation.selector)
+    );
+
+    _checkLiquidation(
+      LiquidationCheck({
+        user: rwaTokenInfos[rwaTokenIndex].user,
+        supplyToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
+        supplyAmount: _getTokenAmount(rwaTokenInfos[rwaTokenIndex].rwaToken, 1500e8),
+        borrowToken: tokenList.usdx,
+        priceImpactToken: rwaTokenInfos[rwaTokenIndex].rwaToken,
+        healthFactorTarget: 98_00,
+        liquidationType: LiquidationType.Full,
+        receiveAToken: false,
+        liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
+        expectedRevertData: bytes(Errors.OPERATION_NOT_SUPPORTED),
+        expectFullLiquidation: false,
+        beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
   }
