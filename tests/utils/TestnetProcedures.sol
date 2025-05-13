@@ -11,6 +11,7 @@ import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched
 import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
 import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
+import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
 import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -66,6 +67,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   MarketReport internal report;
   ContractsReport internal contracts;
   TokenList internal tokenList;
+  RwaATokenList internal rwaATokenList;
 
   Roles internal roleList;
 
@@ -78,6 +80,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   TestnetRWAERC20 internal wtgxx;
   WETH9 internal weth;
 
+  address internal rwaATokenTransferAdmin;
+
   struct TokenList {
     address wbtc;
     address weth;
@@ -86,6 +90,12 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address ustb;
     address wtgxx;
     address gho;
+  }
+
+  struct RwaATokenList {
+    address aBuidl;
+    address aUstb;
+    address aWtgxx;
   }
 
   struct EModeCategoryInput {
@@ -156,6 +166,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       // Perform setup of user positions
       uint256 mintAmount_USDX = 100_000e6;
       uint256 mintAmount_WBTC = 100e8;
+      uint256 mintAmount_BUIDL = 100_000e6;
+      uint256 mintAmount_USTB = 10_000e6;
+      uint256 mintAmount_WTGXX = 100_000e18;
       address[] memory users = new address[](3);
       users[0] = alice;
       users[1] = bob;
@@ -165,6 +178,12 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         vm.startPrank(poolAdmin);
         usdx.mint(users[x], mintAmount_USDX);
         wbtc.mint(users[x], mintAmount_WBTC);
+        buidl.authorize(users[x], true);
+        buidl.mint(users[x], mintAmount_BUIDL);
+        ustb.authorize(users[x], true);
+        ustb.mint(users[x], mintAmount_USTB);
+        wtgxx.authorize(users[x], true);
+        wtgxx.mint(users[x], mintAmount_WTGXX);
         deal(address(weth), users[x], 100e18);
         vm.stopPrank();
 
@@ -172,9 +191,44 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         usdx.approve(report.poolProxy, UINT256_MAX);
         wbtc.approve(report.poolProxy, UINT256_MAX);
         weth.approve(report.poolProxy, UINT256_MAX);
+        buidl.approve(report.poolProxy, UINT256_MAX);
+        ustb.approve(report.poolProxy, UINT256_MAX);
+        wtgxx.approve(report.poolProxy, UINT256_MAX);
         vm.stopPrank();
       }
     }
+
+    _rwaInit();
+  }
+
+  function _rwaInit() internal {
+    rwaATokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
+
+    (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.buidl
+    );
+
+    (rwaATokenList.aUstb, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.ustb
+    );
+
+    (rwaATokenList.aWtgxx, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.wtgxx
+    );
+
+    vm.startPrank(poolAdmin);
+    // authorize aBUIDL to hold BUIDL
+    buidl.authorize(rwaATokenList.aBuidl, true);
+    // authorize aUSTB to hold USTB
+    ustb.authorize(rwaATokenList.aUstb, true);
+    // authorize aWTGXX to hold WTGXX
+    wtgxx.authorize(rwaATokenList.aWtgxx, true);
+    // grant Transfer Role to the aToken Transfer Admin
+    AccessControl(report.aclManager).grantRole(
+      keccak256('ATOKEN_TRANSFER_ROLE'),
+      rwaATokenTransferAdmin
+    );
+    vm.stopPrank();
   }
 
   function initTestEnvironment() public {

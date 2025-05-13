@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {UserConfiguration} from 'src/contracts/protocol/libraries/configuration/UserConfiguration.sol';
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {LiquidationLogic} from 'src/contracts/protocol/libraries/logic/LiquidationLogic.sol';
 import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
@@ -59,11 +58,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     uint256 liquidationAmount;
   }
 
-  address david;
-  address internal aTokenTransferAdmin;
-
+  address internal david;
   RwaTokenInfo[] internal rwaTokenInfos;
-
   LiquidationDataProvider internal liquidationDataProvider;
 
   function setUp() public {
@@ -74,44 +70,20 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
       address(contracts.poolAddressesProvider)
     );
 
-    aTokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
-
-    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.buidl
-    );
     address buidlLiquidator = makeAddr('BUIDL_LIQUIDATOR_1');
-
-    (address aWtgxxAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.wtgxx
-    );
     address wtgxxLiquidator = makeAddr('WTGXX_LIQUIDATOR_1');
-
-    (address aUstbAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.ustb
-    );
     address ustbLiquidator = makeAddr('USTB_LIQUIDATOR_1');
 
     vm.startPrank(poolAdmin);
-    // authorize & mint BUIDL to alice
-    buidl.authorize(alice, true);
-    buidl.mint(alice, 100000e6);
-    // authorize & mint USTB to bob
-    ustb.authorize(bob, true);
-    ustb.mint(bob, 10000e6);
-    // authorize & mint WTGXX to carol
-    wtgxx.authorize(carol, true);
-    wtgxx.mint(carol, 100000e18);
-    // grant Transfer Role to the aToken Transfer Admin
-    AccessControl(aclManagerAddress).grantRole(
-      keccak256('ATOKEN_TRANSFER_ROLE'),
-      aTokenTransferAdmin
-    );
-    // authorize aBUIDL to hold BUIDL
-    buidl.authorize(aBuidlAddress, true);
-    // authorize aUSTB to hold USTB
-    ustb.authorize(aUstbAddress, true);
-    // authorize aWTGXX to hold WTGXX
-    wtgxx.authorize(aWtgxxAddress, true);
+    // alice is the only authorized BUIDL holder amongst the users
+    buidl.authorize(bob, false);
+    buidl.authorize(carol, false);
+    // bob is the only authorized USTB holder amongst the users
+    ustb.authorize(alice, false);
+    ustb.authorize(carol, false);
+    // carol is the only authorized WTGXX holder amongst the users
+    wtgxx.authorize(alice, false);
+    wtgxx.authorize(bob, false);
     // authorize the BUIDL Liquidator to hold BUIDL
     buidl.authorize(buidlLiquidator, true);
     // authorize the USTB Liquidator to hold USTB
@@ -123,15 +95,6 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     usdx.mint(ustbLiquidator, 100000e6);
     usdx.mint(wtgxxLiquidator, 100000e6);
     vm.stopPrank();
-
-    vm.prank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
-    vm.prank(bob);
-    ustb.approve(report.poolProxy, UINT256_MAX);
-
-    vm.prank(carol);
-    wtgxx.approve(report.poolProxy, UINT256_MAX);
 
     // supply 100000 USDX such that users can borrow USDX against RWAs
     david = makeAddr('david');
@@ -152,7 +115,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenInfos.push(
       RwaTokenInfo({
         rwaToken: tokenList.buidl,
-        rwaAToken: aBuidlAddress,
+        rwaAToken: rwaATokenList.aBuidl,
         user: alice,
         liquidator: buidlLiquidator
       })
@@ -161,7 +124,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenInfos.push(
       RwaTokenInfo({
         rwaToken: tokenList.ustb,
-        rwaAToken: aUstbAddress,
+        rwaAToken: rwaATokenList.aUstb,
         user: bob,
         liquidator: ustbLiquidator
       })
@@ -170,7 +133,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     rwaTokenInfos.push(
       RwaTokenInfo({
         rwaToken: tokenList.wtgxx,
-        rwaAToken: aWtgxxAddress,
+        rwaAToken: rwaATokenList.aWtgxx,
         user: carol,
         liquidator: wtgxxLiquidator
       })

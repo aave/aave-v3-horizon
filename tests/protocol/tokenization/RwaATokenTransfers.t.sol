@@ -1,49 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol'
 
 contract RwaATokenTransferTests is TestnetProcedures {
   RwaAToken public aBuidl;
 
-  address aTokenTransferAdmin;
-
   function setUp() public {
-    initTestEnvironment(false);
+    initTestEnvironment();
+    aBuidl = RwaAToken(rwaATokenList.aBuidl);
 
-    aTokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
-
-    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.buidl
-    );
-    aBuidl = RwaAToken(aBuidlAddress);
-
-    vm.startPrank(poolAdmin);
-    // authorize & mint BUIDL to alice
-    buidl.authorize(alice, true);
-    buidl.mint(alice, 100e6);
-    // authorize & mint BUIDL to carol
-    buidl.authorize(carol, true);
-    buidl.mint(carol, 1e6);
-    // grant Transfer Role to the aToken Transfer Admin
-    AccessControl(aclManagerAddress).grantRole(aBuidl.ATOKEN_TRANSFER_ROLE(), aTokenTransferAdmin);
-    // authorize aBUIDL contract to hold BUIDL
-    buidl.authorize(aBuidlAddress, true);
-    vm.stopPrank();
-
-    vm.startPrank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, 100e6, alice, 0);
-    vm.stopPrank();
 
-    vm.startPrank(carol);
-    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(carol);
     contracts.poolProxy.supply(tokenList.buidl, 1e6, carol, 0);
-    vm.stopPrank();
   }
 
   function test_fuzz_reverts_rwaAToken_transfer_OperationNotSupported(
@@ -51,6 +25,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     address to,
     uint256 amount
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -67,6 +43,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     address to,
     uint256 amount
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+    
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -75,14 +53,14 @@ contract RwaATokenTransferTests is TestnetProcedures {
 
   function test_reverts_rwaAToken_transferFrom_OperationNotSupported() public {
     test_fuzz_reverts_rwaAToken_transferFrom_OperationNotSupported({
-      sender: aTokenTransferAdmin,
+      sender: rwaATokenTransferAdmin,
       from: alice,
       to: bob,
       amount: 0
     });
   }
 
-  function test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin(
+  function test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin(
     address from,
     address to,
     uint256 amount
@@ -95,7 +73,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     vm.expectEmit(address(aBuidl));
     emit IERC20.Transfer(from, to, amount);
 
-    vm.prank(aTokenTransferAdmin);
+    vm.prank(rwaATokenTransferAdmin);
     bool success = aBuidl.forceTransfer(from, to, amount);
     assertTrue(success, 'forceTransfer returned false');
 
@@ -103,29 +81,30 @@ contract RwaATokenTransferTests is TestnetProcedures {
     assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount);
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_all() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({
+  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_all() public {
+    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({
       from: alice,
       to: bob,
       amount: aBuidl.balanceOf(alice)
     });
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_partial() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 1});
+  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_partial() public {
+    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({from: alice, to: bob, amount: 1});
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_zero() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 0});
+  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_zero() public {
+    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({from: alice, to: bob, amount: 0});
   }
 
-  function test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin(
+  function test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin(
     address sender,
     address from,
     address to,
     uint256 amount
   ) public {
     vm.assume(sender != aTokenTransferAdmin);
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
 
@@ -133,8 +112,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     aBuidl.forceTransfer(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin() public {
-    test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin({
+  function test_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin() public {
+    test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin({
       sender: carol,
       from: alice,
       to: bob,
@@ -169,6 +148,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     uint256 amount
   ) public {
     vm.assume(sender != report.poolProxy);
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
     vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
 
