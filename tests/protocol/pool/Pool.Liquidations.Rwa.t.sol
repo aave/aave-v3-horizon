@@ -215,7 +215,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vars.borrowAmount = _convertTokenAmount(
       input.supplyToken,
       input.borrowToken,
-      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50
+      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50 // 0.5% extra buffer
     );
 
     vm.startPrank(input.user);
