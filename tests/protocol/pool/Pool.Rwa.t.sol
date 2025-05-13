@@ -20,53 +20,56 @@ contract PoolRwaTests is TestnetProcedures {
   function setUp() public virtual {
     initTestEnvironment();
 
-    (address aBorrowableBuidlAddress, , ) = contracts
-      .protocolDataProvider
-      .getReserveTokensAddresses(tokenList.borrowableBuidl);
+    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.buidl
+    );
 
     vm.startPrank(poolAdmin);
+    // set buidl borrowing config
+    contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.buidl, true);
+    contracts.poolConfiguratorProxy.setReserveFactor(tokenList.buidl, 10_00);
     // authorize & mint BUIDL to bob
-    borrowableBuidl.authorize(bob, true);
-    borrowableBuidl.mint(bob, 100_000e6);
+    buidl.authorize(bob, true);
+    buidl.mint(bob, 100_000e6);
     // authorize & mint BUIDL to carol
-    borrowableBuidl.authorize(carol, true);
-    borrowableBuidl.mint(carol, 100_000e6);
+    buidl.authorize(carol, true);
+    buidl.mint(carol, 100_000e6);
     // authorize aBUIDL to hold BUIDL
-    borrowableBuidl.authorize(aBorrowableBuidlAddress, true);
+    buidl.authorize(aBuidlAddress, true);
     vm.stopPrank();
 
     vm.prank(bob);
-    borrowableBuidl.approve(report.poolProxy, UINT256_MAX);
+    buidl.approve(report.poolProxy, UINT256_MAX);
 
     pool = PoolInstance(report.poolProxy);
   }
 
   function test_reverts_mintToTreasury() public {
-    (, , address varDebtBorrowableBuidl) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.borrowableBuidl
+    (, , address varDebtBuidl) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.buidl
     );
 
-    _seedBorrowableBuidlLiquidity();
+    _seedBuidlLiquidity();
 
     vm.startPrank(bob);
     pool.supply(tokenList.wbtc, 0.4e8, bob, 0);
-    pool.borrow(tokenList.borrowableBuidl, 2000e6, 2, 0, bob);
+    pool.borrow(tokenList.buidl, 2000e6, 2, 0, bob);
     vm.warp(block.timestamp + 30 days);
-    pool.repay(tokenList.borrowableBuidl, IERC20(varDebtBorrowableBuidl).balanceOf(bob), 2, bob);
+    pool.repay(tokenList.buidl, IERC20(varDebtBuidl).balanceOf(bob), 2, bob);
     vm.stopPrank();
 
     // distribute fees to treasury
     address[] memory assets = new address[](1);
-    assets[0] = tokenList.borrowableBuidl;
+    assets[0] = tokenList.buidl;
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
     pool.mintToTreasury(assets);
   }
 
-  function _seedBorrowableBuidlLiquidity() internal {
+  function _seedBuidlLiquidity() internal {
     vm.startPrank(carol);
-    borrowableBuidl.approve(report.poolProxy, UINT256_MAX);
-    pool.supply(tokenList.borrowableBuidl, 50_000e6, carol, 0);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+    pool.supply(tokenList.buidl, 50_000e6, carol, 0);
     vm.stopPrank();
   }
 }
