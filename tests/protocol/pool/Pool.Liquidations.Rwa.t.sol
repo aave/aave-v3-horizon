@@ -616,7 +616,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    vm.assume(liquidator != poolAdmin); // otherwise the pool proxy will not fallback
+    vm.assume(liquidator != report.poolAddressesProvider); // otherwise the pool proxy will not fallback
 
     _checkLiquidation(
       LiquidationCheck({
@@ -664,7 +664,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].liquidator);
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].user);
     vm.assume(liquidator != rwaTokenInfos[rwaTokenIndex].rwaAToken);
-    vm.assume(liquidator != poolAdmin); // otherwise the pool proxy will not fallback
+    vm.assume(liquidator != report.poolAddressesProvider); // otherwise the pool proxy will not fallback
 
     _checkLiquidation(
       LiquidationCheck({
