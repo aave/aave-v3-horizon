@@ -19,11 +19,8 @@ import {IPool} from 'src/contracts/interfaces/IPool.sol';
 abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
-  /**
-   * @dev The role that can force transfer RWA aTokens
-   * This role should be granted in the ACLManager
-   */
-  bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
+  /// @inheritdoc IRwaAToken
+  bytes32 public constant override ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
 
   /**
    * @dev Constructor.
@@ -97,7 +94,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
   }
 
   /// @inheritdoc IRwaAToken
-  function forceTransfer(
+  function authorizedTransfer(
     address from,
     address to,
     uint256 amount

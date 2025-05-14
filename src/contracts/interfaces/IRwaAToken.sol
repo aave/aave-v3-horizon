@@ -8,6 +8,12 @@ pragma solidity ^0.8.0;
  */
 interface IRwaAToken {
   /**
+   * @dev The role required to perform authorized transfers of RWA aTokens
+   * This role should be granted in the ACLManager
+   */
+  function ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
+
+  /**
    * @notice ERC-20 Permits are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
@@ -66,5 +72,5 @@ interface IRwaAToken {
    * @param amount The amount to be transferred.
    * @return True if the transfer was successful, false otherwise.
    */
-  function forceTransfer(address from, address to, uint256 amount) external returns (bool);
+  function authorizedTransfer(address from, address to, uint256 amount) external returns (bool);
 }

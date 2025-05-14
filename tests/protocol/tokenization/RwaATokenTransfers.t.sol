@@ -61,7 +61,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     });
   }
 
-  function test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin(
+  function test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin(
     address from,
     address to,
     uint256 amount
@@ -75,30 +75,38 @@ contract RwaATokenTransferTests is TestnetProcedures {
     emit IERC20.Transfer(from, to, amount);
 
     vm.prank(rwaATokenTransferAdmin);
-    bool success = aBuidl.forceTransfer(from, to, amount);
-    assertTrue(success, 'forceTransfer returned false');
+    bool success = aBuidl.authorizedTransfer(from, to, amount);
+    assertTrue(success, 'authorizedTransfer returned false');
 
     assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount, 'Unexpected from balance');
     assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount, 'Unexpected to balance');
   }
 
-  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_all() public {
-    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_all() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
       from: alice,
       to: bob,
       amount: aBuidl.balanceOf(alice)
     });
   }
 
-  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_partial() public {
-    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({from: alice, to: bob, amount: 1});
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_partial() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
+      from: alice,
+      to: bob,
+      amount: 1
+    });
   }
 
-  function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_zero() public {
-    test_fuzz_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin({from: alice, to: bob, amount: 0});
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_zero() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
+      from: alice,
+      to: bob,
+      amount: 0
+    });
   }
 
-  function test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin(
+  function test_fuzz_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin(
     address sender,
     address from,
     address to,
@@ -110,11 +118,11 @@ contract RwaATokenTransferTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
 
     vm.prank(sender);
-    aBuidl.forceTransfer(from, to, amount);
+    aBuidl.authorizedTransfer(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin() public {
-    test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotRwaATokenTransferAdmin({
+  function test_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin() public {
+    test_fuzz_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin({
       sender: carol,
       from: alice,
       to: bob,
@@ -122,7 +130,7 @@ contract RwaATokenTransferTests is TestnetProcedures {
     });
   }
 
-  function test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(
+  function test_fuzz_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance(
     address from,
     address to,
     uint256 amount
@@ -132,13 +140,13 @@ contract RwaATokenTransferTests is TestnetProcedures {
     vm.expectRevert(stdError.arithmeticError);
 
     vm.prank(rwaATokenTransferAdmin);
-    aBuidl.forceTransfer(from, to, amount);
+    aBuidl.authorizedTransfer(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_forceTransfer_NotEnoughBalance() public {
+  function test_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance() public {
     uint256 amount = 101e6;
     assertGt(amount, aBuidl.balanceOf(alice));
-    test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(alice, bob, amount);
+    test_fuzz_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance(alice, bob, amount);
   }
 
   function test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported(

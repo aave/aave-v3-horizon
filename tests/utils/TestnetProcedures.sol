@@ -59,10 +59,12 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   address internal alice;
   address internal bob;
   address internal carol;
+  address internal liquidityProvider;
 
   uint256 internal alicePrivateKey;
   uint256 internal bobPrivateKey;
   uint256 internal carolPrivateKey;
+  uint256 internal liquidityProviderPrivateKey;
 
   MarketReport internal report;
   ContractsReport internal contracts;
@@ -109,17 +111,10 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
     poolAdmin = makeAddr('POOL_ADMIN');
 
-    alicePrivateKey = 0xA11CE;
-    bobPrivateKey = 0xB0B;
-    carolPrivateKey = 0xCA801;
-
-    alice = vm.addr(alicePrivateKey);
-    bob = vm.addr(bobPrivateKey);
-    carol = vm.addr(carolPrivateKey);
-
-    vm.label(alice, 'alice');
-    vm.label(bob, 'bob');
-    vm.label(carol, 'carol');
+    (alice, alicePrivateKey) = makeAddrAndKey('alice');
+    (bob, bobPrivateKey) = makeAddrAndKey('bob');
+    (carol, carolPrivateKey) = makeAddrAndKey('carol');
+    (liquidityProvider, liquidityProviderPrivateKey) = makeAddrAndKey('liquidityProvider');
 
     (
       Roles memory roles,

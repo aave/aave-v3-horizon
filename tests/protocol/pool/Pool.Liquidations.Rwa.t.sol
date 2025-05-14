@@ -60,7 +60,6 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     uint256 liquidationAmount;
   }
 
-  address internal david;
   RwaTokenInfo[] internal rwaTokenInfos;
   LiquidationDataProvider internal liquidationDataProvider;
 
@@ -77,13 +76,13 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     address ustbLiquidator = makeAddr('USTB_LIQUIDATOR_1');
 
     vm.startPrank(poolAdmin);
-    // alice is the only authorized BUIDL holder amongst the users
+    // alice is the only authorized BUIDL account amongst the users
     buidl.authorize(bob, false);
     buidl.authorize(carol, false);
-    // bob is the only authorized USTB holder amongst the users
+    // bob is the only authorized USTB account amongst the users
     ustb.authorize(alice, false);
     ustb.authorize(carol, false);
-    // carol is the only authorized WTGXX holder amongst the users
+    // carol is the only authorized WTGXX account amongst the users
     wtgxx.authorize(alice, false);
     wtgxx.authorize(bob, false);
     // authorize the BUIDL Liquidator to hold BUIDL
@@ -99,12 +98,11 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vm.stopPrank();
 
     // supply 100000 USDX such that users can borrow USDX against RWAs
-    david = makeAddr('david');
     vm.prank(poolAdmin);
-    usdx.mint(david, 100000e6);
-    vm.startPrank(david);
+    usdx.mint(liquidityProvider, 100_000e6);
+    vm.startPrank(liquidityProvider);
     usdx.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.usdx, 100000e6, david, 0);
+    contracts.poolProxy.supply(tokenList.usdx, 100_000e6, liquidityProvider, 0);
     vm.stopPrank();
 
     vm.prank(buidlLiquidator);
@@ -445,9 +443,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // david withdraw 95000 USDX -> 5000 USDX are still supplied
-    vm.prank(david);
-    contracts.poolProxy.withdraw(tokenList.usdx, 95000e6, david);
+    // liquidityProvider withdraws 95000 USDX -> 5000 USDX are still supplied
+    vm.prank(liquidityProvider);
+    contracts.poolProxy.withdraw(tokenList.usdx, 95000e6, liquidityProvider);
 
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
@@ -485,9 +483,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // david withdraw 50000 USDX -> 50000 USDX are still supplied
-    vm.prank(david);
-    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
+    // liquidityProvider withdraws 50000 USDX -> 50000 USDX are still supplied
+    vm.prank(liquidityProvider);
+    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, liquidityProvider);
 
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
@@ -526,9 +524,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // david withdraw 50000 USDX -> 50000 USDX are still supplied
-    vm.prank(david);
-    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
+    // liquidityProvider withdraws 50000 USDX -> 50000 USDX are still supplied
+    vm.prank(liquidityProvider);
+    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, liquidityProvider);
 
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
@@ -566,9 +564,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
-    // david withdraw 50000 USDX -> 50000 USDX are still supplied
-    vm.prank(david);
-    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, david);
+    // liquidityProvider withdraws 50000 USDX -> 50000 USDX are still supplied
+    vm.prank(liquidityProvider);
+    contracts.poolProxy.withdraw(tokenList.usdx, 50000e6, liquidityProvider);
 
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
       LiquidationCheck({
@@ -646,8 +644,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// Liquidator is not an authorized RWA holder.
-  function test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(
+  /// Liquidator is not an authorized RWA account.
+  function test_fuzz_reverts_liquidation_UnauthorizedRwaAccount(
     uint256 rwaTokenIndex,
     address liquidator
   ) public {
@@ -669,24 +667,26 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         liquidationType: LiquidationType.Full,
         receiveAToken: false,
         liquidator: liquidator,
-        expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
+        expectedRevertData: bytes('UNAUTHORIZED_RWA_ACCOUNT'),
         expectFullLiquidation: false,
         beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
   }
 
-  function test_reverts_liquidation_UnauthorizedRwaHolder() public {
-    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(0, rwaTokenInfos[1].liquidator);
-    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(1, rwaTokenInfos[0].liquidator);
-    test_fuzz_reverts_liquidation_UnauthorizedRwaHolder(2, rwaTokenInfos[0].liquidator);
+  function test_reverts_liquidation_UnauthorizedRwaAccount() public {
+    test_fuzz_reverts_liquidation_UnauthorizedRwaAccount(0, rwaTokenInfos[1].liquidator);
+    test_fuzz_reverts_liquidation_UnauthorizedRwaAccount(1, rwaTokenInfos[0].liquidator);
+    test_fuzz_reverts_liquidation_UnauthorizedRwaAccount(2, rwaTokenInfos[0].liquidator);
   }
 
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// The RWA aToken is no longer an authorized holder.
-  function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaHolder(uint256 rwaTokenIndex) public {
+  /// The RWA aToken is no longer an authorized account.
+  function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaAccount(
+    uint256 rwaTokenIndex
+  ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
     LiquidationDataProvider.LiquidationInfo memory liquidationInfo = _checkLiquidation(
@@ -700,10 +700,10 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         liquidationType: LiquidationType.Full,
         receiveAToken: false,
         liquidator: rwaTokenInfos[rwaTokenIndex].liquidator,
-        expectedRevertData: bytes('UNAUTHORIZED_RWA_HOLDER'),
+        expectedRevertData: bytes('UNAUTHORIZED_RWA_ACCOUNT'),
         expectFullLiquidation: false,
         beforeLiquidationCallbackCalldata: abi.encodeCall(
-          this.removeRwaHolderAuthorization,
+          this.removeRwaAccountAuthorization,
           (rwaTokenInfos[rwaTokenIndex].rwaToken, rwaTokenInfos[rwaTokenIndex].rwaAToken)
         )
       })
@@ -750,9 +750,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function removeRwaHolderAuthorization(address rwaToken, address holder) public {
+  function removeRwaAccountAuthorization(address rwaToken, address account) public {
     vm.prank(poolAdmin);
-    TestnetRWAERC20(rwaToken).authorize(holder, false);
+    TestnetRWAERC20(rwaToken).authorize(account, false);
   }
 
   function _mockPrice(address token, int256 priceImpactPercent) internal {
