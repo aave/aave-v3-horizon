@@ -52,7 +52,7 @@ interface IRwaAToken {
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice RWA aToken transfers are not supported in liquidations.
+   * @notice Transfers are not supported in liquidations.
    * @dev Reverts if called.
    */
   function transferOnLiquidation(address from, address to, uint256 value) external;
