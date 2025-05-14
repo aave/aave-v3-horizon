@@ -23,6 +23,8 @@ import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataPr
 import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
+
 struct TestVars {
   uint8 underlyingDecimals;
   string aTokenName;
@@ -206,9 +208,10 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     ustb.authorize(rwaATokenList.aUstb, true);
     // authorize aWTGXX to hold WTGXX
     wtgxx.authorize(rwaATokenList.aWtgxx, true);
-    // grant Transfer Role to the aToken Transfer Admin
+    // grant Authorized Transfer Role to the aToken Transfer Admin
     AccessControl(report.aclManager).grantRole(
-      keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE'),
+      // fetch role from aBuild (it is the same for all RwaATokens)
+      IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
       rwaATokenTransferAdmin
     );
     vm.stopPrank();

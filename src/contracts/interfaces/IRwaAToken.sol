@@ -8,12 +8,6 @@ pragma solidity ^0.8.0;
  */
 interface IRwaAToken {
   /**
-   * @notice Returns the identifier of the AuthorizedATokenTransfer role
-   * @return The id of the AuthorizedATokenTransfer role
-   */
-  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
-
-  /**
    * @notice Permits are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
@@ -73,4 +67,10 @@ interface IRwaAToken {
    * @return True if the transfer was successful, false otherwise.
    */
   function authorizedTransfer(address from, address to, uint256 amount) external returns (bool);
+
+  /**
+   * @notice Returns the identifier of the AuthorizedATokenTransfer role
+   * @return The id of the AuthorizedATokenTransfer role
+   */
+  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
 }
