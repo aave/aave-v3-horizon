@@ -1,28 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'forge-std/Test.sol';
-import 'forge-std/StdStorage.sol';
-
-import {IAToken, IERC20} from 'src/contracts/interfaces/IAToken.sol';
-import {IPool, DataTypes} from 'src/contracts/interfaces/IPool.sol';
-import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
-import {PoolInstance} from 'src/contracts/instances/PoolInstance.sol';
+import {IERC20Detailed} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
-import {ReserveConfiguration} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
-import {WadRayMath} from 'src/contracts/protocol/libraries/math/WadRayMath.sol';
-import {IAaveOracle} from 'src/contracts/interfaces/IAaveOracle.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract PoolRwaTests is TestnetProcedures {
-  IPool internal pool;
-
   function setUp() public virtual {
     initTestEnvironment();
-
-    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.buidl
-    );
 
     vm.startPrank(poolAdmin);
     // set buidl borrowing config
@@ -34,11 +19,20 @@ contract PoolRwaTests is TestnetProcedures {
     // authorize & mint BUIDL to carol
     buidl.authorize(carol, true);
     buidl.mint(carol, 100_000e6);
-    // authorize aBUIDL to hold BUIDL
-    buidl.authorize(aBuidlAddress, true);
+    // authorize & mint BUIDL to liquidityProvider
+    buidl.authorize(liquidityProvider, true);
+    buidl.mint(liquidityProvider, 100_000e6);
     vm.stopPrank();
 
-    pool = PoolInstance(report.poolProxy);
+    vm.prank(bob);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(carol);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+
+    vm.startPrank(liquidityProvider);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.supply(tokenList.buidl, 50_000e6, liquidityProvider, 0);
+    vm.stopPrank();
   }
 
   function test_reverts_mintToTreasury() public {
@@ -46,14 +40,11 @@ contract PoolRwaTests is TestnetProcedures {
       tokenList.buidl
     );
 
-    _seedBuidlLiquidity();
-
     vm.startPrank(bob);
-    pool.supply(tokenList.wbtc, 0.4e8, bob, 0);
-    pool.borrow(tokenList.buidl, 2000e6, 2, 0, bob);
-    vm.warp(block.timestamp + 30 days);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    pool.repay(tokenList.buidl, IERC20(varDebtBuidl).balanceOf(bob), 2, bob);
+    contracts.poolProxy.supply(tokenList.wbtc, 0.4e8, bob, 0);
+    contracts.poolProxy.borrow(tokenList.buidl, 2000e6, 2, 0, bob);
+    skip(30 days);
+    contracts.poolProxy.repay(tokenList.buidl, IERC20Detailed(varDebtBuidl).balanceOf(bob), 2, bob);
     vm.stopPrank();
 
     // distribute fees to treasury
@@ -61,13 +52,6 @@ contract PoolRwaTests is TestnetProcedures {
     assets[0] = tokenList.buidl;
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
-    pool.mintToTreasury(assets);
-  }
-
-  function _seedBuidlLiquidity() internal {
-    vm.startPrank(carol);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    pool.supply(tokenList.buidl, 50_000e6, carol, 0);
-    vm.stopPrank();
+    contracts.poolProxy.mintToTreasury(assets);
   }
 }
