@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
+import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
