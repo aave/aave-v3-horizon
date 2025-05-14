@@ -93,9 +93,9 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     // authorize the WTGXX Liquidator to hold WTGXX
     wtgxx.authorize(wtgxxLiquidator, true);
     // mint USDX to liquidators
-    usdx.mint(buidlLiquidator, 100000e6);
-    usdx.mint(ustbLiquidator, 100000e6);
-    usdx.mint(wtgxxLiquidator, 100000e6);
+    usdx.mint(buidlLiquidator, 100_000e6);
+    usdx.mint(ustbLiquidator, 100_000e6);
+    usdx.mint(wtgxxLiquidator, 100_000e6);
     vm.stopPrank();
 
     // supply 100000 USDX such that users can borrow USDX against RWAs
