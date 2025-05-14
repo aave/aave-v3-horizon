@@ -920,7 +920,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
   /// Liquidation Protocol Fee enabled, but aTokens cannot be sent to treasury.
-  function test_fuzz_reverts_liquidation_TreasuryFees_OperationNotSupported(
+  function test_fuzz_reverts_liquidation_with_LiquidationProtocolFee_OperationNotSupported(
     uint256 rwaTokenIndex
   ) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
