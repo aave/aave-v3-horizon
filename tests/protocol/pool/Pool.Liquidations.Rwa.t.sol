@@ -142,212 +142,6 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     );
   }
 
-  function _mockPrice(address token, int256 priceImpactPercent) internal {
-    int256 currentPrice = int256(contracts.aaveOracle.getAssetPrice(token));
-    int256 priceDelta = (currentPrice * priceImpactPercent) / 100_00;
-    int256 newPrice = currentPrice + priceDelta;
-    assertGe(newPrice, 0, 'new price should be non-negative');
-
-    address priceFeed = contracts.aaveOracle.getSourceOfAsset(token);
-    vm.mockCall(
-      priceFeed,
-      abi.encodeCall(AggregatorInterface.latestAnswer, ()),
-      abi.encode(int256(newPrice))
-    );
-  }
-
-  function _getRewardTokenBalance(
-    address user,
-    address underlyingToken,
-    bool receiveAToken
-  ) internal view returns (uint256) {
-    address rewardToken = underlyingToken;
-    if (receiveAToken) {
-      (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-        underlyingToken
-      );
-      rewardToken = aToken;
-    }
-
-    return IERC20Detailed(rewardToken).balanceOf(user);
-  }
-
-  function _getLiquidationThreshold(address token) internal view returns (uint256) {
-    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
-      .poolProxy
-      .getConfiguration(token);
-    return ReserveConfiguration.getLiquidationThreshold(supplyReserveConfig);
-  }
-
-  function _getLtv(address token) internal view returns (uint256) {
-    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
-      .poolProxy
-      .getConfiguration(token);
-    return ReserveConfiguration.getLtv(supplyReserveConfig);
-  }
-
-  function _convertTokenAmount(
-    address fromToken,
-    address toToken,
-    uint256 amount
-  ) internal view returns (uint256) {
-    uint256 fromTokenUnits = 10 ** IERC20Detailed(fromToken).decimals();
-    uint256 toTokenUnits = 10 ** IERC20Detailed(toToken).decimals();
-    uint256 fromTokenPrice = contracts.aaveOracle.getAssetPrice(fromToken);
-    uint256 toTokenPrice = contracts.aaveOracle.getAssetPrice(toToken);
-    return (amount * toTokenUnits * fromTokenPrice) / (fromTokenUnits * toTokenPrice);
-  }
-
-  function _getTokenAmount(
-    address token,
-    uint256 amountInBaseCurrency
-  ) internal view returns (uint256) {
-    uint256 tokenUnits = 10 ** IERC20Detailed(token).decimals();
-    uint256 tokenPrice = contracts.aaveOracle.getAssetPrice(token);
-    return (amountInBaseCurrency * tokenUnits) / tokenPrice;
-  }
-
-  function _checkLiquidation(
-    LiquidationCheck memory input
-  ) internal returns (LiquidationDataProvider.LiquidationInfo memory liquidationInfo) {
-    CheckLiquidationVars memory vars;
-
-    vars.borrowAmount = _convertTokenAmount(
-      input.supplyToken,
-      input.borrowToken,
-      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50 // 0.5% extra buffer
-    );
-
-    vm.startPrank(input.user);
-    contracts.poolProxy.supply(input.supplyToken, input.supplyAmount, input.user, 0);
-    contracts.poolProxy.borrow(input.borrowToken, vars.borrowAmount, 2, 0, input.user);
-    vm.stopPrank();
-
-    vars.avgLiqThreshold = _getLiquidationThreshold(input.supplyToken);
-    (vars.totalCollateralInBaseCurrency, vars.totalDebtInBaseCurrency, , , , ) = contracts
-      .poolProxy
-      .getUserAccountData(input.user);
-
-    if (input.priceImpactToken == input.supplyToken) {
-      vars.totalCollateralInBaseCurrencyTarget =
-        (vars.totalDebtInBaseCurrency * input.healthFactorTarget) /
-        vars.avgLiqThreshold;
-      vars.priceImpactPercent =
-        ((int256(
-          (vars.totalCollateralInBaseCurrencyTarget * 1e8) / vars.totalCollateralInBaseCurrency
-        ) - 1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
-        1e8;
-    } else {
-      vars.totalDebtInBaseCurrencyTarget =
-        (vars.totalCollateralInBaseCurrency * vars.avgLiqThreshold) /
-        input.healthFactorTarget;
-      if (input.priceImpactToken == input.borrowToken) {
-        vars.priceImpactPercent =
-          ((int256((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency) -
-            1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
-          1e8;
-      } else {
-        DataTypes.ReserveDataLegacy memory borrowReserveData = contracts.poolProxy.getReserveData(
-          input.borrowToken
-        );
-        vars.timeToSkip =
-          ((((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency - 1e8) *
-            365 days *
-            WadRayMath.RAY) / 1e8) /
-          borrowReserveData.currentVariableBorrowRate;
-      }
-    }
-
-    if (input.priceImpactToken != address(0)) {
-      _mockPrice(input.priceImpactToken, vars.priceImpactPercent);
-    } else {
-      skip(vars.timeToSkip);
-    }
-
-    uint256 liquidatorBalanceBefore = _getRewardTokenBalance(
-      input.liquidator,
-      input.supplyToken,
-      input.receiveAToken
-    );
-
-    if (input.beforeLiquidationCallbackCalldata.length > 0) {
-      address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
-    }
-
-    vars.liquidationAmount = IERC20Detailed(
-      contracts.poolProxy.getReserveVariableDebtToken(input.borrowToken)
-    ).balanceOf(input.user);
-    if (input.liquidationType == LiquidationType.Partial) {
-      vars.liquidationAmount = vars.liquidationAmount / 2;
-    }
-
-    if (input.expectedRevertData.length != 0) {
-      vm.expectRevert(input.expectedRevertData);
-    } else {
-      liquidationInfo = liquidationDataProvider.getLiquidationInfo({
-        user: input.user,
-        collateralAsset: input.supplyToken,
-        debtAsset: input.borrowToken,
-        debtLiquidationAmount: vars.liquidationAmount
-      });
-
-      vm.expectEmit(address(contracts.poolProxy));
-      emit LiquidationLogic.LiquidationCall(
-        input.supplyToken,
-        input.borrowToken,
-        input.user,
-        liquidationInfo.maxDebtToLiquidate,
-        liquidationInfo.maxCollateralToLiquidate,
-        input.liquidator,
-        input.receiveAToken
-      );
-    }
-
-    vm.prank(input.liquidator);
-    contracts.poolProxy.liquidationCall({
-      collateralAsset: input.supplyToken,
-      debtAsset: input.borrowToken,
-      user: input.user,
-      debtToCover: vars.liquidationAmount,
-      receiveAToken: input.receiveAToken
-    });
-
-    // post-liquidation checks
-    if (input.expectedRevertData.length == 0) {
-      // check that the liquidator received the correct amount of collateral
-      assertEq(
-        _getRewardTokenBalance(input.liquidator, input.supplyToken, input.receiveAToken),
-        liquidatorBalanceBefore + liquidationInfo.maxCollateralToLiquidate
-      );
-
-      // check partial/full liquidation
-      uint256 debtLeft = IERC20Detailed(
-        contracts.poolProxy.getReserveVariableDebtToken(input.borrowToken)
-      ).balanceOf(input.user);
-      if (input.expectFullLiquidation) {
-        assertEq(debtLeft, 0, 'Debt was not fully liquidated');
-      } else {
-        assertGt(debtLeft, 0, 'Debt was not partially liquidated');
-      }
-
-      // check bad debt was cleared, if any
-      (uint256 totalCollateralInBaseCurrency, , , , , ) = contracts.poolProxy.getUserAccountData(
-        input.user
-      );
-      if (totalCollateralInBaseCurrency == 0) {
-        assertFalse(
-          contracts.poolProxy.getUserConfiguration(input.user).isBorrowingAny(),
-          'Bad debt was not cleared'
-        );
-      }
-    }
-  }
-
-  function removeRwaHolderAuthorization(address rwaToken, address holder) public {
-    vm.prank(poolAdmin);
-    TestnetRWAERC20(rwaToken).authorize(holder, false);
-  }
-
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
@@ -891,7 +685,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// Liquidator is no longer an authorized RWA holder.
+  /// The RWA aToken is no longer an authorized holder.
   function test_fuzz_reverts_liquidation_ATokenUnauthorizedRwaHolder(uint256 rwaTokenIndex) public {
     rwaTokenIndex = bound(rwaTokenIndex, 0, rwaTokenInfos.length - 1);
 
@@ -954,5 +748,211 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
         beforeLiquidationCallbackCalldata: abi.encode()
       })
     );
+  }
+
+  function removeRwaHolderAuthorization(address rwaToken, address holder) public {
+    vm.prank(poolAdmin);
+    TestnetRWAERC20(rwaToken).authorize(holder, false);
+  }
+
+  function _mockPrice(address token, int256 priceImpactPercent) internal {
+    int256 currentPrice = int256(contracts.aaveOracle.getAssetPrice(token));
+    int256 priceDelta = (currentPrice * priceImpactPercent) / 100_00;
+    int256 newPrice = currentPrice + priceDelta;
+    assertGe(newPrice, 0, 'new price should be non-negative');
+
+    address priceFeed = contracts.aaveOracle.getSourceOfAsset(token);
+    vm.mockCall(
+      priceFeed,
+      abi.encodeCall(AggregatorInterface.latestAnswer, ()),
+      abi.encode(int256(newPrice))
+    );
+  }
+
+  function _getRewardTokenBalance(
+    address user,
+    address underlyingToken,
+    bool receiveAToken
+  ) internal view returns (uint256) {
+    address rewardToken = underlyingToken;
+    if (receiveAToken) {
+      (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+        underlyingToken
+      );
+      rewardToken = aToken;
+    }
+
+    return IERC20Detailed(rewardToken).balanceOf(user);
+  }
+
+  function _getLiquidationThreshold(address token) internal view returns (uint256) {
+    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
+      .poolProxy
+      .getConfiguration(token);
+    return ReserveConfiguration.getLiquidationThreshold(supplyReserveConfig);
+  }
+
+  function _getLtv(address token) internal view returns (uint256) {
+    DataTypes.ReserveConfigurationMap memory supplyReserveConfig = contracts
+      .poolProxy
+      .getConfiguration(token);
+    return ReserveConfiguration.getLtv(supplyReserveConfig);
+  }
+
+  function _convertTokenAmount(
+    address fromToken,
+    address toToken,
+    uint256 amount
+  ) internal view returns (uint256) {
+    uint256 fromTokenUnits = 10 ** IERC20Detailed(fromToken).decimals();
+    uint256 toTokenUnits = 10 ** IERC20Detailed(toToken).decimals();
+    uint256 fromTokenPrice = contracts.aaveOracle.getAssetPrice(fromToken);
+    uint256 toTokenPrice = contracts.aaveOracle.getAssetPrice(toToken);
+    return (amount * toTokenUnits * fromTokenPrice) / (fromTokenUnits * toTokenPrice);
+  }
+
+  function _getTokenAmount(
+    address token,
+    uint256 amountInBaseCurrency
+  ) internal view returns (uint256) {
+    uint256 tokenUnits = 10 ** IERC20Detailed(token).decimals();
+    uint256 tokenPrice = contracts.aaveOracle.getAssetPrice(token);
+    return (amountInBaseCurrency * tokenUnits) / tokenPrice;
+  }
+
+  function _checkLiquidation(
+    LiquidationCheck memory input
+  ) internal returns (LiquidationDataProvider.LiquidationInfo memory liquidationInfo) {
+    CheckLiquidationVars memory vars;
+
+    vars.borrowAmount = _convertTokenAmount(
+      input.supplyToken,
+      input.borrowToken,
+      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50 // 0.5% extra buffer
+    );
+
+    vm.startPrank(input.user);
+    contracts.poolProxy.supply(input.supplyToken, input.supplyAmount, input.user, 0);
+    contracts.poolProxy.borrow(input.borrowToken, vars.borrowAmount, 2, 0, input.user);
+    vm.stopPrank();
+
+    vars.avgLiqThreshold = _getLiquidationThreshold(input.supplyToken);
+    (vars.totalCollateralInBaseCurrency, vars.totalDebtInBaseCurrency, , , , ) = contracts
+      .poolProxy
+      .getUserAccountData(input.user);
+
+    if (input.priceImpactToken == input.supplyToken) {
+      vars.totalCollateralInBaseCurrencyTarget =
+        (vars.totalDebtInBaseCurrency * input.healthFactorTarget) /
+        vars.avgLiqThreshold;
+      vars.priceImpactPercent =
+        ((int256(
+          (vars.totalCollateralInBaseCurrencyTarget * 1e8) / vars.totalCollateralInBaseCurrency
+        ) - 1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
+        1e8;
+    } else {
+      vars.totalDebtInBaseCurrencyTarget =
+        (vars.totalCollateralInBaseCurrency * vars.avgLiqThreshold) /
+        input.healthFactorTarget;
+      if (input.priceImpactToken == input.borrowToken) {
+        vars.priceImpactPercent =
+          ((int256((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency) -
+            1e8) * int256(PercentageMath.PERCENTAGE_FACTOR)) /
+          1e8;
+      } else {
+        DataTypes.ReserveDataLegacy memory borrowReserveData = contracts.poolProxy.getReserveData(
+          input.borrowToken
+        );
+        vars.timeToSkip =
+          ((((vars.totalDebtInBaseCurrencyTarget * 1e8) / vars.totalDebtInBaseCurrency - 1e8) *
+            365 days *
+            WadRayMath.RAY) / 1e8) /
+          borrowReserveData.currentVariableBorrowRate;
+      }
+    }
+
+    if (input.priceImpactToken != address(0)) {
+      _mockPrice(input.priceImpactToken, vars.priceImpactPercent);
+    } else {
+      skip(vars.timeToSkip);
+    }
+
+    uint256 liquidatorBalanceBefore = _getRewardTokenBalance(
+      input.liquidator,
+      input.supplyToken,
+      input.receiveAToken
+    );
+
+    if (input.beforeLiquidationCallbackCalldata.length > 0) {
+      address(this).delegatecall(input.beforeLiquidationCallbackCalldata);
+    }
+
+    vars.liquidationAmount = IERC20Detailed(
+      contracts.poolProxy.getReserveVariableDebtToken(input.borrowToken)
+    ).balanceOf(input.user);
+    if (input.liquidationType == LiquidationType.Partial) {
+      vars.liquidationAmount = vars.liquidationAmount / 2;
+    }
+
+    if (input.expectedRevertData.length != 0) {
+      vm.expectRevert(input.expectedRevertData);
+    } else {
+      liquidationInfo = liquidationDataProvider.getLiquidationInfo({
+        user: input.user,
+        collateralAsset: input.supplyToken,
+        debtAsset: input.borrowToken,
+        debtLiquidationAmount: vars.liquidationAmount
+      });
+
+      vm.expectEmit(address(contracts.poolProxy));
+      emit LiquidationLogic.LiquidationCall(
+        input.supplyToken,
+        input.borrowToken,
+        input.user,
+        liquidationInfo.maxDebtToLiquidate,
+        liquidationInfo.maxCollateralToLiquidate,
+        input.liquidator,
+        input.receiveAToken
+      );
+    }
+
+    vm.prank(input.liquidator);
+    contracts.poolProxy.liquidationCall({
+      collateralAsset: input.supplyToken,
+      debtAsset: input.borrowToken,
+      user: input.user,
+      debtToCover: vars.liquidationAmount,
+      receiveAToken: input.receiveAToken
+    });
+
+    // post-liquidation checks
+    if (input.expectedRevertData.length == 0) {
+      // check that the liquidator received the correct amount of collateral
+      assertEq(
+        _getRewardTokenBalance(input.liquidator, input.supplyToken, input.receiveAToken),
+        liquidatorBalanceBefore + liquidationInfo.maxCollateralToLiquidate
+      );
+
+      // check partial/full liquidation
+      uint256 debtLeft = IERC20Detailed(
+        contracts.poolProxy.getReserveVariableDebtToken(input.borrowToken)
+      ).balanceOf(input.user);
+      if (input.expectFullLiquidation) {
+        assertEq(debtLeft, 0, 'Debt was not fully liquidated');
+      } else {
+        assertGt(debtLeft, 0, 'Debt was not partially liquidated');
+      }
+
+      // check bad debt was cleared, if any
+      (uint256 totalCollateralInBaseCurrency, , , , , ) = contracts.poolProxy.getUserAccountData(
+        input.user
+      );
+      if (totalCollateralInBaseCurrency == 0) {
+        assertFalse(
+          contracts.poolProxy.getUserConfiguration(input.user).isBorrowingAny(),
+          'Bad debt was not cleared'
+        );
+      }
+    }
   }
 }

@@ -78,8 +78,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     bool success = aBuidl.forceTransfer(from, to, amount);
     assertTrue(success, 'forceTransfer returned false');
 
-    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
-    assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount);
+    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount, 'Unexpected from balance');
+    assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount, 'Unexpected to balance');
   }
 
   function test_rwaAToken_forceTransfer_by_rwaATokenTransferAdmin_all() public {
@@ -136,7 +136,9 @@ contract RwaATokenTransferTests is TestnetProcedures {
   }
 
   function test_reverts_rwaAToken_forceTransfer_NotEnoughBalance() public {
-    test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(alice, bob, 101e6);
+    uint256 amount = 101e6;
+    assertGt(amount, aBuidl.balanceOf(alice));
+    test_fuzz_reverts_rwaAToken_forceTransfer_NotEnoughBalance(alice, bob, amount);
   }
 
   function test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported(

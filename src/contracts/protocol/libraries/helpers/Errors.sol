@@ -105,5 +105,4 @@ library Errors {
   string public constant MUST_NOT_LEAVE_DUST = '103'; // Below a certain threshold liquidators need to take the full position
   string public constant USER_CANNOT_HAVE_DEBT = '104'; // Thrown when a user tries to interact with a method that requires a position without debt
   string public constant CALLER_NOT_ATOKEN_TRANSFER_ADMIN = '1000'; // The caller of the function is not the RWA force transfer admin
-  string public constant RECIPIENT_NOT_TREASURY = '1001'; // The recipient is not the treasury
 }
