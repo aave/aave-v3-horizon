@@ -160,7 +160,7 @@ contract AaveV3TestListing is AaveV3Payload {
         supplyCap: 0,
         borrowCap: 0,
         debtCeiling: 0,
-        liqProtocolFee: 0
+        liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,
@@ -185,7 +185,7 @@ contract AaveV3TestListing is AaveV3Payload {
         supplyCap: 0,
         borrowCap: 0,
         debtCeiling: 0,
-        liqProtocolFee: 0
+        liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,
@@ -210,7 +210,7 @@ contract AaveV3TestListing is AaveV3Payload {
         supplyCap: 0,
         borrowCap: 0,
         debtCeiling: 0,
-        liqProtocolFee: 0
+        liqProtocolFee: 10_00
       }),
       IEngine.TokenImplementations({
         aToken: ATOKEN_IMPLEMENTATION,

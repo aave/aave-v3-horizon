@@ -533,7 +533,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
 
   function test_setLiquidationProtocolFee_amount_gt_percentageFactor() public {
     vm.expectEmit(address(contracts.poolConfiguratorProxy));
-    emit LiquidationProtocolFeeChanged(tokenList.usdx, 0, 6_00);
+    emit LiquidationProtocolFeeChanged(tokenList.usdx, 10_00, 6_00);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.usdx, 6_00);

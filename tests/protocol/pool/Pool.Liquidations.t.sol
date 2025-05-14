@@ -855,9 +855,6 @@ contract PoolLiquidationTests is TestnetProcedures {
   }
 
   function test_liquidate_borrow_burn_multiple_assets_bad_debt() public {
-    vm.prank(poolAdmin);
-    contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.wbtc, 10_00);
-
     uint256 amount = 1.00999999e8;
     uint256 borrowAmount = 20500.999999e6;
     uint256 secondBorrowAmount = 0.002e8;
