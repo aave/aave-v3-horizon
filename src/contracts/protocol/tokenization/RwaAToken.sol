@@ -11,10 +11,10 @@ import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
 /**
- * @title Aave ERC20 RWA AToken
+ * @title RwaAToken
  * @author Aave
- * @notice Implementation of the interest bearing token
- * for Real-World Assets (RWAs) within the Aave protocol
+ * @notice Implementation of the interest bearing token for Real-World Assets (RWAs)
+ * @dev Functionalities are restricted to prevent aTokens from being transferred unless the action is performed by an authorized entity
  */
 abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
