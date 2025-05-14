@@ -919,7 +919,7 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
   /// @dev Supply token price drops, which makes user fully liquidatable.
   /// It is a small liquidation (under the $2000 base value threshold),
   /// and health factor is good (above the 0.95 close factor threshold).
-  /// Fees are turned on, and aTokens cannot be sent to treasury.
+  /// Liquidation Protocol Fee enabled, but aTokens cannot be sent to treasury.
   function test_fuzz_reverts_liquidation_TreasuryFees_OperationNotSupported(
     uint256 rwaTokenIndex
   ) public {
