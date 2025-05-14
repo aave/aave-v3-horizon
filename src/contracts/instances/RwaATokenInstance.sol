@@ -9,11 +9,6 @@ contract RwaATokenInstance is RwaAToken {
 
   constructor(IPool pool) RwaAToken(pool) {}
 
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure virtual override returns (uint256) {
-    return ATOKEN_REVISION;
-  }
-
   /// @inheritdoc IInitializableAToken
   function initialize(
     IPool initializingPool,
@@ -46,5 +41,10 @@ contract RwaATokenInstance is RwaAToken {
       aTokenSymbol,
       params
     );
+  }
+
+  /// @inheritdoc VersionedInitializable
+  function getRevision() internal pure virtual override returns (uint256) {
+    return ATOKEN_REVISION;
   }
 }
