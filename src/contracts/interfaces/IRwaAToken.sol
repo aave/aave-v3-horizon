@@ -8,13 +8,13 @@ pragma solidity ^0.8.0;
  */
 interface IRwaAToken {
   /**
-   * @dev The role required to perform authorized transfers of RWA aTokens
-   * This role should be granted in the ACLManager
+   * @notice Returns the identifier of the AuthorizedATokenTransfer role
+   * @return The id of the AuthorizedATokenTransfer role
    */
-  function ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
+  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
 
   /**
-   * @notice ERC-20 Permits are not supported for RWA aTokens.
+   * @notice Permits are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function permit(
@@ -28,31 +28,31 @@ interface IRwaAToken {
   ) external;
 
   /**
-   * @notice ERC-20 Approvals are not supported for RWA aTokens.
+   * @notice Approvals are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function approve(address spender, uint256 amount) external returns (bool);
 
   /**
-   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @notice Allowances are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
 
   /**
-   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @notice Allowances are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
 
   /**
-   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @notice Transfers are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function transfer(address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @notice Transfers are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);

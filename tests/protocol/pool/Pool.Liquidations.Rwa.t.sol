@@ -76,15 +76,18 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     address ustbLiquidator = makeAddr('USTB_LIQUIDATOR_1');
 
     vm.startPrank(poolAdmin);
-    // alice is the only authorized BUIDL account amongst the users
-    buidl.authorize(bob, false);
-    buidl.authorize(carol, false);
-    // bob is the only authorized USTB account amongst the users
-    ustb.authorize(alice, false);
-    ustb.authorize(carol, false);
-    // carol is the only authorized WTGXX account amongst the users
-    wtgxx.authorize(alice, false);
-    wtgxx.authorize(bob, false);
+    // authorize alice to hold BUIDL
+    buidl.authorize(alice, true);
+    // mint BUIDL to alice
+    buidl.mint(alice, 100_000e6);
+    // authorize bob to hold USTB
+    ustb.authorize(bob, true);
+    // mint USTB to bob
+    ustb.mint(bob, 10_000e6);
+    // authorize carol to hold WTGXX
+    wtgxx.authorize(carol, true);
+    // mint WTGXX to carol
+    wtgxx.mint(carol, 100_000e18);
     // authorize the BUIDL Liquidator to hold BUIDL
     buidl.authorize(buidlLiquidator, true);
     // authorize the USTB Liquidator to hold USTB
@@ -96,6 +99,13 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     usdx.mint(ustbLiquidator, 100_000e6);
     usdx.mint(wtgxxLiquidator, 100_000e6);
     vm.stopPrank();
+
+    vm.prank(alice);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(bob);
+    ustb.approve(report.poolProxy, UINT256_MAX);
+    vm.prank(carol);
+    wtgxx.approve(report.poolProxy, UINT256_MAX);
 
     // supply 100000 USDX such that users can borrow USDX against RWAs
     vm.prank(poolAdmin);

@@ -161,9 +161,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       // Perform setup of user positions
       uint256 mintAmount_USDX = 100_000e6;
       uint256 mintAmount_WBTC = 100e8;
-      uint256 mintAmount_BUIDL = 100_000e6;
-      uint256 mintAmount_USTB = 10_000e6;
-      uint256 mintAmount_WTGXX = 100_000e18;
       address[] memory users = new address[](3);
       users[0] = alice;
       users[1] = bob;
@@ -173,12 +170,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         vm.startPrank(poolAdmin);
         usdx.mint(users[x], mintAmount_USDX);
         wbtc.mint(users[x], mintAmount_WBTC);
-        buidl.authorize(users[x], true);
-        buidl.mint(users[x], mintAmount_BUIDL);
-        ustb.authorize(users[x], true);
-        ustb.mint(users[x], mintAmount_USTB);
-        wtgxx.authorize(users[x], true);
-        wtgxx.mint(users[x], mintAmount_WTGXX);
         deal(address(weth), users[x], 100e18);
         vm.stopPrank();
 
@@ -186,9 +177,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         usdx.approve(report.poolProxy, UINT256_MAX);
         wbtc.approve(report.poolProxy, UINT256_MAX);
         weth.approve(report.poolProxy, UINT256_MAX);
-        buidl.approve(report.poolProxy, UINT256_MAX);
-        ustb.approve(report.poolProxy, UINT256_MAX);
-        wtgxx.approve(report.poolProxy, UINT256_MAX);
         vm.stopPrank();
       }
     }
@@ -220,7 +208,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     wtgxx.authorize(rwaATokenList.aWtgxx, true);
     // grant Transfer Role to the aToken Transfer Admin
     AccessControl(report.aclManager).grantRole(
-      keccak256('ATOKEN_TRANSFER_ROLE'),
+      keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE'),
       rwaATokenTransferAdmin
     );
     vm.stopPrank();
