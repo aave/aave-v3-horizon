@@ -828,7 +828,8 @@ contract PoolLiquidationsRwaTests is TestnetProcedures {
     vars.borrowAmount = _convertTokenAmount(
       input.supplyToken,
       input.borrowToken,
-      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50 // 0.5% extra buffer
+      // borrow almost max amount (1.05 health factor)
+      (input.supplyAmount * _getLtv(input.supplyToken)) / 100_50
     );
 
     vm.startPrank(input.user);
