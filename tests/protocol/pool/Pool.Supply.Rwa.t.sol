@@ -264,6 +264,59 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     );
   }
 
+  // fuzz - supply with permit fails with relayer with no prior approval to poolProxy
+  function test_fuzz_supplyWithPermit_with_relayer_no_approvals_should_revert_with_onBehalfOfNotSupported(
+    uint128 userPk,
+    uint128 supplyAmount,
+    uint128 underlyingBalance,
+    address relayer,
+    address onBehalfOf
+  ) public {
+    vm.assume(userPk != 0);
+    vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
+    address user = vm.addr(userPk);
+    vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
+    vm.assume(relayer != user && relayer != poolAdmin && relayer != address(0));
+
+    vm.startPrank(poolAdmin);
+    buidl.authorize(user, true);
+    buidl.mint(user, underlyingBalance);
+    buidl.authorize(relayer, true);
+    buidl.mint(relayer, underlyingBalance);
+    vm.stopPrank();
+
+    EIP712SigUtils.Permit memory permit = EIP712SigUtils.Permit({
+      owner: user,
+      spender: address(contracts.poolProxy),
+      value: supplyAmount,
+      nonce: 0,
+      deadline: block.timestamp + 1 days
+    });
+    bytes32 digest = EIP712SigUtils.getTypedDataHash(
+      permit,
+      bytes(TestnetERC20(tokenList.buidl).name()),
+      bytes('1'),
+      tokenList.buidl
+    );
+
+    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
+
+    // permit fails gracefully, but reverts due to lack of approval to poolProxy
+    vm.expectRevert('ERC20: transfer amount exceeds allowance');
+
+    vm.prank(relayer);
+    contracts.poolProxy.supplyWithPermit(
+      tokenList.buidl,
+      supplyAmount,
+      onBehalfOf, // will always fail regardless of onBehalfOf
+      0,
+      permit.deadline,
+      v,
+      r,
+      s
+    );
+  }
+
   // fuzz - supply with permit fails gracefully
   // function still reverts because relayer is not authorized to hold RWA
   function test_fuzz_supplyWithPermit_fails_gracefully(
@@ -304,7 +357,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
 
     // permit fails gracefully, but still reverts due to RWA authorization through normal supply flow
     // relayer is not authorized to hold RWA
-    vm.expectRevert();
+    vm.expectRevert('UNAUTHORIZED_RWA_ACCOUNT');
 
     vm.prank(relayer);
     contracts.poolProxy.supplyWithPermit(
