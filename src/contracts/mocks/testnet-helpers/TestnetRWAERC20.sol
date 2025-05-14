@@ -6,8 +6,8 @@ import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol
 contract TestnetRWAERC20 is TestnetERC20 {
   mapping(address => bool) public authorized;
 
-  modifier onlyAuthorized(address potentialHolder) {
-    require(authorized[potentialHolder], 'UNAUTHORIZED_RWA_HOLDER');
+  modifier onlyAuthorized(address account) {
+    require(authorized[account], 'UNAUTHORIZED_RWA_ACCOUNT');
     _;
   }
 
@@ -18,8 +18,8 @@ contract TestnetRWAERC20 is TestnetERC20 {
     address owner
   ) TestnetERC20(name, symbol, decimals, owner) {}
 
-  function authorize(address holder, bool isAuthorized) public {
-    authorized[holder] = isAuthorized;
+  function authorize(address account, bool isAuthorized) public {
+    authorized[account] = isAuthorized;
   }
 
   function _mint(

@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {SafeCast} from 'src/contracts/dependencies/openzeppelin/contracts/SafeCast.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
+import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AToken} from 'src/contracts/protocol/tokenization/AToken.sol';
+import {IncentivizedERC20} from 'src/contracts/protocol/tokenization/base/IncentivizedERC20.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
+/**
+ * @title RwaAToken
+ * @author Aave
+ * @notice Implementation of the interest bearing token for Real-World Assets (RWAs)
+ * @dev Functionalities are restricted to prevent aTokens from being transferred unless the action is performed by an authorized entity
+ */
 abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
-  bytes32 public constant ATOKEN_TRANSFER_ROLE = keccak256('ATOKEN_TRANSFER_ROLE');
+  /// @inheritdoc IRwaAToken
+  bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
+    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE');
 
   /**
    * @dev Constructor.
@@ -83,18 +91,20 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     address to,
     uint256 value
   ) public virtual override(AToken, IRwaAToken) {
-    require(to == _treasury, Errors.RECIPIENT_NOT_TREASURY);
-    super.transferOnLiquidation(from, to, value);
+    revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
   /// @inheritdoc IRwaAToken
-  function forceTransfer(
+  function authorizedTransfer(
     address from,
     address to,
     uint256 amount
   ) external virtual override returns (bool) {
     require(
-      IAccessControl(_addressesProvider.getACLManager()).hasRole(ATOKEN_TRANSFER_ROLE, msg.sender),
+      IAccessControl(_addressesProvider.getACLManager()).hasRole(
+        AUTHORIZED_ATOKEN_TRANSFER_ROLE,
+        msg.sender
+      ),
       Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
     );
 

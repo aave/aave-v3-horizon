@@ -11,6 +11,7 @@ import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched
 import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
 import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
+import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
 import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -21,6 +22,8 @@ import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMa
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -58,14 +61,17 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   address internal alice;
   address internal bob;
   address internal carol;
+  address internal liquidityProvider;
 
   uint256 internal alicePrivateKey;
   uint256 internal bobPrivateKey;
   uint256 internal carolPrivateKey;
+  uint256 internal liquidityProviderPrivateKey;
 
   MarketReport internal report;
   ContractsReport internal contracts;
   TokenList internal tokenList;
+  RwaATokenList internal rwaATokenList;
 
   Roles internal roleList;
 
@@ -78,6 +84,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   TestnetRWAERC20 internal wtgxx;
   WETH9 internal weth;
 
+  address internal rwaATokenTransferAdmin;
+
   struct TokenList {
     address wbtc;
     address weth;
@@ -86,6 +94,12 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     address ustb;
     address wtgxx;
     address gho;
+  }
+
+  struct RwaATokenList {
+    address aBuidl;
+    address aUstb;
+    address aWtgxx;
   }
 
   struct EModeCategoryInput {
@@ -99,17 +113,10 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   function _initTestEnvironment(bool mintUserTokens, bool l2) internal {
     poolAdmin = makeAddr('POOL_ADMIN');
 
-    alicePrivateKey = 0xA11CE;
-    bobPrivateKey = 0xB0B;
-    carolPrivateKey = 0xCA801;
-
-    alice = vm.addr(alicePrivateKey);
-    bob = vm.addr(bobPrivateKey);
-    carol = vm.addr(carolPrivateKey);
-
-    vm.label(alice, 'alice');
-    vm.label(bob, 'bob');
-    vm.label(carol, 'carol');
+    (alice, alicePrivateKey) = makeAddrAndKey('alice');
+    (bob, bobPrivateKey) = makeAddrAndKey('bob');
+    (carol, carolPrivateKey) = makeAddrAndKey('carol');
+    (liquidityProvider, liquidityProviderPrivateKey) = makeAddrAndKey('liquidityProvider');
 
     (
       Roles memory roles,
@@ -175,6 +182,39 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
         vm.stopPrank();
       }
     }
+
+    _rwaInit();
+  }
+
+  function _rwaInit() internal {
+    rwaATokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
+
+    (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.buidl
+    );
+
+    (rwaATokenList.aUstb, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.ustb
+    );
+
+    (rwaATokenList.aWtgxx, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
+      tokenList.wtgxx
+    );
+
+    vm.startPrank(poolAdmin);
+    // authorize aBUIDL to hold BUIDL
+    buidl.authorize(rwaATokenList.aBuidl, true);
+    // authorize aUSTB to hold USTB
+    ustb.authorize(rwaATokenList.aUstb, true);
+    // authorize aWTGXX to hold WTGXX
+    wtgxx.authorize(rwaATokenList.aWtgxx, true);
+    // grant Authorized Transfer Role to the aToken Transfer Admin
+    AccessControl(report.aclManager).grantRole(
+      // fetch role from aBuild (it is the same for all RwaATokens)
+      IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
+      rwaATokenTransferAdmin
+    );
+    vm.stopPrank();
   }
 
   function initTestEnvironment() public {

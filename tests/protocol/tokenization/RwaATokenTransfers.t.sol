@@ -1,38 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {stdError} from 'forge-std/Test.sol';
 
 contract RwaATokenTransferTests is TestnetProcedures {
   RwaAToken public aBuidl;
 
-  address aTokenTransferAdmin;
-
   function setUp() public {
-    initTestEnvironment(false);
-
-    aTokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
-
-    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.buidl
-    );
-    aBuidl = RwaAToken(aBuidlAddress);
+    initTestEnvironment();
+    aBuidl = RwaAToken(rwaATokenList.aBuidl);
 
     vm.startPrank(poolAdmin);
-    // authorize & mint BUIDL to alice
+    // authorize alice to hold BUIDL
     buidl.authorize(alice, true);
-    buidl.mint(alice, 100e6);
-    // authorize & mint BUIDL to carol
+    // mint BUIDL to alice
+    buidl.mint(alice, 100_000e6);
+    // authorize carol to hold BUIDL
     buidl.authorize(carol, true);
+    // mint BUIDL to carol
     buidl.mint(carol, 1e6);
-    // grant Transfer Role to the aToken Transfer Admin
-    AccessControl(aclManagerAddress).grantRole(aBuidl.ATOKEN_TRANSFER_ROLE(), aTokenTransferAdmin);
-    // authorize aBUIDL contract to hold BUIDL
-    buidl.authorize(aBuidlAddress, true);
     vm.stopPrank();
 
     vm.startPrank(alice);
@@ -51,6 +41,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     address to,
     uint256 amount
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -67,6 +59,8 @@ contract RwaATokenTransferTests is TestnetProcedures {
     address to,
     uint256 amount
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -75,14 +69,14 @@ contract RwaATokenTransferTests is TestnetProcedures {
 
   function test_reverts_rwaAToken_transferFrom_OperationNotSupported() public {
     test_fuzz_reverts_rwaAToken_transferFrom_OperationNotSupported({
-      sender: aTokenTransferAdmin,
+      sender: rwaATokenTransferAdmin,
       from: alice,
       to: bob,
       amount: 0
     });
   }
 
-  function test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin(
+  function test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin(
     address from,
     address to,
     uint256 amount
@@ -95,46 +89,55 @@ contract RwaATokenTransferTests is TestnetProcedures {
     vm.expectEmit(address(aBuidl));
     emit IERC20.Transfer(from, to, amount);
 
-    vm.prank(aTokenTransferAdmin);
-    bool success = aBuidl.forceTransfer(from, to, amount);
-    assertTrue(success, 'forceTransfer returned false');
+    vm.prank(rwaATokenTransferAdmin);
+    bool success = aBuidl.authorizedTransfer(from, to, amount);
+    assertTrue(success, 'authorizedTransfer returned false');
 
-    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
-    assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount);
+    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount, 'Unexpected from balance');
+    assertEq(aBuidl.balanceOf(to), toBalanceBefore + amount, 'Unexpected to balance');
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_all() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_all() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
       from: alice,
       to: bob,
       amount: aBuidl.balanceOf(alice)
     });
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_partial() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 1});
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_partial() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
+      from: alice,
+      to: bob,
+      amount: 1
+    });
   }
 
-  function test_rwaAToken_forceTransfer_by_aTokenTransferAdmin_zero() public {
-    test_fuzz_rwaAToken_forceTransfer_by_aTokenTransferAdmin({from: alice, to: bob, amount: 0});
+  function test_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin_zero() public {
+    test_fuzz_rwaAToken_authorizedTransfer_by_rwaATokenTransferAdmin({
+      from: alice,
+      to: bob,
+      amount: 0
+    });
   }
 
-  function test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin(
+  function test_fuzz_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin(
     address sender,
     address from,
     address to,
     uint256 amount
   ) public {
-    vm.assume(sender != aTokenTransferAdmin);
+    vm.assume(sender != rwaATokenTransferAdmin);
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
 
     vm.prank(sender);
-    aBuidl.forceTransfer(from, to, amount);
+    aBuidl.authorizedTransfer(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin() public {
-    test_fuzz_reverts_rwaAToken_forceTransfer_CallerNotATokenTransferAdmin({
+  function test_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin() public {
+    test_fuzz_reverts_rwaAToken_authorizedTransfer_CallerNotRwaATokenTransferAdmin({
       sender: carol,
       from: alice,
       to: bob,
@@ -142,73 +145,45 @@ contract RwaATokenTransferTests is TestnetProcedures {
     });
   }
 
-  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury(
+  function test_fuzz_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance(
     address from,
     address to,
     uint256 amount
   ) public {
-    vm.assume(to != report.treasury);
+    amount = bound(amount, aBuidl.balanceOf(from) + 1, type(uint128).max);
 
-    vm.expectRevert(bytes(Errors.RECIPIENT_NOT_TREASURY));
+    vm.expectRevert(stdError.arithmeticError);
 
-    vm.prank(report.poolProxy);
+    vm.prank(rwaATokenTransferAdmin);
+    aBuidl.authorizedTransfer(from, to, amount);
+  }
+
+  function test_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance() public {
+    uint256 amount = 101e6;
+    assertGt(amount, aBuidl.balanceOf(alice));
+    test_fuzz_reverts_rwaAToken_authorizedTransfer_NotEnoughBalance(alice, bob, amount);
+  }
+
+  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported(
+    address sender,
+    address from,
+    address to,
+    uint256 amount
+  ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+
+    vm.prank(sender);
     aBuidl.transferOnLiquidation(from, to, amount);
   }
 
-  function test_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury() public {
-    test_fuzz_reverts_rwaAToken_transferOnLiquidation_RecipientNotTreasury({
+  function test_reverts_rwaAtoken_transferOnLiquidation_OperationNotSupported() public {
+    test_fuzz_reverts_rwaAToken_transferOnLiquidation_OperationNotSupported({
+      sender: report.poolProxy,
       from: alice,
       to: bob,
-      amount: 0
+      amount: 1e6
     });
-  }
-
-  function test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool(
-    address sender,
-    address from,
-    uint256 amount
-  ) public {
-    vm.assume(sender != report.poolProxy);
-
-    vm.expectRevert(bytes(Errors.CALLER_MUST_BE_POOL));
-
-    vm.prank(sender);
-    aBuidl.transferOnLiquidation(from, report.treasury, amount);
-  }
-
-  function test_reverts_rwaAToken_transferOnLiquidation_CallerNotPool() public {
-    test_fuzz_reverts_rwaAToken_transferOnLiquidation_CallerNotPool({
-      sender: carol,
-      from: alice,
-      amount: 0
-    });
-  }
-
-  function test_fuzz_rwaAToken_transferOnLiquidation(address from, uint256 amount) public {
-    uint256 fromBalanceBefore = aBuidl.balanceOf(from);
-    amount = bound(amount, 0, fromBalanceBefore);
-
-    uint256 treasuryBalanceBefore = aBuidl.balanceOf(report.treasury);
-
-    vm.expectEmit(address(aBuidl));
-    emit IERC20.Transfer(from, report.treasury, amount);
-
-    vm.prank(report.poolProxy);
-    aBuidl.transferOnLiquidation(from, report.treasury, amount);
-
-    assertEq(aBuidl.balanceOf(from), fromBalanceBefore - amount);
-    assertEq(aBuidl.balanceOf(report.treasury), treasuryBalanceBefore + amount);
-  }
-
-  function test_rwaAToken_transferOnLiqudation_all() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: aBuidl.balanceOf(alice)});
-  }
-
-  function test_rwaAToken_transferOnLiquidation_partial() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 1});
-  }
-
-  function test_rwaAToken_transferOnLiquidation_zero() public {
-    test_fuzz_rwaAToken_transferOnLiquidation({from: alice, amount: 0});
   }
 }

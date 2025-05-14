@@ -10,11 +10,17 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
 
   function setUp() public {
     initTestEnvironment();
+    aBuidl = RwaAToken(rwaATokenList.aBuidl);
 
-    (address aBuidlAddress, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      tokenList.buidl
-    );
-    aBuidl = RwaAToken(aBuidlAddress);
+    vm.startPrank(poolAdmin);
+    // authorize alice to hold BUIDL
+    buidl.authorize(alice, true);
+    // mint BUIDL to alice
+    buidl.mint(alice, 100_000e6);
+    vm.stopPrank();
+
+    vm.prank(alice);
+    buidl.approve(report.poolProxy, UINT256_MAX);
   }
 
   function test_fuzz_reverts_rwaAToken_permit_OperationNotSupported(
@@ -27,6 +33,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     bytes32 r,
     bytes32 s
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -51,6 +59,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     address spender,
     uint256 amount
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -70,6 +80,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     address spender,
     uint256 addedValue
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);
@@ -89,6 +101,8 @@ contract RwaATokenAllowanceTests is TestnetProcedures {
     address spender,
     uint256 subtractedValue
   ) public {
+    vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
+
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
 
     vm.prank(sender);

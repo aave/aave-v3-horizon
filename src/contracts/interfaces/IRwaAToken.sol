@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
  */
 interface IRwaAToken {
   /**
-   * @notice ERC-20 Permits are not supported for RWA aTokens.
+   * @notice Permits are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function permit(
@@ -22,40 +22,38 @@ interface IRwaAToken {
   ) external;
 
   /**
-   * @notice ERC-20 Approvals are not supported for RWA aTokens.
+   * @notice Approvals are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function approve(address spender, uint256 amount) external returns (bool);
 
   /**
-   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @notice Allowances are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function increaseAllowance(address spender, uint256 addedValue) external returns (bool);
 
   /**
-   * @notice ERC-20 Allowances are not supported for RWA aTokens.
+   * @notice Allowances are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool);
 
   /**
-   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @notice Transfers are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function transfer(address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice ERC-20 Transfers are not supported for RWA aTokens.
+   * @notice Transfers are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
-   * @notice Transfers liquidation fees in form of aTokens to the treasury
-   * @param from The address getting liquidated, current owner of the aTokens
-   * @param to The recipient (must be treasury)
-   * @param value The amount of tokens getting transferred
+   * @notice Transfers are not supported in liquidations.
+   * @dev Reverts if called.
    */
   function transferOnLiquidation(address from, address to, uint256 value) external;
 
@@ -68,7 +66,7 @@ interface IRwaAToken {
    * @param amount The amount to be transferred.
    * @return True if the transfer was successful, false otherwise.
    */
-  function forceTransfer(address from, address to, uint256 amount) external returns (bool);
+  function authorizedTransfer(address from, address to, uint256 amount) external returns (bool);
 
   /**
    * @notice Mints `amount` aTokens to `user`.
@@ -85,4 +83,10 @@ interface IRwaAToken {
     uint256 amount,
     uint256 index
   ) external returns (bool);
+
+  /**
+   * @notice Returns the identifier of the AuthorizedATokenTransfer role
+   * @return The id of the AuthorizedATokenTransfer role
+   */
+  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
 }

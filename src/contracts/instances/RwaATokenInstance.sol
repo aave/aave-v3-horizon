@@ -5,14 +5,9 @@ import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from 'src/contracts/protocol/tokenization/AToken.sol';
 
 contract RwaATokenInstance is RwaAToken {
-  uint256 public constant RWA_ATOKEN_REVISION = 1;
+  uint256 public constant ATOKEN_REVISION = 1;
 
   constructor(IPool pool) RwaAToken(pool) {}
-
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure virtual override returns (uint256) {
-    return RWA_ATOKEN_REVISION;
-  }
 
   /// @inheritdoc IInitializableAToken
   function initialize(
@@ -46,5 +41,10 @@ contract RwaATokenInstance is RwaAToken {
       aTokenSymbol,
       params
     );
+  }
+
+  /// @inheritdoc VersionedInitializable
+  function getRevision() internal pure virtual override returns (uint256) {
+    return ATOKEN_REVISION;
   }
 }
