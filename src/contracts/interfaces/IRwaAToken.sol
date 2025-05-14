@@ -64,6 +64,12 @@ interface IRwaAToken {
   function transferOnLiquidation(address from, address to, uint256 value) external;
 
   /**
+   * @notice Transfers are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function transferUnderlyingTo(address target, uint256 amount) external;
+
+  /**
    * @notice Transfers an amount of aTokens between two users.
    * @dev It checks for valid HF after the tranfer.
    * @dev Only callable by transfer role admin.

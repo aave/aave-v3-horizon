@@ -103,6 +103,14 @@ abstract contract RwaAToken is AToken, IRwaAToken {
   }
 
   /// @inheritdoc IRwaAToken
+  function transferUnderlyingTo(
+    address target,
+    uint256 amount
+  ) external virtual override(AToken, IRwaAToken) {
+    revert(Errors.OPERATION_NOT_SUPPORTED);
+  }
+
+  /// @inheritdoc IRwaAToken
   function authorizedTransfer(
     address from,
     address to,
