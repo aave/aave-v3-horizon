@@ -33,14 +33,16 @@ contract PoolBorrowRwaTests is TestnetProcedures {
     vm.prank(bob);
     contracts.poolProxy.supply(tokenList.wbtc, 0.4e8, bob, 0);
 
+    uint256 borrowAmount = 2000e6;
+
     vm.expectCall(
       rwaATokenList.aBuidl,
-      abi.encodeCall(IRwaAToken.transferUnderlyingTo, (bob, 2000e6))
+      abi.encodeCall(IRwaAToken.transferUnderlyingTo, (bob, borrowAmount))
     );
 
-    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED), rwaATokenList.aBuidl);
 
     vm.prank(bob);
-    contracts.poolProxy.borrow(tokenList.buidl, 2000e6, 2, 0, bob);
+    contracts.poolProxy.borrow(tokenList.buidl, borrowAmount, 2, 0, bob);
   }
 }

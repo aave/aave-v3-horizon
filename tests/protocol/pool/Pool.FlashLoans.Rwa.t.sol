@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import {MockFlashLoanSimpleReceiver} from 'src/contracts/mocks/flashloan/MockSimpleFlashLoanReceiver.sol';
+import {MockFlashLoanReceiver} from 'src/contracts/mocks/flashloan/MockFlashLoanReceiver.sol';
+import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
+import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+
+contract PoolFlashLoansRwaTests is TestnetProcedures {
+  MockFlashLoanReceiver internal mockFlashReceiver;
+  MockFlashLoanSimpleReceiver internal mockFlashSimpleReceiver;
+
+  function setUp() public {
+    initTestEnvironment();
+
+    mockFlashReceiver = new MockFlashLoanReceiver(
+      IPoolAddressesProvider(report.poolAddressesProvider)
+    );
+    mockFlashSimpleReceiver = new MockFlashLoanSimpleReceiver(
+      IPoolAddressesProvider(report.poolAddressesProvider)
+    );
+
+    vm.startPrank(poolAdmin);
+    // make BUIDL flashloanable
+    contracts.poolConfiguratorProxy.setReserveFlashLoaning(tokenList.buidl, true);
+    // authorize alice to hold BUIDL
+    buidl.authorize(alice, true);
+    // mint BUIDL to alice
+    buidl.mint(alice, 100_000e6);
+    // authorize liquidityProvider to hold BUIDL
+    buidl.authorize(liquidityProvider, true);
+    // mint BUIDL to liquidityProvider
+    buidl.mint(liquidityProvider, 100_000e6);
+    vm.stopPrank();
+
+    vm.startPrank(liquidityProvider);
+    buidl.approve(report.poolProxy, UINT256_MAX);
+    contracts.poolProxy.supply(tokenList.buidl, 50_000e6, liquidityProvider, 0);
+    vm.stopPrank();
+  }
+
+  function test_reverts_flashLoanSimple_OperationNotSupported() public {
+    uint256 amount = 2000e6;
+
+    vm.expectCall(
+      rwaATokenList.aBuidl,
+      abi.encodeCall(IRwaAToken.transferUnderlyingTo, (address(mockFlashSimpleReceiver), amount))
+    );
+
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED), rwaATokenList.aBuidl);
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoanSimple({
+      receiverAddress: address(mockFlashSimpleReceiver),
+      asset: tokenList.buidl,
+      amount: amount,
+      params: abi.encode(),
+      referralCode: 0
+    });
+  }
+
+  function test_reverts_flashLoan_OperationNotSupported() public {
+    uint256 amount = 2000e6;
+
+    vm.expectCall(
+      rwaATokenList.aBuidl,
+      abi.encodeCall(IRwaAToken.transferUnderlyingTo, (address(mockFlashReceiver), amount))
+    );
+
+    vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED), rwaATokenList.aBuidl);
+
+    address[] memory assets = new address[](1);
+    assets[0] = tokenList.buidl;
+    uint256[] memory amounts = new uint256[](1);
+    amounts[0] = amount;
+    uint256[] memory modes = new uint256[](1);
+    modes[0] = 0;
+
+    vm.prank(alice);
+    contracts.poolProxy.flashLoan({
+      receiverAddress: address(mockFlashReceiver),
+      assets: assets,
+      amounts: amounts,
+      interestRateModes: modes,
+      onBehalfOf: alice,
+      params: abi.encode(),
+      referralCode: 0
+    });
+  }
+}
