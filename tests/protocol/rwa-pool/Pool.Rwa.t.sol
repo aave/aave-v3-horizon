@@ -13,7 +13,7 @@ import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool, DataTypes} from 'src/contracts/interfaces/IPool.sol';
 import {ReserveConfiguration} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
 import {IAaveOracle} from 'src/contracts/interfaces/IAaveOracle.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {TestnetProcedures, MockRwaATokenInstance, MockATokenInstance} from 'tests/utils/TestnetProcedures.sol';
 
 contract PoolRwaTests is TestnetProcedures {
   using stdStorage for StdStorage;
@@ -427,21 +427,5 @@ contract PoolRwaTests is TestnetProcedures {
       })
     );
     vm.stopPrank();
-  }
-}
-
-contract MockATokenInstance is ATokenInstance {
-  constructor(IPool pool) ATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return 2;
-  }
-}
-
-contract MockRwaATokenInstance is RwaATokenInstance {
-  constructor(IPool pool) RwaATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return 3;
   }
 }

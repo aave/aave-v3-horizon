@@ -22,6 +22,8 @@ import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMa
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
+import {RwaATokenInstance} from 'src/contracts/instances/RwaATokenInstance.sol';
 
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 
@@ -550,5 +552,21 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+}
+
+contract MockRwaATokenInstance is RwaATokenInstance {
+  constructor(IPool pool) RwaATokenInstance(pool) {}
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return 3;
+  }
+}
+
+contract MockATokenInstance is ATokenInstance {
+  constructor(IPool pool) ATokenInstance(pool) {}
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return 2;
   }
 }
