@@ -50,7 +50,7 @@ contract PoolFlashLoansRwaTests is TestnetProcedures {
     });
   }
 
-  function test_reverts_fuzz_flashLoan_OperationNotSupported(uint256 amount) public {
+  function test_fuzz_reverts_flashLoan_OperationNotSupported(uint256 amount) public {
     amount = bound(amount, 0, IERC20(rwaATokenList.aBuidl).totalSupply());
 
     vm.expectCall(
