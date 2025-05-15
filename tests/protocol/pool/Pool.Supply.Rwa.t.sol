@@ -4,35 +4,23 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
-import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {IAToken, IERC20} from 'src/contracts/interfaces/IAToken.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {EIP712SigUtils} from 'tests/utils/EIP712SigUtils.sol';
-import {SupplyLogic} from 'src/contracts/protocol/libraries/logic/SupplyLogic.sol';
+import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
 contract PoolSupplyRwaTests is TestnetProcedures {
-  address internal aUSDX;
   address internal aBuidl;
-  address aTokenTransferAdmin;
 
   function setUp() public {
     initTestEnvironment();
-
-    aTokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
-
-    (aUSDX, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.usdx);
     (aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.buidl);
 
     vm.startPrank(poolAdmin);
     // authorize & mint BUIDL to alice
     buidl.authorize(alice, true);
     buidl.mint(alice, 100000e6);
-    // grant Transfer Role to the aToken Transfer Admin
-    AccessControl(aclManagerAddress).grantRole(
-      keccak256('ATOKEN_TRANSFER_ROLE'),
-      aTokenTransferAdmin
-    );
     // authorize aBUIDL contract to hold BUIDL
     buidl.authorize(aBuidl, true);
     vm.stopPrank();
@@ -50,9 +38,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     supplyAmount = bound(supplyAmount, 1, underlyingBalanceBefore);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
@@ -87,7 +75,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     uint256 scaledBalanceTokenBase = IAToken(aBuidl).scaledBalanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
@@ -129,9 +117,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPk, digest);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, user);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.buidl, user);
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.buidl, user, user, supplyAmount, 0);
+    emit IPool.Supply(tokenList.buidl, user, user, supplyAmount, 0);
 
     vm.prank(user);
     contracts.poolProxy.supplyWithPermit(
@@ -220,7 +208,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != poolAdmin && relayer != address(0));
+    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -276,7 +264,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != poolAdmin && relayer != address(0));
+    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -329,7 +317,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != poolAdmin && relayer != address(0));
+    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -469,9 +457,9 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     uint256 underlyingBalanceBefore = IERC20(tokenList.buidl).balanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
+    emit IPool.ReserveUsedAsCollateralEnabled(tokenList.buidl, alice);
     vm.expectEmit(report.poolProxy);
-    emit SupplyLogic.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
+    emit IPool.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
 
     vm.prank(alice);
     contracts.poolProxy.deposit(tokenList.buidl, supplyAmount, alice, 0);
