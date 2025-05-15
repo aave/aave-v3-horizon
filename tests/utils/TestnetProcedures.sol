@@ -386,6 +386,31 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     return configurations;
   }
 
+  function _generateRwaInitConfig(
+    TestVars memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
+    TestVars[] memory tArray = new TestVars[](1);
+    tArray[0] = t;
+    return _generateRwaInitConfig(tArray, r, poolAdminUser, isValidDecimals);
+  }
+
+  function _generateRwaInitConfig(
+    TestVars[] memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput[] memory) {
+    ConfiguratorInputTypes.InitReserveInput[]
+      memory configurations = new ConfiguratorInputTypes.InitReserveInput[](t.length);
+    for (uint256 i = 0; i < t.length; i++) {
+      configurations[i] = _generateRwaInitReserveInput(t[i], r, poolAdminUser, isValidDecimals);
+    }
+    return configurations;
+  }
+
   function _generateInitReserveInput(
     TestVars memory t,
     MarketReport memory r,
@@ -402,6 +427,45 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     input.aTokenImpl = r.aToken;
     input.underlyingAsset = address(
       new TestnetERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
+    );
+    input.variableDebtTokenImpl = r.variableDebtToken;
+    input.useVirtualBalance = t.useVirtualBalance;
+    input.interestRateStrategyAddress = r.defaultInterestRateStrategy;
+    input.treasury = t.treasury;
+    input.incentivesController = r.rewardsControllerProxy;
+    input.aTokenName = t.aTokenName;
+    input.aTokenSymbol = t.aTokenSymbol;
+    input.variableDebtTokenName = t.variableDebtName;
+    input.variableDebtTokenSymbol = t.variableDebtSymbol;
+    input.params = bytes('');
+    input.interestRateData = abi.encode(
+      IDefaultInterestRateStrategyV2.InterestRateData({
+        optimalUsageRatio: 80_00,
+        baseVariableBorrowRate: 1_00,
+        variableRateSlope1: 4_00,
+        variableRateSlope2: 60_00
+      })
+    );
+
+    return input;
+  }
+
+  function _generateRwaInitReserveInput(
+    TestVars memory t,
+    MarketReport memory r,
+    address poolAdminUser,
+    bool isValidDecimals
+  ) internal returns (ConfiguratorInputTypes.InitReserveInput memory) {
+    if (isValidDecimals) {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 6, 25));
+    } else {
+      t.underlyingDecimals = uint8(bound(t.underlyingDecimals, 0, 5));
+    }
+
+    ConfiguratorInputTypes.InitReserveInput memory input;
+    input.aTokenImpl = r.rwaAToken;
+    input.underlyingAsset = address(
+      new TestnetRWAERC20('Misc Token', 'MISC', t.underlyingDecimals, poolAdminUser)
     );
     input.variableDebtTokenImpl = r.variableDebtToken;
     input.useVirtualBalance = t.useVirtualBalance;

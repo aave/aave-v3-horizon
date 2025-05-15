@@ -12,6 +12,25 @@ contract PoolConfiguratorACLModifiersRwaTest is TestnetProcedures {
     initTestEnvironment();
   }
 
+  function test_reverts_notAdmin_initReserves(TestVars memory t, address caller) public {
+    ConfiguratorInputTypes.InitReserveInput[] memory input = _generateRwaInitConfig(
+      t,
+      report,
+      poolAdmin,
+      true
+    );
+    vm.assume(
+      !contracts.aclManager.isPoolAdmin(caller) &&
+        !contracts.aclManager.isAssetListingAdmin(caller) &&
+        caller != address(contracts.poolAddressesProvider)
+    );
+
+    vm.expectRevert(bytes(Errors.CALLER_NOT_ASSET_LISTING_OR_POOL_ADMIN));
+
+    vm.prank(caller);
+    contracts.poolConfiguratorProxy.initReserves(input);
+  }
+
   function test_reverts_notAdmin_dropReserve(address caller) public {
     vm.assume(
       !contracts.aclManager.isPoolAdmin(caller) &&
