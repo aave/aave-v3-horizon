@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import 'forge-std/Test.sol';
-
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 import {IAToken, IERC20} from 'src/contracts/interfaces/IAToken.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
@@ -11,22 +9,21 @@ import {EIP712SigUtils} from 'tests/utils/EIP712SigUtils.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
 contract PoolSupplyRwaTests is TestnetProcedures {
-  address internal aBuidl;
+  IAToken internal aBuidl;
 
   function setUp() public {
     initTestEnvironment();
-    (aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(tokenList.buidl);
 
     vm.startPrank(poolAdmin);
     // authorize & mint BUIDL to alice
     buidl.authorize(alice, true);
-    buidl.mint(alice, 100000e6);
-    // authorize aBUIDL contract to hold BUIDL
-    buidl.authorize(aBuidl, true);
+    buidl.mint(alice, 100_000e6);
     vm.stopPrank();
 
     vm.prank(alice);
     buidl.approve(report.poolProxy, UINT256_MAX);
+
+    aBuidl = IAToken(rwaATokenList.aBuidl);
   }
 
   function test_first_supply() public {
@@ -46,7 +43,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.buidl).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
-    assertEq(IAToken(aBuidl).scaledBalanceOf(alice), supplyAmount);
+    assertEq(aBuidl.scaledBalanceOf(alice), supplyAmount);
   }
 
   // supply fails because onBehalfOf is not supported
@@ -60,7 +57,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     address onBehalfOf
   ) public {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
-    vm.assume(onBehalfOf != alice && onBehalfOf != aBuidl);
+    vm.assume(onBehalfOf != alice && onBehalfOf != rwaATokenList.aBuidl);
 
     vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
@@ -72,7 +69,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     test_first_supply();
     uint256 supplyAmount = 2e6;
     uint256 underlyingBalanceBefore = IERC20(tokenList.buidl).balanceOf(alice);
-    uint256 scaledBalanceTokenBase = IAToken(aBuidl).scaledBalanceOf(alice);
+    uint256 scaledBalanceTokenBase = aBuidl.scaledBalanceOf(alice);
 
     vm.expectEmit(report.poolProxy);
     emit IPool.Supply(tokenList.buidl, alice, alice, supplyAmount, 0);
@@ -81,7 +78,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.buidl).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
-    assertEq(IAToken(aBuidl).scaledBalanceOf(alice), scaledBalanceTokenBase + supplyAmount);
+    assertEq(aBuidl.scaledBalanceOf(alice), scaledBalanceTokenBase + supplyAmount);
   }
 
   // supply with permit for themself
@@ -134,7 +131,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     );
 
     assertEq(IERC20(tokenList.buidl).balanceOf(user), underlyingBalance - supplyAmount);
-    assertEq(IAToken(aBuidl).scaledBalanceOf(user), supplyAmount);
+    assertEq(aBuidl.scaledBalanceOf(user), supplyAmount);
   }
 
   // fuzz - supply with permit for themself fails if onBehalfOf is a different address
@@ -406,7 +403,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     );
 
     assertEq(IERC20(tokenList.buidl).balanceOf(user), underlyingBalance - supplyAmount);
-    assertEq(IAToken(aBuidl).scaledBalanceOf(user), supplyAmount);
+    assertEq(aBuidl.scaledBalanceOf(user), supplyAmount);
   }
 
   function test_supplyWithPermit_should_revert_if_permit_is_less_than_supply_amount(
@@ -465,7 +462,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     contracts.poolProxy.deposit(tokenList.buidl, supplyAmount, alice, 0);
 
     assertEq(IERC20(tokenList.buidl).balanceOf(alice), underlyingBalanceBefore - supplyAmount);
-    assertEq(IAToken(aBuidl).scaledBalanceOf(alice), supplyAmount);
+    assertEq(aBuidl.scaledBalanceOf(alice), supplyAmount);
   }
 
   // deposit fails if onBehalfOf does not match caller
@@ -480,7 +477,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     address onBehalfOf
   ) public {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
-    vm.assume(onBehalfOf != alice && onBehalfOf != aBuidl);
+    vm.assume(onBehalfOf != alice && onBehalfOf != rwaATokenList.aBuidl);
 
     vm.expectRevert(bytes(Errors.SUPPLY_ON_BEHALF_OF_NOT_SUPPORTED));
 
@@ -509,7 +506,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
     vm.expectRevert(bytes(Errors.SUPPLY_TO_ATOKEN));
 
     vm.prank(caller);
-    contracts.poolProxy.supply(tokenList.buidl, supplyAmount, aBuidl, 0);
+    contracts.poolProxy.supply(tokenList.buidl, supplyAmount, rwaATokenList.aBuidl, 0);
   }
 
   function test_reverts_supply_reserveInactive() public {
@@ -559,7 +556,7 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   }
 
   function test_fuzz_reverts_supply_cap(address onBehalfOf) public {
-    vm.assume(onBehalfOf != aBuidl);
+    vm.assume(onBehalfOf != rwaATokenList.aBuidl);
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setSupplyCap(tokenList.buidl, 1);
