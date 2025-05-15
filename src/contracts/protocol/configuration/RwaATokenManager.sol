@@ -31,7 +31,12 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   /// @inheritdoc IRwaATokenManager
-  function transferRWAAToken(
+  function removeATokenTransferRole(address aTokenAddress, address admin) external override {
+    revokeRole(getATokenTransferRole(aTokenAddress), admin);
+  }
+
+  /// @inheritdoc IRwaATokenManager
+  function transferRwaAToken(
     address rwaATokenAddress,
     address from,
     address to,

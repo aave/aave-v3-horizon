@@ -15,14 +15,21 @@ interface IRwaATokenManager {
   function addATokenTransferRole(address aTokenAddress, address admin) external;
 
   /**
-   * @dev Transfers RWA aTokens from one address to another
+   * @dev Removes a RWA aToken transfer admin
+   * @param aTokenAddress The address of the RWA aToken
+   * @param admin The address of the RWA aToken transfer admin to remove
+   */
+  function removeATokenTransferRole(address aTokenAddress, address admin) external;
+
+  /**
+   * @dev Performs an authorized transfer RWA aTokens from one address to another
    * @param rwaATokenAddress The address of the RWA aToken
    * @param from The address from which the RWA aTokens are transferred
    * @param to The address that will receive the RWA aTokens
    * @param amount The amount of RWA aTokens to transfer
    * @return True if the transfer was successful, false otherwise
    */
-  function transferRWAAToken(
+  function transferRwaAToken(
     address rwaATokenAddress,
     address from,
     address to,

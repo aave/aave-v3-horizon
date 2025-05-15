@@ -10,6 +10,7 @@ import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol'
 import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
+import {RwaATokenManager} from 'src/contracts/protocol/configuration/RwaATokenManager.sol';
 import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
@@ -84,6 +85,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   TestnetRWAERC20 internal wtgxx;
   WETH9 internal weth;
 
+  address internal rwaATokenManagerOwner;
   address internal rwaATokenTransferAdmin;
 
   struct TokenList {
@@ -187,7 +189,8 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   }
 
   function _rwaInit() internal {
-    rwaATokenTransferAdmin = makeAddr('ATOKEN_TRANSFER_ADMIN_1');
+    rwaATokenManagerOwner = makeAddr('RWA_ATOKEN_MANAGER_OWNER');
+    rwaATokenTransferAdmin = address(new RwaATokenManager(rwaATokenManagerOwner));
 
     (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
