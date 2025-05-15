@@ -29,11 +29,13 @@ contract PoolBorrowRwaTests is TestnetProcedures {
     vm.stopPrank();
   }
 
-  function test_reverts_borrow_TransferUnderlyingTo_OperationNotSupported() public {
+  function test_reverts_fuzz_borrow_TransferUnderlyingTo_OperationNotSupported(
+    uint256 borrowAmount
+  ) public {
+    borrowAmount = bound(borrowAmount, 1, 8_000e6);
+
     vm.prank(bob);
     contracts.poolProxy.supply(tokenList.wbtc, 0.4e8, bob, 0);
-
-    uint256 borrowAmount = 2000e6;
 
     vm.expectCall(
       rwaATokenList.aBuidl,
