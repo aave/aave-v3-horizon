@@ -18,15 +18,9 @@ contract PoolRwaTests is TestnetProcedures {
     // set buidl borrowing config
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.buidl, true);
     contracts.poolConfiguratorProxy.setReserveFactor(tokenList.buidl, 10_00);
-    // authorize & mint BUIDL to bob
-    buidl.authorize(bob, true);
-    buidl.mint(bob, 100_000e6);
     vm.stopPrank();
 
-    vm.prank(bob);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
-    _seedBuidlLiquidity();
+    _seedLiquidity({token: tokenList.buidl, amount: 50_000e6, isRwa: true});
   }
 
   function test_reverts_mintToTreasury() public {
@@ -56,20 +50,6 @@ contract PoolRwaTests is TestnetProcedures {
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
     contracts.poolProxy.mintToTreasury(assets);
-  }
-
-  function _seedBuidlLiquidity() internal {
-    // authorize & mint BUIDL to liquidityProvider
-    vm.startPrank(poolAdmin);
-    buidl.authorize(liquidityProvider, true);
-    buidl.mint(liquidityProvider, 100_000e6);
-    vm.stopPrank();
-
-    // supply liquidity through liquidityProvider
-    vm.startPrank(liquidityProvider);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.buidl, 50_000e6, liquidityProvider, 0);
-    vm.stopPrank();
   }
 
   // upgrade aBuidl to the rwa aToken implementation

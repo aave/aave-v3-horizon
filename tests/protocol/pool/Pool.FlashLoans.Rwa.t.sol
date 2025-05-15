@@ -23,23 +23,11 @@ contract PoolFlashLoansRwaTests is TestnetProcedures {
       IPoolAddressesProvider(report.poolAddressesProvider)
     );
 
-    vm.startPrank(poolAdmin);
     // make BUIDL flashloanable
+    vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveFlashLoaning(tokenList.buidl, true);
-    // authorize alice to hold BUIDL
-    buidl.authorize(alice, true);
-    // mint BUIDL to alice
-    buidl.mint(alice, 100_000e6);
-    // authorize liquidityProvider to hold BUIDL
-    buidl.authorize(liquidityProvider, true);
-    // mint BUIDL to liquidityProvider
-    buidl.mint(liquidityProvider, 100_000e6);
-    vm.stopPrank();
 
-    vm.startPrank(liquidityProvider);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.buidl, 50_000e6, liquidityProvider, 0);
-    vm.stopPrank();
+    _seedLiquidity({token: tokenList.buidl, amount: 50_000e6, isRwa: true});
   }
 
   function test_reverts_flashLoanSimple_OperationNotSupported() public {

@@ -9,24 +9,11 @@ contract PoolBorrowRwaTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    vm.startPrank(poolAdmin);
     // set buidl borrowing config
+    vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.buidl, true);
-    // authorize & mint BUIDL to bob
-    buidl.authorize(bob, true);
-    buidl.mint(bob, 100_000e6);
-    // authorize & mint BUIDL to liquidityProvider
-    buidl.authorize(liquidityProvider, true);
-    buidl.mint(liquidityProvider, 100_000e6);
-    vm.stopPrank();
 
-    vm.prank(bob);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
-    vm.startPrank(liquidityProvider);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-    contracts.poolProxy.supply(tokenList.buidl, 50_000e6, liquidityProvider, 0);
-    vm.stopPrank();
+    _seedLiquidity({token: tokenList.buidl, amount: 50_000e6, isRwa: true});
   }
 
   function test_reverts_fuzz_borrow_TransferUnderlyingTo_OperationNotSupported(

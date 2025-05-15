@@ -14,15 +14,6 @@ contract PoolSupplyRwaTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
-    vm.startPrank(poolAdmin);
-    // authorize & mint BUIDL to alice
-    buidl.authorize(alice, true);
-    buidl.mint(alice, 100_000e6);
-    vm.stopPrank();
-
-    vm.prank(alice);
-    buidl.approve(report.poolProxy, UINT256_MAX);
-
     aBuidl = IAToken(rwaATokenList.aBuidl);
   }
 
