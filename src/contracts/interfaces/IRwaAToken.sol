@@ -52,10 +52,22 @@ interface IRwaAToken {
   function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
 
   /**
+   * @notice Not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function mintToTreasury(uint256 amount, uint256 index) external;
+
+  /**
    * @notice Transfers are not supported in liquidations.
    * @dev Reverts if called.
    */
   function transferOnLiquidation(address from, address to, uint256 value) external;
+
+  /**
+   * @notice Transfers of the underlying asset are not supported for RWA aTokens.
+   * @dev Reverts if called.
+   */
+  function transferUnderlyingTo(address target, uint256 amount) external;
 
   /**
    * @notice Transfers an amount of aTokens between two users.
@@ -67,6 +79,22 @@ interface IRwaAToken {
    * @return True if the transfer was successful, false otherwise.
    */
   function authorizedTransfer(address from, address to, uint256 amount) external returns (bool);
+
+  /**
+   * @notice Mints `amount` aTokens to `user`.
+   * @dev onBehalfOf must match the caller.
+   * @param caller The address performing the mint
+   * @param onBehalfOf The address of the user that will receive the minted aTokens
+   * @param amount The amount of tokens getting minted
+   * @param index The next liquidity index of the reserve
+   * @return `true` if the the previous balance of the user was 0
+   */
+  function mint(
+    address caller,
+    address onBehalfOf,
+    uint256 amount,
+    uint256 index
+  ) external returns (bool);
 
   /**
    * @notice Returns the identifier of the AuthorizedATokenTransfer role
