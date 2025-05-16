@@ -306,7 +306,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.startPrank(poolAdmin);
     IAccessControl(report.aclManager).revokeRole(
       // fetch role from aBuidl (it is the same for all RwaATokens)
-      IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
+      IRwaAToken(rwaATokenList.aBuidl).ATOKEN_ADMIN_ROLE(),
       rwaATokenTransferAdmin
     );
     vm.stopPrank();

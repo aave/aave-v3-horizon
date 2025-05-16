@@ -222,7 +222,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     // grant Authorized Transfer Role to the aToken Transfer Admin
     AccessControl(report.aclManager).grantRole(
       // fetch role from aBuidl (it is the same for all RwaATokens)
-      IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
+      IRwaAToken(rwaATokenList.aBuidl).ATOKEN_ADMIN_ROLE(),
       rwaATokenTransferAdmin
     );
     vm.stopPrank();

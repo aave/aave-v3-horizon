@@ -20,8 +20,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
   using SafeCast for uint256;
 
   /// @inheritdoc IRwaAToken
-  bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
-    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ADMIN');
+  bytes32 public constant override ATOKEN_ADMIN_ROLE = keccak256('ATOKEN_ADMIN');
 
   /**
    * @dev Constructor.
@@ -111,10 +110,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     uint256 amount
   ) external virtual override returns (bool) {
     require(
-      IAccessControl(_addressesProvider.getACLManager()).hasRole(
-        AUTHORIZED_ATOKEN_TRANSFER_ROLE,
-        msg.sender
-      ),
+      IAccessControl(_addressesProvider.getACLManager()).hasRole(ATOKEN_ADMIN_ROLE, msg.sender),
       Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN
     );
 
