@@ -10,7 +10,6 @@ import {DefaultMarketInput} from 'src/deployments/inputs/DefaultMarketInput.sol'
 import {AaveV3BatchOrchestration} from 'src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {IPoolAddressesProvider} from 'src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
-import {RwaATokenManager} from 'src/contracts/protocol/configuration/RwaATokenManager.sol';
 import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
@@ -18,6 +17,7 @@ import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
 import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
+import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
 import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';

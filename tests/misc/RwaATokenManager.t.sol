@@ -7,7 +7,7 @@ import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {stdError} from 'forge-std/Test.sol';
 import {Vm} from 'forge-std/Vm.sol';
-import {RwaATokenManager} from 'src/contracts/protocol/configuration/RwaATokenManager.sol';
+import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
@@ -341,6 +341,9 @@ contract RwaATokenManagerTest is TestnetProcedures {
   ) public {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
+
+    vm.assume(from != report.poolAddressesProvider); // otherwise the pool proxy will not fallback);
+    vm.assume(from != address(rwaATokenInfo.rwaToken) && from != rwaATokenInfo.rwaAToken);
 
     amount = bound(amount, 1, type(uint128).max);
 
