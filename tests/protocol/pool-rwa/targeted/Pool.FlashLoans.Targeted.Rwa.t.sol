@@ -9,7 +9,7 @@ import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.s
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
-contract PoolFlashLoansRwaTests is TestnetProcedures {
+contract PoolFlashLoansTargetedRwaTests is TestnetProcedures {
   MockFlashLoanReceiver internal mockFlashReceiver;
   MockFlashLoanSimpleReceiver internal mockFlashSimpleReceiver;
 

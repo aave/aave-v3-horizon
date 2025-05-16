@@ -8,7 +8,7 @@ import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol
 import {EIP712SigUtils} from 'tests/utils/EIP712SigUtils.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 
-contract PoolSupplyRwaTests is TestnetProcedures {
+contract PoolSupplyTargetedRwaTests is TestnetProcedures {
   IAToken internal aBuidl;
 
   function setUp() public {

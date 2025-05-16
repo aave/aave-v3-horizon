@@ -10,7 +10,7 @@ import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
-contract PoolRwaTests is TestnetProcedures {
+contract PoolRwaTargetedTests is TestnetProcedures {
   function setUp() public virtual {
     initTestEnvironment();
 

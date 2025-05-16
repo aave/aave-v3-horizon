@@ -15,7 +15,7 @@ import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {LiquidationDataProvider} from 'src/contracts/helpers/LiquidationDataProvider.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
-contract PoolLiquidationsRwaTests is TestnetProcedures {
+contract PoolLiquidationsTargetedRwaTests is TestnetProcedures {
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
   struct RwaTokenInfo {

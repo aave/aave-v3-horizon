@@ -5,7 +5,7 @@ import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
-contract PoolBorrowRwaTests is TestnetProcedures {
+contract PoolBorrowTargetedRwaTests is TestnetProcedures {
   function setUp() public {
     initTestEnvironment();
 
