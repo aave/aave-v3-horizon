@@ -21,7 +21,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
 
   /// @inheritdoc IRwaAToken
   bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
-    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE');
+    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ADMIN');
 
   /**
    * @dev Constructor.

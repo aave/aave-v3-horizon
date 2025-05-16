@@ -13,21 +13,21 @@ import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol'
  */
 contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
-  bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
-    keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE');
+  bytes32 public constant override AUTHORIZED_TRANSFER_ROLE =
+    keccak256('AUTHORIZED_TRANSFER_ADMIN');
 
   constructor(address owner) {
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function grantATokenTransferRole(address aTokenAddress, address account) external override {
-    grantRole(getATokenTransferRole(aTokenAddress), account);
+  function grantAuthorizedTransferRole(address aTokenAddress, address account) external override {
+    grantRole(getAuthorizedTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function revokeATokenTransferRole(address aTokenAddress, address account) external override {
-    revokeRole(getATokenTransferRole(aTokenAddress), account);
+  function revokeAuthorizedTransferRole(address aTokenAddress, address account) external override {
+    revokeRole(getAuthorizedTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
@@ -36,20 +36,20 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
     address from,
     address to,
     uint256 amount
-  ) external override onlyRole(getATokenTransferRole(aTokenAddress)) returns (bool) {
+  ) external override onlyRole(getAuthorizedTransferRole(aTokenAddress)) returns (bool) {
     return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function hasATokenTransferRole(
+  function hasAuthorizedTransferRole(
     address aTokenAddress,
     address account
   ) external view override returns (bool) {
-    return hasRole(getATokenTransferRole(aTokenAddress), account);
+    return hasRole(getAuthorizedTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function getATokenTransferRole(address aTokenAddress) public pure override returns (bytes32) {
-    return keccak256(abi.encode(AUTHORIZED_ATOKEN_TRANSFER_ROLE, aTokenAddress));
+  function getAuthorizedTransferRole(address aTokenAddress) public pure override returns (bytes32) {
+    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, aTokenAddress));
   }
 }

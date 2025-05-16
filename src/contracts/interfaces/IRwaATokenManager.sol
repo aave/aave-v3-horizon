@@ -8,21 +8,21 @@ pragma solidity ^0.8.0;
  */
 interface IRwaATokenManager {
   /**
-   * @dev Grants authorized transfer role for an RWA aToken to an address
+   * @dev Grants authorized transfer role for an RWA aToken to an account
    * @param aTokenAddress The address of the RWA aToken
    * @param account The address of the new RWA aToken transfer role holder
    */
-  function grantATokenTransferRole(address aTokenAddress, address account) external;
+  function grantAuthorizedTransferRole(address aTokenAddress, address account) external;
 
   /**
-   * @dev Revokes the authorized transfer role for an RWA aToken from an address
+   * @dev Revokes the authorized transfer role for an RWA aToken from an account
    * @param aTokenAddress The address of the RWA aToken
    * @param account The address of the RWA aToken transfer role holder to be revoked
    */
-  function revokeATokenTransferRole(address aTokenAddress, address account) external;
+  function revokeAuthorizedTransferRole(address aTokenAddress, address account) external;
 
   /**
-   * @dev Performs an authorized transfer of RWA aTokens from one address to another
+   * @dev Performs an authorized transfer of RWA aTokens from one account to another
    * @param aTokenAddress The address of the RWA aToken
    * @param from The address from which the RWA aTokens are transferred
    * @param to The address that will receive the RWA aTokens
@@ -37,26 +37,26 @@ interface IRwaATokenManager {
   ) external returns (bool);
 
   /**
-   * @dev Checks if an address has the RWA aToken transfer role
+   * @dev Checks if an account has the authorized transfer role
    * @param aTokenAddress The address of the RWA aToken
    * @param account The address to check
-   * @return True if the given address has the RWA aToken transfer role, false otherwise
+   * @return True if the given address has the authorized transfer role for the RWA aToken, false otherwise
    */
-  function hasATokenTransferRole(
+  function hasAuthorizedTransferRole(
     address aTokenAddress,
     address account
   ) external view returns (bool);
 
   /**
-   * @notice Returns the identifier of the AuthorizedATokenTransfer role
-   * @return The id of the AuthorizedATokenTransfer role
+   * @notice Returns the identifier of the AuthorizedTransfer role
+   * @return The id of the AuthorizedTransfer role
    */
-  function AUTHORIZED_ATOKEN_TRANSFER_ROLE() external pure returns (bytes32);
+  function AUTHORIZED_TRANSFER_ROLE() external pure returns (bytes32);
 
   /**
    * @dev Returns the role required to transfer the RWA aToken
    * @param aTokenAddress The address of the RWA aToken
    * @return The role required to transfer the RWA aToken
    */
-  function getATokenTransferRole(address aTokenAddress) external pure returns (bytes32);
+  function getAuthorizedTransferRole(address aTokenAddress) external pure returns (bytes32);
 }
