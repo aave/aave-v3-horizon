@@ -22,7 +22,7 @@ interface IRwaATokenManager {
   function revokeAuthorizedTransferRole(address aTokenAddress, address account) external;
 
   /**
-   * @dev Performs an authorized transfer of RWA aTokens from one account to another
+   * @notice Performs an authorized transfer of RWA aTokens from one account to another
    * @param aTokenAddress The address of the RWA aToken
    * @param from The address from which the RWA aTokens are transferred
    * @param to The address that will receive the RWA aTokens
