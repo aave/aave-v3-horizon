@@ -54,9 +54,9 @@ interface IRwaATokenManager {
   function AUTHORIZED_TRANSFER_ROLE() external pure returns (bytes32);
 
   /**
-   * @dev Returns the role required to transfer the RWA aToken
+   * @notice Returns the role id required to perform transfers of the specified RWA aToken.
    * @param aTokenAddress The address of the RWA aToken
-   * @return The role required to transfer the RWA aToken
+   * @return The bytes32 identifier of the role required to transfer the RWA aToken
    */
   function getAuthorizedTransferRole(address aTokenAddress) external pure returns (bytes32);
 }
