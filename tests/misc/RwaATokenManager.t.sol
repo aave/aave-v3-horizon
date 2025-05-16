@@ -59,21 +59,21 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
   }
 
-  function test_authorizedATokenTransferRole() public {
+  function test_authorizedATokenTransferRole() public view {
     assertEq(
       rwaATokenManager.AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
       keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE')
     );
   }
 
-  function test_fuzz_getATokenTransferRole(address aTokenAddress) public {
+  function test_fuzz_getATokenTransferRole(address aTokenAddress) public view {
     assertEq(
       rwaATokenManager.getATokenTransferRole(aTokenAddress),
       keccak256(abi.encode(rwaATokenManager.AUTHORIZED_ATOKEN_TRANSFER_ROLE(), aTokenAddress))
     );
   }
 
-  function test_getATokenTransferRole() public {
+  function test_getATokenTransferRole() public view {
     test_fuzz_getATokenTransferRole(rwaATokenList.aBuidl);
   }
 
@@ -139,7 +139,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   ) public {
     vm.assume(sender != rwaATokenManagerOwner);
 
-    uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     vm.expectRevert(
@@ -165,7 +165,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   }
 
   function test_fuzz_revokeATokenTransferRole(uint256 rwaATokenIndex) public {
-    uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     test_fuzz_grantATokenTransferRole(rwaATokenIndex);
@@ -185,7 +185,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   }
 
   function test_fuzz_revokeATokenTransferRole_NoEffect(uint256 rwaATokenIndex) public {
-    uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     vm.recordLogs();
@@ -202,7 +202,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   }
 
   function test_fuzz_hasATokenTransferRole_true(uint256 rwaATokenIndex) public {
-    uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     test_fuzz_grantATokenTransferRole(rwaATokenIndex);
@@ -212,7 +212,10 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
   }
 
-  function test_fuzz_hasATokenTransferRole_False(address aTokenAddress, address account) public {
+  function test_fuzz_hasATokenTransferRole_False(
+    address aTokenAddress,
+    address account
+  ) public view {
     assertFalse(rwaATokenManager.hasATokenTransferRole(aTokenAddress, account));
   }
 
@@ -343,6 +346,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.assume(from != report.poolAddressesProvider); // otherwise the pool proxy will not fallback);
     vm.assume(from != address(rwaATokenInfo.rwaToken) && from != rwaATokenInfo.rwaAToken);
     vm.assume(from != to);
+    vm.assume(from != address(0) && to != address(0));
 
     amount = bound(amount, 1, type(uint128).max);
 
