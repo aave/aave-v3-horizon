@@ -37,9 +37,9 @@ interface IRwaATokenManager {
   ) external returns (bool);
 
   /**
-   * @dev Checks if an account has the authorized transfer role
+   * @notice Returns whether the account holds the authorized transfer role for a specific RWA aToken.
    * @param aTokenAddress The address of the RWA aToken
-   * @param account The address to check
+   * @param account The address of the account
    * @return True if the given address has the authorized transfer role for the RWA aToken, false otherwise
    */
   function hasAuthorizedTransferRole(
