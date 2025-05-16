@@ -79,7 +79,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     test_fuzz_getATokenTransferRole(rwaATokenList.aBuidl);
   }
 
-  function test_reverts_fuzz_addATokenTransferRole_AccountIsMissingDefaultAdminRole(
+  function test_fuzz_reverts_grantATokenTransferRole_AccountIsMissingDefaultAdminRole(
     uint256 rwaATokenIndex,
     address sender
   ) public {
@@ -97,17 +97,17 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
 
     vm.prank(sender);
-    rwaATokenManager.addATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin);
+    rwaATokenManager.grantATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin);
   }
 
-  function test_reverts_addATokenTransferRole_AccountIsMissingDefaultAdminRole() public {
-    test_reverts_fuzz_addATokenTransferRole_AccountIsMissingDefaultAdminRole({
+  function test_reverts_grantATokenTransferRole_AccountIsMissingDefaultAdminRole() public {
+    test_fuzz_reverts_grantATokenTransferRole_AccountIsMissingDefaultAdminRole({
       rwaATokenIndex: 0,
       sender: poolAdmin
     });
   }
 
-  function test_fuzz_addATokenTransferRole(uint256 rwaATokenIndex) public {
+  function test_fuzz_grantATokenTransferRole(uint256 rwaATokenIndex) public {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
@@ -119,23 +119,23 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.addATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin);
+    rwaATokenManager.grantATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin);
   }
 
-  function test_addATokenTransferRole_twice() public {
-    test_fuzz_addATokenTransferRole(0);
+  function test_grantATokenTransferRole_twice() public {
+    test_fuzz_grantATokenTransferRole(0);
 
     vm.recordLogs();
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.addATokenTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
+    rwaATokenManager.grantATokenTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
 
     // assert no event was emitted (since role was already granted)
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 0);
   }
 
-  function test_reverts_fuzz_removeATokenTransferRole_AccountIsMissingDefaultAdminRole(
+  function test_fuzz_reverts_revokeATokenTransferRole_AccountIsMissingDefaultAdminRole(
     uint256 rwaATokenIndex,
     address sender
   ) public {
@@ -153,24 +153,24 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
 
     vm.prank(sender);
-    rwaATokenManager.removeATokenTransferRole(
+    rwaATokenManager.revokeATokenTransferRole(
       rwaATokenInfo.rwaAToken,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
 
-  function test_reverts_removeATokenTransferRole_AccountIsMissingDefaultAdminRole() public {
-    test_reverts_fuzz_removeATokenTransferRole_AccountIsMissingDefaultAdminRole({
+  function test_reverts_revokeATokenTransferRole_AccountIsMissingDefaultAdminRole() public {
+    test_fuzz_reverts_revokeATokenTransferRole_AccountIsMissingDefaultAdminRole({
       rwaATokenIndex: 0,
       sender: poolAdmin
     });
   }
 
-  function test_fuzz_removeATokenTransferRole(uint256 rwaATokenIndex) public {
+  function test_fuzz_revokeATokenTransferRole(uint256 rwaATokenIndex) public {
     uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     vm.expectEmit(address(rwaATokenManager));
     emit IAccessControl.RoleRevoked(
@@ -180,20 +180,20 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.removeATokenTransferRole(
+    rwaATokenManager.revokeATokenTransferRole(
       rwaATokenInfo.rwaAToken,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
 
-  function test_fuzz_removeATokenTransfeRole_NoEffect(uint256 rwaATokenIndex) public {
+  function test_fuzz_revokeATokenTransferRole_NoEffect(uint256 rwaATokenIndex) public {
     uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     vm.recordLogs();
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.removeATokenTransferRole(
+    rwaATokenManager.revokeATokenTransferRole(
       rwaATokenInfo.rwaAToken,
       rwaATokenInfo.rwaATokenAdmin
     );
@@ -207,7 +207,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     assertTrue(
       rwaATokenManager.hasATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin)
@@ -218,7 +218,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     assertFalse(rwaATokenManager.hasATokenTransferRole(aTokenAddress, account));
   }
 
-  /// @dev aBuidl admin is grante permission, and then it is revoked
+  /// @dev Grant role to aBuidl admin, then revoke role
   function test_fuzz_hasATokenTransfer_False_Scenario() public {
     address aTokenAddress = rwaATokenInfos[0].rwaAToken;
 
@@ -228,11 +228,11 @@ contract RwaATokenManagerTest is TestnetProcedures {
     test_fuzz_hasATokenTransferRole_False(aTokenAddress, rwaATokenInfos[2].rwaATokenAdmin);
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.removeATokenTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
+    rwaATokenManager.revokeATokenTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
     test_fuzz_hasATokenTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
   }
 
-  function test_reverts_fuzz_transferRwaAToken_NotATokenTransferRole(
+  function test_fuzz_reverts_transferRwaAToken_NotATokenTransferRole(
     uint256 rwaATokenIndex,
     address sender,
     address from,
@@ -256,8 +256,8 @@ contract RwaATokenManagerTest is TestnetProcedures {
   }
 
   function test_reverts_transferRwaAToken_NotATokenTransferRole() public {
-    test_fuzz_addATokenTransferRole(0);
-    test_reverts_fuzz_transferRwaAToken_NotATokenTransferRole({
+    test_fuzz_grantATokenTransferRole(0);
+    test_fuzz_reverts_transferRwaAToken_NotATokenTransferRole({
       rwaATokenIndex: 0,
       sender: rwaATokenManagerOwner,
       from: alice,
@@ -266,7 +266,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     });
   }
 
-  function test_reverts_fuzz_transferRwaAToken_NotEnoughBalance(
+  function test_fuzz_reverts_transferRwaAToken_NotEnoughBalance(
     uint256 rwaATokenIndex,
     address from,
     address to,
@@ -277,7 +277,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     amount = bound(amount, 1, type(uint128).max);
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     vm.expectRevert(stdError.arithmeticError);
 
@@ -285,7 +285,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
   }
 
-  function test_reverts_fuzz_transferRwaAToken_CallerNotATokenTransferAdmin(
+  function test_fuzz_reverts_transferRwaAToken_CallerNotATokenTransferAdmin(
     uint256 rwaATokenIndex,
     address from,
     address to,
@@ -294,11 +294,11 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     vm.startPrank(poolAdmin);
     IAccessControl(report.aclManager).revokeRole(
-      // fetch role from aBuild (it is the same for all RwaATokens)
+      // fetch role from aBuidl (it is the same for all RwaATokens)
       IRwaAToken(rwaATokenList.aBuidl).AUTHORIZED_ATOKEN_TRANSFER_ROLE(),
       rwaATokenTransferAdmin
     );
@@ -310,7 +310,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
   }
 
-  function test_reverts_fuzz_transferRwaAToken_AuthorizedTransferFails(
+  function test_fuzz_reverts_transferRwaAToken_AuthorizedTransferFails(
     uint256 rwaATokenIndex,
     address from,
     address to,
@@ -319,7 +319,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     vm.mockCallRevert(
       rwaATokenInfo.rwaAToken,
@@ -344,7 +344,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     amount = bound(amount, 1, type(uint128).max);
 
-    test_fuzz_addATokenTransferRole(rwaATokenIndex);
+    test_fuzz_grantATokenTransferRole(rwaATokenIndex);
 
     vm.startPrank(poolAdmin);
     rwaATokenInfo.rwaToken.authorize(from, true);

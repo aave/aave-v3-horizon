@@ -8,18 +8,18 @@ pragma solidity ^0.8.0;
  */
 interface IRwaATokenManager {
   /**
-   * @dev Adds a new admin as RWA aToken transfer admin
+   * @dev Grants authorized transfer admin role for an RWA aToken to an address
    * @param aTokenAddress The address of the RWA aToken
    * @param admin The address of the new RWA aToken transfer admin
    */
-  function addATokenTransferRole(address aTokenAddress, address admin) external;
+  function grantATokenTransferRole(address aTokenAddress, address admin) external;
 
   /**
-   * @dev Removes an RWA aToken transfer admin
+   * @dev Revokes the authorized transfer admin role for an RWA aToken from an address
    * @param aTokenAddress The address of the RWA aToken
-   * @param admin The address of the RWA aToken transfer admin to remove
+   * @param admin The address of the RWA aToken transfer admin to be revoked
    */
-  function removeATokenTransferRole(address aTokenAddress, address admin) external;
+  function revokeATokenTransferRole(address aTokenAddress, address admin) external;
 
   /**
    * @dev Performs an authorized transfer of RWA aTokens from one address to another

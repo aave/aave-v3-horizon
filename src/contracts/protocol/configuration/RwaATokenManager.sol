@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
-import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol';
 
 /**
  * @title RwaATokenManager
@@ -25,12 +25,12 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   /// @inheritdoc IRwaATokenManager
-  function addATokenTransferRole(address aTokenAddress, address admin) external override {
+  function grantATokenTransferRole(address aTokenAddress, address admin) external override {
     grantRole(getATokenTransferRole(aTokenAddress), admin);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function removeATokenTransferRole(address aTokenAddress, address admin) external override {
+  function revokeATokenTransferRole(address aTokenAddress, address admin) external override {
     revokeRole(getATokenTransferRole(aTokenAddress), admin);
   }
 
