@@ -15,7 +15,7 @@ interface IRwaATokenManager {
   function addATokenTransferRole(address aTokenAddress, address admin) external;
 
   /**
-   * @dev Removes a RWA aToken transfer admin
+   * @dev Removes an RWA aToken transfer admin
    * @param aTokenAddress The address of the RWA aToken
    * @param admin The address of the RWA aToken transfer admin to remove
    */
