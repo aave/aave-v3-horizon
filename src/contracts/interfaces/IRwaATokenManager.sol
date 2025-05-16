@@ -8,9 +8,9 @@ pragma solidity ^0.8.0;
  */
 interface IRwaATokenManager {
   /**
-   * @dev Grants authorized transfer role for an RWA aToken to an account
+   * @notice Grants the authorized transfer role for a specific RWA aToken to a designated account.
    * @param aTokenAddress The address of the RWA aToken
-   * @param account The address of the new RWA aToken transfer role holder
+   * @param account The address of the account to which permission is granted
    */
   function grantAuthorizedTransferRole(address aTokenAddress, address account) external;
 
