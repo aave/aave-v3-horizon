@@ -2,8 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {IAccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
+import {IERC20} from 'src/contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
+import {IPool} from 'src/contracts/interfaces/IPool.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {stdError} from 'forge-std/Test.sol';
 import {Vm} from 'forge-std/Vm.sol';
@@ -329,7 +331,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
   }
 
-  function test_transferRwaAToken(
+  function test_fuzz_transferRwaAToken(
     uint256 rwaATokenIndex,
     address from,
     address to,
@@ -340,6 +342,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     vm.assume(from != report.poolAddressesProvider); // otherwise the pool proxy will not fallback);
     vm.assume(from != address(rwaATokenInfo.rwaToken) && from != rwaATokenInfo.rwaAToken);
+    vm.assume(from != to);
 
     amount = bound(amount, 1, type(uint128).max);
 
@@ -355,15 +358,26 @@ contract RwaATokenManagerTest is TestnetProcedures {
     contracts.poolProxy.supply(address(rwaATokenInfo.rwaToken), amount, from, 0);
     vm.stopPrank();
 
-    assertEq(TestnetRWAERC20(rwaATokenInfo.rwaAToken).balanceOf(from), amount);
-    assertEq(TestnetRWAERC20(rwaATokenInfo.rwaAToken).balanceOf(to), 0);
+    uint256 fromBalanceBefore = IERC20(rwaATokenInfo.rwaAToken).balanceOf(from);
+    uint256 toBalanceBefore = IERC20(rwaATokenInfo.rwaAToken).balanceOf(to);
+
+    assertEq(fromBalanceBefore, amount);
+    assertEq(toBalanceBefore, 0);
+
+    vm.expectCall(
+      report.poolProxy,
+      abi.encodeCall(
+        IPool.finalizeTransfer,
+        (address(rwaATokenInfo.rwaToken), from, to, amount, fromBalanceBefore, toBalanceBefore)
+      )
+    );
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
     bool success = rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
 
     assertTrue(success);
 
-    assertEq(TestnetRWAERC20(rwaATokenInfo.rwaAToken).balanceOf(from), 0);
-    assertEq(TestnetRWAERC20(rwaATokenInfo.rwaAToken).balanceOf(to), amount);
+    assertEq(IERC20(rwaATokenInfo.rwaAToken).balanceOf(from), 0);
+    assertEq(IERC20(rwaATokenInfo.rwaAToken).balanceOf(to), amount);
   }
 }

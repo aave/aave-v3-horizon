@@ -42,7 +42,10 @@ interface IRwaATokenManager {
    * @param account The address to check
    * @return True if the given address has the RWA aToken transfer role, false otherwise
    */
-  function hasATokenTransferRole(address aTokenAddress, address account) external view returns (bool);
+  function hasATokenTransferRole(
+    address aTokenAddress,
+    address account
+  ) external view returns (bool);
 
   /**
    * @notice Returns the identifier of the AuthorizedATokenTransfer role
