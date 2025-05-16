@@ -12,7 +12,7 @@ import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
   struct RwaATokenInfo {
-    address rwaToken;
+    TestnetRWAERC20 rwaToken;
     address rwaAToken;
     address rwaATokenAdmin;
   }
@@ -36,21 +36,21 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: tokenList.buidl,
+        rwaToken: TestnetRWAERC20(tokenList.buidl),
         rwaAToken: rwaATokenList.aBuidl,
         rwaATokenAdmin: aBuidlAdmin
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: tokenList.ustb,
+        rwaToken: TestnetRWAERC20(tokenList.ustb),
         rwaAToken: rwaATokenList.aUstb,
         rwaATokenAdmin: aUstbAdmin
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
-        rwaToken: tokenList.wtgxx,
+        rwaToken: TestnetRWAERC20(tokenList.wtgxx),
         rwaAToken: rwaATokenList.aWtgxx,
         rwaATokenAdmin: aWtgxxAdmin
       })
@@ -130,6 +130,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.addATokenTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
 
+    // assert no event was emitted (since role was already granted)
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 0);
   }
@@ -197,11 +198,12 @@ contract RwaATokenManagerTest is TestnetProcedures {
       rwaATokenInfo.rwaATokenAdmin
     );
 
+    // assert no event was emitted (since role was already revoked)
     Vm.Log[] memory entries = vm.getRecordedLogs();
     assertEq(entries.length, 0);
   }
 
-  function test_fuzz_hasATokenTransferRole_True(uint256 rwaATokenIndex) public {
+  function test_fuzz_hasATokenTransferRole_true(uint256 rwaATokenIndex) public {
     uint256 rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
@@ -220,7 +222,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   function test_fuzz_hasATokenTransfer_False_Scenario() public {
     address aTokenAddress = rwaATokenInfos[0].rwaAToken;
 
-    test_fuzz_hasATokenTransferRole_True(0);
+    test_fuzz_hasATokenTransferRole_true(0);
     test_fuzz_hasATokenTransferRole_False(aTokenAddress, poolAdmin);
     test_fuzz_hasATokenTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
     test_fuzz_hasATokenTransferRole_False(aTokenAddress, rwaATokenInfos[2].rwaATokenAdmin);
@@ -345,13 +347,13 @@ contract RwaATokenManagerTest is TestnetProcedures {
     test_fuzz_addATokenTransferRole(rwaATokenIndex);
 
     vm.startPrank(poolAdmin);
-    TestnetRWAERC20(rwaATokenInfo.rwaToken).authorize(from, true);
-    TestnetRWAERC20(rwaATokenInfo.rwaToken).mint(from, amount);
+    rwaATokenInfo.rwaToken.authorize(from, true);
+    rwaATokenInfo.rwaToken.mint(from, amount);
     vm.stopPrank();
 
     vm.startPrank(from);
-    TestnetRWAERC20(rwaATokenInfo.rwaToken).approve(report.poolProxy, amount);
-    contracts.poolProxy.supply(rwaATokenInfo.rwaToken, amount, from, 0);
+    rwaATokenInfo.rwaToken.approve(report.poolProxy, amount);
+    contracts.poolProxy.supply(address(rwaATokenInfo.rwaToken), amount, from, 0);
     vm.stopPrank();
 
     assertEq(TestnetRWAERC20(rwaATokenInfo.rwaAToken).balanceOf(from), amount);
