@@ -15,6 +15,10 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
   bytes32 public constant override AUTHORIZED_TRANSFER_ROLE = keccak256('AUTHORIZED_TRANSFER');
 
+  /**
+   * @dev Constructor
+   * @param owner The address of the default admin role
+   */
   constructor(address owner) {
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
   }
