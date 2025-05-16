@@ -64,7 +64,7 @@ interface IRwaAToken {
   function transferOnLiquidation(address from, address to, uint256 value) external;
 
   /**
-   * @notice Transfers are not supported for RWA aTokens.
+   * @notice Transfers of the underlying asset are not supported for RWA aTokens.
    * @dev Reverts if called.
    */
   function transferUnderlyingTo(address target, uint256 amount) external;
