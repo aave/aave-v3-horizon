@@ -13,8 +13,7 @@ import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol'
  */
 contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
-  bytes32 public constant override AUTHORIZED_TRANSFER_ROLE =
-    keccak256('AUTHORIZED_TRANSFER_ADMIN');
+  bytes32 public constant override AUTHORIZED_TRANSFER_ROLE = keccak256('AUTHORIZED_TRANSFER');
 
   constructor(address owner) {
     _setupRole(DEFAULT_ADMIN_ROLE, owner);

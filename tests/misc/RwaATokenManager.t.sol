@@ -60,7 +60,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
   }
 
   function test_authorizedATokenTransferRole() public view {
-    assertEq(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), keccak256('AUTHORIZED_TRANSFER_ADMIN'));
+    assertEq(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), keccak256('AUTHORIZED_TRANSFER'));
   }
 
   function test_fuzz_getAuthorizedTransferRole(address aTokenAddress) public view {
