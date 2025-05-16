@@ -8,46 +8,41 @@ pragma solidity ^0.8.0;
  */
 interface IRwaATokenManager {
   /**
-   * @dev Grants authorized transfer admin role for an RWA aToken to an address
+   * @dev Grants authorized transfer role for an RWA aToken to an address
    * @param aTokenAddress The address of the RWA aToken
-   * @param admin The address of the new RWA aToken transfer admin
+   * @param account The address of the new RWA aToken transfer role holder
    */
-  function grantATokenTransferRole(address aTokenAddress, address admin) external;
+  function grantATokenTransferRole(address aTokenAddress, address account) external;
 
   /**
-   * @dev Revokes the authorized transfer admin role for an RWA aToken from an address
+   * @dev Revokes the authorized transfer role for an RWA aToken from an address
    * @param aTokenAddress The address of the RWA aToken
-   * @param admin The address of the RWA aToken transfer admin to be revoked
+   * @param account The address of the RWA aToken transfer role holder to be revoked
    */
-  function revokeATokenTransferRole(address aTokenAddress, address admin) external;
+  function revokeATokenTransferRole(address aTokenAddress, address account) external;
 
   /**
    * @dev Performs an authorized transfer of RWA aTokens from one address to another
-   * @param rwaATokenAddress The address of the RWA aToken
+   * @param aTokenAddress The address of the RWA aToken
    * @param from The address from which the RWA aTokens are transferred
    * @param to The address that will receive the RWA aTokens
    * @param amount The amount of RWA aTokens to transfer
    * @return True if the transfer was successful, false otherwise
    */
   function transferRwaAToken(
-    address rwaATokenAddress,
+    address aTokenAddress,
     address from,
     address to,
     uint256 amount
   ) external returns (bool);
 
   /**
-   * @dev The owner of the RWA aToken manager.
-   */
-  function OWNER() external view returns (address);
-
-  /**
-   * @dev Checks if an address has the RWA aToken transfer admin role
+   * @dev Checks if an address has the RWA aToken transfer role
    * @param aTokenAddress The address of the RWA aToken
-   * @param admin The address to check
-   * @return True if the given address has the RWA aToken transfer admin role, false otherwise
+   * @param account The address to check
+   * @return True if the given address has the RWA aToken transfer role, false otherwise
    */
-  function hasATokenTransferRole(address aTokenAddress, address admin) external view returns (bool);
+  function hasATokenTransferRole(address aTokenAddress, address account) external view returns (bool);
 
   /**
    * @notice Returns the identifier of the AuthorizedATokenTransfer role

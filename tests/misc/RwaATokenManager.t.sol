@@ -57,10 +57,6 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
   }
 
-  function test_owner() public {
-    assertEq(rwaATokenManager.OWNER(), rwaATokenManagerOwner);
-  }
-
   function test_authorizedATokenTransferRole() public {
     assertEq(
       rwaATokenManager.AUTHORIZED_ATOKEN_TRANSFER_ROLE(),

@@ -1,55 +1,51 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol';
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
+import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol';
 
 /**
  * @title RwaATokenManager
  * @author Aave
- * @notice Implementation of the RWA aToken manager
- * @dev Registry for RWA aTokens permissions
+ * @notice Implementation of the RWA aToken Manager, allowing transfer permissions to be granted individually for each RWA aToken.
+ * @dev Requires the AuthorizedATokenTransferAdmin role on the Aave V3 Pool.
  */
 contract RwaATokenManager is AccessControl, IRwaATokenManager {
-  /// @inheritdoc IRwaATokenManager
-  address public immutable override OWNER;
-
   /// @inheritdoc IRwaATokenManager
   bytes32 public constant override AUTHORIZED_ATOKEN_TRANSFER_ROLE =
     keccak256('AUTHORIZED_ATOKEN_TRANSFER_ROLE');
 
   constructor(address owner) {
-    OWNER = owner;
-    _setupRole(DEFAULT_ADMIN_ROLE, OWNER);
+    _setupRole(DEFAULT_ADMIN_ROLE, owner);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function grantATokenTransferRole(address aTokenAddress, address admin) external override {
-    grantRole(getATokenTransferRole(aTokenAddress), admin);
+  function grantATokenTransferRole(address aTokenAddress, address account) external override {
+    grantRole(getATokenTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function revokeATokenTransferRole(address aTokenAddress, address admin) external override {
-    revokeRole(getATokenTransferRole(aTokenAddress), admin);
+  function revokeATokenTransferRole(address aTokenAddress, address account) external override {
+    revokeRole(getATokenTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
   function transferRwaAToken(
-    address rwaATokenAddress,
+    address aTokenAddress,
     address from,
     address to,
     uint256 amount
-  ) external override onlyRole(getATokenTransferRole(rwaATokenAddress)) returns (bool) {
-    return IRwaAToken(rwaATokenAddress).authorizedTransfer(from, to, amount);
+  ) external override onlyRole(getATokenTransferRole(aTokenAddress)) returns (bool) {
+    return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
   }
 
   /// @inheritdoc IRwaATokenManager
   function hasATokenTransferRole(
     address aTokenAddress,
-    address admin
+    address account
   ) external view override returns (bool) {
-    return hasRole(getATokenTransferRole(aTokenAddress), admin);
+    return hasRole(getATokenTransferRole(aTokenAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
