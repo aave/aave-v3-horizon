@@ -122,7 +122,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     rwaATokenManager.addATokenTransferRole(rwaATokenInfo.rwaAToken, rwaATokenInfo.rwaATokenAdmin);
   }
 
-  function test_addATokenTransferRole_Twice() public {
+  function test_addATokenTransferRole_twice() public {
     test_fuzz_addATokenTransferRole(0);
 
     vm.recordLogs();
