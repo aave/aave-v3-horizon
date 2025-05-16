@@ -9,8 +9,7 @@ import {IRwaATokenManager} from 'src/contracts/interfaces/IRwaATokenManager.sol'
  * @title RwaATokenManager
  * @author Aave
  * @notice Implementation of the RWA aToken manager
- * @dev Registry for RWA aTokens permissions and the authorized address to perform
- * @dev authorized transfers of RWA aTokens.
+ * @dev Registry for RWA aTokens permissions
  */
 contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
