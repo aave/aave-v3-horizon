@@ -15,6 +15,8 @@ import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/A
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
 import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
+import {RwaATokenInstance} from 'src/contracts/instances/RwaATokenInstance.sol';
+import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
 import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
 import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
@@ -489,5 +491,83 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
           variableRateSlope2: 60_00
         })
       );
+  }
+
+  function _setVersion(address aToken, uint256 revisionPlaceholder, uint256 newRevision) internal {
+    bytes memory bytecode = aToken.code;
+    for (uint256 i = 0; i <= bytecode.length - 32; i++) {
+      bytes32 chunk;
+      assembly {
+        chunk := mload(add(add(bytecode, 0x20), i))
+      }
+
+      if (chunk == bytes32(revisionPlaceholder)) {
+        assembly {
+          mstore(add(add(bytecode, 0x20), i), newRevision)
+        }
+      }
+    }
+
+    vm.etch(aToken, bytecode);
+  }
+
+  function _upgradeToStandardAToken(address asset, string memory symbol, uint256 version) internal {
+    MockATokenInstance mockAToken = new MockATokenInstance(IPool(report.poolProxy));
+    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), version);
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
+  }
+
+  function _upgradeToRwaAToken(address asset, string memory symbol, uint256 version) internal {
+    MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(IPool(report.poolProxy));
+    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), version);
+
+    vm.startPrank(poolAdmin);
+    contracts.poolConfiguratorProxy.updateAToken(
+      ConfiguratorInputTypes.UpdateATokenInput({
+        asset: asset,
+        treasury: report.treasury,
+        incentivesController: report.rewardsControllerProxy,
+        name: symbol,
+        symbol: symbol,
+        implementation: address(mockAToken),
+        params: abi.encode()
+      })
+    );
+    vm.stopPrank();
+  }
+}
+
+contract MockATokenInstance is ATokenInstance {
+  uint256 public constant ATOKEN_REVISION_PLACEHOLDER =
+    0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef;
+
+  constructor(IPool pool) ATokenInstance(pool) {}
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return ATOKEN_REVISION_PLACEHOLDER;
+  }
+}
+
+contract MockRwaATokenInstance is RwaATokenInstance {
+  uint256 public constant ATOKEN_REVISION_PLACEHOLDER =
+    0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef;
+
+  constructor(IPool pool) RwaATokenInstance(pool) {}
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return ATOKEN_REVISION_PLACEHOLDER;
   }
 }

@@ -8,7 +8,7 @@ import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
-import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
+import {TestnetProcedures, MockATokenInstance, MockRwaATokenInstance} from 'tests/utils/TestnetProcedures.sol';
 
 contract PoolRwaTargetedTests is TestnetProcedures {
   function setUp() public virtual {
@@ -25,7 +25,7 @@ contract PoolRwaTargetedTests is TestnetProcedures {
 
   function test_reverts_mintToTreasury() public {
     // upgrade aBuidl to the standard aToken implementation, to be able to borrow
-    _upgradeToStandardAToken();
+    _upgradeToStandardAToken(tokenList.buidl, 'aBuidl', 2);
 
     (, , address varDebtBuidl) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
@@ -43,62 +43,12 @@ contract PoolRwaTargetedTests is TestnetProcedures {
     assets[0] = tokenList.buidl;
 
     // upgrade aBuidl to the rwa aToken implementation, to test that mintToTreasury reverts
-    _upgradeToRwaAToken();
+    _upgradeToRwaAToken(tokenList.buidl, 'aBuidl', 3);
 
     // expect call by matching the selector only
     vm.expectCall(rwaATokenList.aBuidl, abi.encodeWithSelector(IRwaAToken.mintToTreasury.selector));
 
     vm.expectRevert(bytes(Errors.OPERATION_NOT_SUPPORTED));
     contracts.poolProxy.mintToTreasury(assets);
-  }
-
-  // upgrade aBuidl to the rwa aToken implementation
-  function _upgradeToRwaAToken() internal {
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateAToken(
-      ConfiguratorInputTypes.UpdateATokenInput({
-        asset: tokenList.buidl,
-        treasury: report.treasury,
-        incentivesController: report.rewardsControllerProxy,
-        name: 'aBuidl',
-        symbol: 'aBuidl',
-        implementation: address(new MockRwaATokenInstance(IPool(report.poolProxy))),
-        params: abi.encode()
-      })
-    );
-    vm.stopPrank();
-  }
-
-  // upgrade aBuidl to the standard aToken implementation
-  function _upgradeToStandardAToken() internal {
-    vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.updateAToken(
-      ConfiguratorInputTypes.UpdateATokenInput({
-        asset: tokenList.buidl,
-        treasury: report.treasury,
-        incentivesController: report.rewardsControllerProxy,
-        name: 'aBuidl',
-        symbol: 'aBuidl',
-        implementation: address(new MockATokenInstance(IPool(report.poolProxy))),
-        params: abi.encode()
-      })
-    );
-    vm.stopPrank();
-  }
-}
-
-contract MockATokenInstance is ATokenInstance {
-  constructor(IPool pool) ATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return 2;
-  }
-}
-
-contract MockRwaATokenInstance is RwaATokenInstance {
-  constructor(IPool pool) RwaATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return 3;
   }
 }
