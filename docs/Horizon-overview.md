@@ -4,7 +4,7 @@
 - Horizon is an initiative by Aave Labs focused on creating Real-World Asset (RWA) products tailored for institutions
 - Horizon will launch a licensed, separate instance of the Aave Protocol (initially a fork of v3.3) to accommodate regulatory compliance requirements associated with RWA products
 - Horizon Instance will have a dual role setup with responsibilities split between Aave DAO (Operational role) and Aave Labs (Executive role) 
-  - Operational: ownership and upgrade of the contracts, execution of governance proposals
+  - Operational: ownership of the contracts, execution of governance proposals
   - Executive: risk management, assets listing, and general configuration
  
 ## Overview
@@ -22,35 +22,34 @@
 
 ## Expected Code Changes
 - new RWA-specific aToken instance contract (`RwaAToken`)
-  - prevent internal/external transfers and allowance-related methods
-  - authorized ATokenAdmin role which can transfer on behalf of users (`ATOKEN_ADMIN_ROLE`)
-  - prevent liquidation into aTokens (only underlying RWA Token collateral can be liquidated)
-  - Prevent supplying `onBehalfOf`
+  - prevents internal/external transfers and allowance-related methods for users
+  - creates authorized ATokenAdmin role which can transfer aTokens on behalf of users (`ATOKEN_ADMIN_ROLE`)
+  - prevents liquidation into aTokens (only underlying RWA Token collateral can be liquidated)
+  - prevents supplying `onBehalfOf` other users
 - `RwaATokenManager` contract
-  - external aToken manager smart contract to encode granular aToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE`)
-- Miscellaneous
-  - additional errors codes, tests
-  - associated interfaces
+  - external aToken manager smart contract to encode granular authorized aToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE`)
+- miscellaneous
+  - additional errors codes, associated interfaces
+  - additional test suites 
 
 ## Detailed Functionality Changes
 
 ### RWA Asset (Collateral Asset)
 - aTokens
   - users cannot transfer their own aTokens
-  - new `ATOKEN_ADMIN` can forcibly transfer others users' aToken without needing approval (but can still only transfer an aToken amount up to healthy health factor)
+  - new `ATOKEN_ADMIN` can forcibly transfer users' aToken without needing approval (but can still only transfer an aToken amount up to healthy health factor)
 - Supply
-  - can only be supplied by permissioned users whitelisted to hold RWA Token (will rely on underlying RWA asset-level permissioning)
+  - can only be supplied by permissioned users allowlisted to hold RWA Token (will rely on underlying RWA asset-level permissioning)
   - can only be supplied as collateral
   - cannot supply `onBehalfOf` (to align with restricting aToken transfer)
 - Borrow
-  - cannot be borrowed or flash borrowed 
+  - cannot be borrowed or flashborrowed 
 - Repay
-  - cannot be borrowed or flash borrowed 
+  - cannot be borrowed or flashborrowed 
 - Liquidation
-  - cannot be borrowed or flash borrowed (n/a as it cannot be borrowed)
-  - cannot liquidate to `receiveAToken` (align with restricting aToken transfer)
-  - liquidators are implicitly permissioned to those already whitelisted to receive underlying RWA asset
-  - technically any user whitelisted to hold RWA asset can liquidate; any further permissioning to a smaller subset of liquidators will be governed off-chain
+  - cannot liquidate to `receiveAToken` (aligns with restricting aToken transfer)
+  - liquidators are implicitly permissioned to those already allowlisted to receive underlying RWA asset
+  - technically any user allowlisted to hold RWA token asset can liquidate; any further permissioning to a smaller subset of liquidators will be governed off-chain
 
 ### Stablecoins (Borrowable Asset)
 - aTokens
@@ -62,21 +61,20 @@
 - Withdraw
   - same as v3.3
 - Borrow
-  - can be borrowed (implicitly permissioned as only users that have supplied RWA assets can borrow stablecoins)
+  - can be borrowed (implicitly permissioned, because only users that have supplied RWA assets can borrow stablecoins)
   - can be flashborrowed (there will also be authorized flashborrowers)
 - Repay
   - same as v3.3
 - Liquidation
-  - n/a as it will only be repaid in a liquidation but never used as collateral asset
+  - n/a - it will only be repaid in a liquidation but never used as collateral asset
 
-## Edge Cases of note:
+## Edge Cases of Note
 User has a borrow position but loses private keys to wallet. This will need to be migrated to a new wallet.
 Issuers will resolve using: 
 - flashborrow to borrow enough stablecoin to repay a user's debt
 - repay `onBehalfOf` to repay debt on behalf of user
 - `ATOKEN_ADMIN` to move RWA aToken collateral to new wallet
-- open a new borrow position 
-
+- open a new borrow position on new wallet 
 
 ## References
 - https://governance.aave.com/t/arfc-horizon-s-rwa-instance/21898
