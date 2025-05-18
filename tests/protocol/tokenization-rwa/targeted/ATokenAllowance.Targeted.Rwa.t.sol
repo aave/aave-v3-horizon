@@ -5,7 +5,7 @@ import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
-contract RwaATokenAllowanceTests is TestnetProcedures {
+contract ATokenAllowanceTargetedRwaTests is TestnetProcedures {
   RwaAToken public aBuidl;
 
   function setUp() public {

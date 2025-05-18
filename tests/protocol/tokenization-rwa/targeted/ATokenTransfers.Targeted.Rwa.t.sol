@@ -8,7 +8,7 @@ import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 import {stdError} from 'forge-std/Test.sol';
 
-contract RwaATokenTransferTests is TestnetProcedures {
+contract ATokenTransferTargetedRwaTests is TestnetProcedures {
   RwaAToken public aBuidl;
 
   function setUp() public {
