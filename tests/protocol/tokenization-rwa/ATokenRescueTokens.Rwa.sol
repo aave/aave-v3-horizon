@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import {ATokenRescueTokensTests} from 'tests/protocol/tokenization/ATokenRescueTokens.sol';
 
 contract ATokenRescueTokensRwaTests is ATokenRescueTokensTests {
-    function setUp() public override {
-        super.setUp();
-        _upgradeToRwaAToken(tokenList.usdx, 'aUSDX', 2);
-        _upgradeToRwaAToken(tokenList.wbtc, 'aWBTC', 2);
-    }
+  function setUp() public override {
+    super.setUp();
+    _upgradeToRwaAToken(tokenList.usdx, 'aUSDX', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWBTC', 2);
+  }
 }
