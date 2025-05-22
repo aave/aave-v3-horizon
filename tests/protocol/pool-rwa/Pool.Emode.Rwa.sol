@@ -6,7 +6,7 @@ import {PoolEModeTests} from 'tests/protocol/pool/Pool.Emode.sol';
 contract PoolEModeRwaTests is PoolEModeTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 
   function test_liquidations_shouldApplyEModeLBForEmodeAssets(uint256 amount) public override {
@@ -17,8 +17,8 @@ contract PoolEModeRwaTests is PoolEModeTests {
   }
 
   function test_setUserEMode_shouldAllowSwitchingIfNoBorrows(uint8 eMode) public override {
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc', 2);
-    _upgradeToRwaAToken(tokenList.weth, 'aWeth', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
+    _upgradeToRwaAToken(tokenList.weth, 'aWeth');
     super.test_setUserEMode_shouldAllowSwitchingIfNoBorrows(eMode);
   }
 }

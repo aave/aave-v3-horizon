@@ -18,15 +18,15 @@ import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol
 import {RwaATokenInstance} from 'src/contracts/instances/RwaATokenInstance.sol';
 import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
 import {PoolConfigurator} from 'src/contracts/protocol/pool/PoolConfigurator.sol';
+import {VersionedInitializable} from 'src/contracts/misc/aave-upgradeability/VersionedInitializable.sol';
 import {DefaultReserveInterestRateStrategyV2} from 'src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {RwaATokenManager} from 'src/contracts/misc/RwaATokenManager.sol';
+import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {ReserveConfiguration} from 'src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
-
-import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -511,9 +511,17 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.etch(aToken, bytecode);
   }
 
-  function _upgradeToStandardAToken(address asset, string memory symbol, uint256 version) internal {
+  function _upgradeToStandardAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision;
+    try MockRwaATokenInstance(aToken).getMockRevision() returns (uint256 revision) {
+      currentRevision = revision;
+    } catch {
+      currentRevision = 1;
+    }
+
     MockATokenInstance mockAToken = new MockATokenInstance(IPool(report.poolProxy));
-    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), version);
+    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), currentRevision + 1);
 
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.updateAToken(
@@ -530,9 +538,17 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
     vm.stopPrank();
   }
 
-  function _upgradeToRwaAToken(address asset, string memory symbol, uint256 version) internal {
+  function _upgradeToRwaAToken(address asset, string memory symbol) internal {
+    (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
+    uint256 currentRevision;
+    try MockRwaATokenInstance(aToken).getMockRevision() returns (uint256 revision) {
+      currentRevision = revision;
+    } catch {
+      currentRevision = 1;
+    }
+
     MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(IPool(report.poolProxy));
-    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), version);
+    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), currentRevision + 1);
 
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.updateAToken(
@@ -559,6 +575,10 @@ contract MockATokenInstance is ATokenInstance {
   function getRevision() internal pure virtual override returns (uint256) {
     return ATOKEN_REVISION_PLACEHOLDER;
   }
+
+  function getMockRevision() external pure returns (uint256) {
+    return getRevision();
+  }
 }
 
 contract MockRwaATokenInstance is RwaATokenInstance {
@@ -569,5 +589,9 @@ contract MockRwaATokenInstance is RwaATokenInstance {
 
   function getRevision() internal pure virtual override returns (uint256) {
     return ATOKEN_REVISION_PLACEHOLDER;
+  }
+
+  function getMockRevision() external pure returns (uint256) {
+    return getRevision();
   }
 }

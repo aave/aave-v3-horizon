@@ -25,7 +25,7 @@ contract PoolRwaTargetedTests is TestnetProcedures {
 
   function test_reverts_mintToTreasury() public {
     // upgrade aBuidl to the standard aToken implementation, to be able to borrow
-    _upgradeToStandardAToken(tokenList.buidl, 'aBuidl', 2);
+    _upgradeToStandardAToken(tokenList.buidl, 'aBuidl');
 
     (, , address varDebtBuidl) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl
@@ -43,7 +43,7 @@ contract PoolRwaTargetedTests is TestnetProcedures {
     assets[0] = tokenList.buidl;
 
     // upgrade aBuidl to the rwa aToken implementation, to test that mintToTreasury reverts
-    _upgradeToRwaAToken(tokenList.buidl, 'aBuidl', 3);
+    _upgradeToRwaAToken(tokenList.buidl, 'aBuidl');
 
     // expect call by matching the selector only
     vm.expectCall(rwaATokenList.aBuidl, abi.encodeWithSelector(IRwaAToken.mintToTreasury.selector));

@@ -6,6 +6,6 @@ import {ATokenRepayTests} from 'tests/protocol/tokenization/ATokenRepay.t.sol';
 contract ATokenRepayRwaTests is ATokenRepayTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
   }
 }

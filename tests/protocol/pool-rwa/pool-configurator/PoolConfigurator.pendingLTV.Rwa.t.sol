@@ -6,6 +6,6 @@ import {PoolConfiguratorPendingLtvTests} from 'tests/protocol/pool/pool-configur
 contract PoolConfiguratorPendingLtvRwaTests is PoolConfiguratorPendingLtvTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 }

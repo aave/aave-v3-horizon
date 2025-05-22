@@ -6,7 +6,7 @@ import {ATokenRescueTokensTests} from 'tests/protocol/tokenization/ATokenRescueT
 contract ATokenRescueTokensRwaTests is ATokenRescueTokensTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUSDX', 2);
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWBTC', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUSDX');
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWBTC');
   }
 }

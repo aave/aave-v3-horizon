@@ -9,12 +9,12 @@ contract ATokenEventsRwaTests is ATokenEventsTests {
   }
 
   function test_atoken_burnEvents_singleWithdraw_noInterests() public override {
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_atoken_burnEvents_singleWithdraw_noInterests();
   }
 
   function test_atoken_mintEvents_firstSupply() public override {
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_atoken_mintEvents_firstSupply();
   }
 }

@@ -6,18 +6,26 @@ import {VariableDebtTokenEventsTests} from 'tests/protocol/tokenization/Variable
 contract VariableDebtTokenEventsRwaTests is VariableDebtTokenEventsTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 3);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
-  function test_balanceOf() public override {}
+  function test_balanceOf() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
-  function test_scaledBalanceOf() public override {}
+  function test_scaledBalanceOf() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
-  function test_totalScaledSupply() public override {}
+  function test_totalScaledSupply() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
-  function test_totalSupply() public override {}
+  function test_totalSupply() public override {
+    // Intentionally left blank
+  }
 }

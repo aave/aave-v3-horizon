@@ -6,6 +6,6 @@ import {PoolConfiguratorLiquidationFeeTests} from 'tests/protocol/pool/pool-conf
 contract PoolConfiguratorLiquidationFeeRwaTests is PoolConfiguratorLiquidationFeeTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 }

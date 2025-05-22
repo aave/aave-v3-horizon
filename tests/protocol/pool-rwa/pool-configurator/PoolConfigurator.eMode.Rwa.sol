@@ -6,7 +6,7 @@ import {PoolConfiguratorEModeConfigTests} from 'tests/protocol/pool/pool-configu
 contract PoolConfiguratorEModeConfigRwaTests is PoolConfiguratorEModeConfigTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc', 2);
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 }

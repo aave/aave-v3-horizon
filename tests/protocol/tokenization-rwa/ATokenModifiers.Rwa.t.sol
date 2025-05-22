@@ -6,12 +6,16 @@ import {ATokenModifiersTests} from 'tests/protocol/tokenization/ATokenModifiers.
 contract ATokenModifiersRwaTests is ATokenModifiersTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 
   /// @dev skipping this test, transfers on liquidation are not supported for RWA aTokens
-  function test_revert_notAdmin_transferOnLiquidation() public override {}
+  function test_revert_notAdmin_transferOnLiquidation() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, transfers of underlying are not supported for RWA aTokens
-  function test_revert_notAdmin_transferUnderlyingTo() public override {}
+  function test_revert_notAdmin_transferUnderlyingTo() public override {
+    // Intentionally left blank
+  }
 }

@@ -6,36 +6,56 @@ import {ATokenEdgeCasesTests} from 'tests/protocol/tokenization/ATokenEdgeCases.
 contract ATokenEdgeCasesRwaTests is ATokenEdgeCasesTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 
   /// @dev skipping this test, approvals for not supported for RWA aTokens
-  function testApprove() public override {}
+  function testApprove() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, approvals for not supported for RWA aTokens
-  function testApproveMax() public override {}
+  function testApproveMax() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, approvals are not supported for RWA aTokens
-  function testApproveWithZeroAddressSpender() public override {}
+  function testApproveWithZeroAddressSpender() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, allowances are not supported for RWA aTokens
-  function testDecreaseAllowance() public override {}
+  function testDecreaseAllowance() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, allowances are not supported for RWA aTokens
-  function testIncreaseAllowance() public override {}
+  function testIncreaseAllowance() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, allowances are not supported for RWA aTokens
-  function testIncreaseAllowanceFromZero() public override {}
+  function testIncreaseAllowanceFromZero() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, transfers are not supported for RWA aTokens
-  function testTransferFromZeroAmount() public override {}
+  function testTransferFromZeroAmount() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, mints to treasury are not supported for RWA aTokens
-  function testMintToTreasury_amount_zero() public override {}
+  function testMintToTreasury_amount_zero() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this tests, transfers are not supported for RWA aTokens
-  function test_transferFrom_zeroAddress_origin() public override {}
+  function test_transferFrom_zeroAddress_origin() public override {
+    // Intentionally left blank
+  }
 
   /// @dev skipping this test, transfers are not supported for RWA aTokens
-  function test_transfer_amount_MAX_UINT_128() public override {}
+  function test_transfer_amount_MAX_UINT_128() public override {
+    // Intentionally left blank
+  }
 }

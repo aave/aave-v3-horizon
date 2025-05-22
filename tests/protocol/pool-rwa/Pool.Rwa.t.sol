@@ -6,6 +6,6 @@ import {PoolTests} from 'tests/protocol/pool/Pool.t.sol';
 contract PoolRwaTests is PoolTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
   }
 }

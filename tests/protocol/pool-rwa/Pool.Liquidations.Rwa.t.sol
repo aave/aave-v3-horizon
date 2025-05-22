@@ -15,7 +15,7 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
 
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc', 2);
+    _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
 
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.wbtc, 0);
@@ -78,7 +78,7 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
   /// @dev overwriting to make wbtc a standard aToken: test is borrowing wbtc
   /// @dev we also need to turn back on the liquidation fees
   function test_liquidate_borrow_burn_multiple_assets_bad_debt() public override {
-    _upgradeToStandardAToken(tokenList.wbtc, 'aWbtc', 3);
+    _upgradeToStandardAToken(tokenList.wbtc, 'aWbtc');
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.wbtc, 10_00);
     super.test_liquidate_borrow_burn_multiple_assets_bad_debt();
@@ -87,7 +87,7 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
   /// @dev overwriting to make wbtc a standard aToken: test is borrowing wbtc
   /// @dev we also need to turn back on the liquidation fees
   function test_liquidate_variable_borrow_repro() public override {
-    _upgradeToStandardAToken(tokenList.wbtc, 'aWbtc', 3);
+    _upgradeToStandardAToken(tokenList.wbtc, 'aWbtc');
     vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.setLiquidationProtocolFee(tokenList.wbtc, 10_00);
     super.test_liquidate_borrow_burn_multiple_assets_bad_debt();
@@ -198,9 +198,13 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
   function test_self_liquidate_isolated_position_shoulEnableCollateralIfIsolatedSupplier()
     public
     override
-  {}
+  {
+    // Intentionally left blank
+  }
 
   /// @dev overwriting to skip: test only applies if receiveAToken is true,
   /// @dev which is not applicable for RWAs
-  function test_self_liquidate_position_shoulKeepCollateralEnabled() public override {}
+  function test_self_liquidate_position_shoulKeepCollateralEnabled() public override {
+    // Intentionally left blank
+  }
 }

@@ -6,6 +6,6 @@ import {PoolConfiguratorACLModifiersTest} from 'tests/protocol/pool/pool-configu
 contract PoolConfiguratorACLModifiersRwaTest is PoolConfiguratorACLModifiersTest {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 }

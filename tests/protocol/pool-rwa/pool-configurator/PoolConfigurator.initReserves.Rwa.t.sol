@@ -6,6 +6,6 @@ import {PoolConfiguratorInitReservesTests} from 'tests/protocol/pool/pool-config
 contract PoolConfiguratorInitReservesRwaTests is PoolConfiguratorInitReservesTests {
   function setUp() public override {
     super.setUp();
-    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx', 2);
+    _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
   }
 }
