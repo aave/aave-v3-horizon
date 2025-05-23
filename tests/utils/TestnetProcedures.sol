@@ -559,12 +559,12 @@ contract MockATokenInstance is ATokenInstance {
     MOCK_REVISION = mockRevision;
   }
 
-  function getRevision() internal pure virtual override returns (uint256) {
-    return _cast(getMockRevision)();
-  }
-
   function getMockRevision() public view returns (uint256) {
     return MOCK_REVISION;
+  }
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return _cast(getMockRevision)();
   }
 
   function _cast(
@@ -583,12 +583,12 @@ contract MockRwaATokenInstance is RwaATokenInstance {
     MOCK_REVISION = mockRevision;
   }
 
-  function getRevision() internal pure virtual override returns (uint256) {
-    return _cast(getMockRevision)();
-  }
-
   function getMockRevision() public view returns (uint256) {
     return MOCK_REVISION;
+  }
+
+  function getRevision() internal pure virtual override returns (uint256) {
+    return _cast(getMockRevision)();
   }
 
   function _cast(
