@@ -493,24 +493,6 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       );
   }
 
-  function _setVersion(address aToken, uint256 revisionPlaceholder, uint256 newRevision) internal {
-    bytes memory bytecode = aToken.code;
-    for (uint256 i = 0; i <= bytecode.length - 32; i++) {
-      bytes32 chunk;
-      assembly {
-        chunk := mload(add(add(bytecode, 0x20), i))
-      }
-
-      if (chunk == bytes32(revisionPlaceholder)) {
-        assembly {
-          mstore(add(add(bytecode, 0x20), i), newRevision)
-        }
-      }
-    }
-
-    vm.etch(aToken, bytecode);
-  }
-
   function _upgradeToStandardAToken(address asset, string memory symbol) internal {
     (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
     uint256 currentRevision;
@@ -520,10 +502,12 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       currentRevision = 1;
     }
 
-    MockATokenInstance mockAToken = new MockATokenInstance(IPool(report.poolProxy));
-    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), currentRevision + 1);
+    MockATokenInstance mockAToken = new MockATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
 
-    vm.startPrank(poolAdmin);
+    vm.prank(poolAdmin);
     contracts.poolConfiguratorProxy.updateAToken(
       ConfiguratorInputTypes.UpdateATokenInput({
         asset: asset,
@@ -547,8 +531,10 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       currentRevision = 1;
     }
 
-    MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(IPool(report.poolProxy));
-    _setVersion(address(mockAToken), mockAToken.ATOKEN_REVISION_PLACEHOLDER(), currentRevision + 1);
+    MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(
+      IPool(report.poolProxy),
+      currentRevision + 1
+    );
 
     vm.startPrank(poolAdmin);
     contracts.poolConfiguratorProxy.updateAToken(
@@ -567,31 +553,49 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 }
 
 contract MockATokenInstance is ATokenInstance {
-  uint256 public constant ATOKEN_REVISION_PLACEHOLDER =
-    0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef;
+  uint256 internal immutable MOCK_REVISION;
 
-  constructor(IPool pool) ATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return ATOKEN_REVISION_PLACEHOLDER;
+  constructor(IPool pool, uint256 mockRevision) ATokenInstance(pool) {
+    MOCK_REVISION = mockRevision;
   }
 
-  function getMockRevision() external pure returns (uint256) {
-    return getRevision();
+  function getRevision() internal pure virtual override returns (uint256) {
+    return _cast(getMockRevision)();
+  }
+
+  function getMockRevision() public view returns (uint256) {
+    return MOCK_REVISION;
+  }
+
+  function _cast(
+    function() view returns (uint256) f
+  ) internal pure returns (function() pure returns (uint256) f2) {
+    assembly {
+      f2 := f
+    }
   }
 }
 
 contract MockRwaATokenInstance is RwaATokenInstance {
-  uint256 public constant ATOKEN_REVISION_PLACEHOLDER =
-    0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef;
+  uint256 internal immutable MOCK_REVISION;
 
-  constructor(IPool pool) RwaATokenInstance(pool) {}
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return ATOKEN_REVISION_PLACEHOLDER;
+  constructor(IPool pool, uint256 mockRevision) RwaATokenInstance(pool) {
+    MOCK_REVISION = mockRevision;
   }
 
-  function getMockRevision() external pure returns (uint256) {
-    return getRevision();
+  function getRevision() internal pure virtual override returns (uint256) {
+    return _cast(getMockRevision)();
+  }
+
+  function getMockRevision() public view returns (uint256) {
+    return MOCK_REVISION;
+  }
+
+  function _cast(
+    function() view returns (uint256) f
+  ) internal pure returns (function() pure returns (uint256) f2) {
+    assembly {
+      f2 := f
+    }
   }
 }
