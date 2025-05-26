@@ -93,61 +93,9 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
     super.test_liquidate_borrow_burn_multiple_assets_bad_debt();
   }
 
-  /// @dev overwriting to make `params.receiveAToken` false
+  /// @dev skipping as it is not applicable for RWAs
   function test_partial_liquidate_atokens_variable_borrow() public override {
-    uint256 amount = 1e8;
-    uint256 borrowAmount = 20500e6;
-    vm.startPrank(alice);
-
-    contracts.poolProxy.supply(tokenList.wbtc, amount, alice, 0);
-    contracts.poolProxy.borrow(tokenList.usdx, borrowAmount, 2, 0, alice);
-    vm.stopPrank();
-
-    LiquidationInput memory params = _loadLiquidationInput(
-      alice,
-      tokenList.wbtc,
-      tokenList.usdx,
-      106e6,
-      tokenList.wbtc,
-      25_00
-    );
-    params.receiveAToken = false;
-
-    (, , address varDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(
-      params.debtAsset
-    );
-    uint256 userDebtBefore = IERC20(varDebtToken).balanceOf(params.user);
-    uint256 liquidatorBalanceBefore;
-    if (params.receiveAToken) {
-      (address atoken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
-        params.collateralAsset
-      );
-      liquidatorBalanceBefore = IERC20(atoken).balanceOf(bob);
-    } else {
-      liquidatorBalanceBefore = IERC20(params.collateralAsset).balanceOf(bob);
-    }
-
-    vm.expectEmit(address(contracts.poolProxy));
-    emit LiquidationLogic.LiquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.actualDebtToLiquidate,
-      params.actualCollateralToLiquidate,
-      bob,
-      params.receiveAToken
-    );
-    // Liquidate
-    vm.prank(bob);
-    contracts.poolProxy.liquidationCall(
-      params.collateralAsset,
-      params.debtAsset,
-      params.user,
-      params.liquidationAmountInput,
-      params.receiveAToken
-    );
-
-    _afterLiquidationChecksVariable(params, bob, liquidatorBalanceBefore, userDebtBefore);
+    vm.skip(true, 'Not applicable for RWAs');
   }
 
   /// @dev overwriting to make `params.receiveAToken` false
@@ -199,12 +147,12 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
     public
     override
   {
-    // Intentionally left blank
+    vm.skip(true, 'Not applicable for RWAs');
   }
 
   /// @dev overwriting to skip: test only applies if receiveAToken is true,
   /// @dev which is not applicable for RWAs
   function test_self_liquidate_position_shoulKeepCollateralEnabled() public override {
-    // Intentionally left blank
+    vm.skip(true, 'Not applicable for RWAs');
   }
 }
