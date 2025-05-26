@@ -157,7 +157,7 @@ contract PoolSupplyTargetedRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(onBehalfOf != user);
+    vm.assume(onBehalfOf != user && onBehalfOf != rwaATokenList.aBuidl);
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -274,6 +274,7 @@ contract PoolSupplyTargetedRwaTests is TestnetProcedures {
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
     vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
+    vm.assume(onBehalfOf != rwaATokenList.aBuidl);
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);
@@ -326,7 +327,12 @@ contract PoolSupplyTargetedRwaTests is TestnetProcedures {
     vm.assume(supplyAmount != 0 && supplyAmount <= underlyingBalance);
     address user = vm.addr(userPk);
     vm.assume(user != alice); // user is not alice so that they can be authorized to hold buidl first
-    vm.assume(relayer != user && relayer != report.poolAddressesProvider && relayer != address(0));
+    vm.assume(
+      relayer != user &&
+        relayer != report.poolAddressesProvider &&
+        relayer != rwaATokenList.aBuidl &&
+        relayer != address(0)
+    );
 
     vm.startPrank(poolAdmin);
     buidl.authorize(user, true);

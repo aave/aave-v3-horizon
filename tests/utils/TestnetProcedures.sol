@@ -27,6 +27,8 @@ import {PercentageMath} from 'src/contracts/protocol/libraries/math/PercentageMa
 import {AaveProtocolDataProvider} from 'src/contracts/helpers/AaveProtocolDataProvider.sol';
 import {MarketReportUtils} from 'src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {MockRwaATokenInstance} from 'tests/mocks/MockRwaATokenInstance.sol';
+import {MockATokenInstance} from 'tests/mocks/MockATokenInstance.sol';
 
 struct TestVars {
   uint8 underlyingDecimals;
@@ -549,53 +551,5 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
       })
     );
     vm.stopPrank();
-  }
-}
-
-contract MockATokenInstance is ATokenInstance {
-  uint256 internal immutable MOCK_REVISION;
-
-  constructor(IPool pool, uint256 mockRevision) ATokenInstance(pool) {
-    MOCK_REVISION = mockRevision;
-  }
-
-  function getMockRevision() public view returns (uint256) {
-    return MOCK_REVISION;
-  }
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return _cast(getMockRevision)();
-  }
-
-  function _cast(
-    function() view returns (uint256) f
-  ) internal pure returns (function() pure returns (uint256) f2) {
-    assembly {
-      f2 := f
-    }
-  }
-}
-
-contract MockRwaATokenInstance is RwaATokenInstance {
-  uint256 internal immutable MOCK_REVISION;
-
-  constructor(IPool pool, uint256 mockRevision) RwaATokenInstance(pool) {
-    MOCK_REVISION = mockRevision;
-  }
-
-  function getMockRevision() public view returns (uint256) {
-    return MOCK_REVISION;
-  }
-
-  function getRevision() internal pure virtual override returns (uint256) {
-    return _cast(getMockRevision)();
-  }
-
-  function _cast(
-    function() view returns (uint256) f
-  ) internal pure returns (function() pure returns (uint256) f2) {
-    assembly {
-      f2 := f
-    }
   }
 }

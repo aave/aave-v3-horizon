@@ -9,6 +9,7 @@ contract PoolDeficitRwaTests is PoolDeficitTests {
     _upgradeToRwaAToken(tokenList.wbtc, 'aWbtc');
   }
 
+  /// @dev overwriting to make usdx an RWA aToken: test is not borrowing it
   function test_reverts_eliminateReserveDeficit_reserve_not_in_deficit(
     address coverageAdmin
   ) public override {

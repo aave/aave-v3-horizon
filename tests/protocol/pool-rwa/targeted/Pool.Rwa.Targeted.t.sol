@@ -8,7 +8,7 @@ import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {IRwaAToken} from 'src/contracts/interfaces/IRwaAToken.sol';
 import {IPool} from 'src/contracts/interfaces/IPool.sol';
-import {TestnetProcedures, MockATokenInstance, MockRwaATokenInstance} from 'tests/utils/TestnetProcedures.sol';
+import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
 
 contract PoolRwaTargetedTests is TestnetProcedures {
   function setUp() public virtual {

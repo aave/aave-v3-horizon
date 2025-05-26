@@ -10,21 +10,25 @@ contract PoolRepayRwaTests is PoolRepayTests {
     _upgradeToRwaAToken(tokenList.weth, 'aWeth');
   }
 
+  /// @dev overwriting to make usdx an RWA aToken: test is not borrowing it
   function test_reverts_borrow_invalidAmount() public override {
     _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_reverts_borrow_invalidAmount();
   }
 
+  /// @dev overwriting to make usdx an RWA aToken: test is not borrowing it
   function test_reverts_borrow_reserveInactive() public override {
     _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_reverts_borrow_reserveInactive();
   }
 
+  /// @dev overwriting to make usdx an RWA aToken: test is not borrowing it
   function test_reverts_borrow_reservePaused() public override {
     _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_reverts_borrow_reservePaused();
   }
 
+  /// @dev overwriting to make usdx an RWA aToken: test is not borrowing it
   function test_reverts_repay_no_debt() public override {
     _upgradeToRwaAToken(tokenList.usdx, 'aUsdx');
     super.test_reverts_repay_no_debt();
