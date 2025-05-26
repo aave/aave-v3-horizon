@@ -64,7 +64,7 @@ contract PoolSupplyHorizonTests is TestnetProcedures {
     contracts.poolProxy.supply(tokenList.buidl, supplyAmount, onBehalfOf, 0);
   }
 
-  // supply fails because user is no longer authrized to hold RWA
+  // supply fails because user is no longer authorized to hold RWA
   function test_fuzz_reverts_supply_UnauthorizedRwaAccount(uint256 supplyAmount) public {
     supplyAmount = bound(supplyAmount, 1, IERC20(tokenList.buidl).balanceOf(alice));
 
