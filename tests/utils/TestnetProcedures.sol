@@ -497,12 +497,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _upgradeToStandardAToken(address asset, string memory symbol) internal {
     (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
-    uint256 currentRevision;
-    try MockRwaATokenInstance(aToken).getMockRevision() returns (uint256 revision) {
-      currentRevision = revision;
-    } catch {
-      currentRevision = 1;
-    }
+    uint256 currentRevision = ATokenInstance(aToken).ATOKEN_REVISION();
 
     MockATokenInstance mockAToken = new MockATokenInstance(
       IPool(report.poolProxy),
@@ -526,12 +521,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _upgradeToRwaAToken(address asset, string memory symbol) internal {
     (address aToken, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(asset);
-    uint256 currentRevision;
-    try MockRwaATokenInstance(aToken).getMockRevision() returns (uint256 revision) {
-      currentRevision = revision;
-    } catch {
-      currentRevision = 1;
-    }
+    uint256 currentRevision = RwaATokenInstance(aToken).ATOKEN_REVISION();
 
     MockRwaATokenInstance mockAToken = new MockRwaATokenInstance(
       IPool(report.poolProxy),

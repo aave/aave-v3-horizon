@@ -3,16 +3,19 @@ pragma solidity ^0.8.10;
 
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {ATokenInstance} from '../../src/contracts/instances/ATokenInstance.sol';
+import {Test} from 'forge-std/Test.sol';
 
-contract MockATokenInstance is ATokenInstance {
-  uint256 internal immutable MOCK_REVISION;
-
+contract MockATokenInstance is ATokenInstance, Test {
   constructor(IPool pool, uint256 mockRevision) ATokenInstance(pool) {
-    MOCK_REVISION = mockRevision;
+    vm.mockCall(
+      address(this),
+      abi.encodeWithSignature('ATOKEN_REVISION()'),
+      abi.encode(mockRevision)
+    );
   }
 
-  function getMockRevision() public view returns (uint256) {
-    return MOCK_REVISION;
+  function getMockRevision() internal view returns (uint256) {
+    return this.ATOKEN_REVISION();
   }
 
   function getRevision() internal pure virtual override returns (uint256) {
