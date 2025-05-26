@@ -10,7 +10,7 @@ import {WadRayMath} from 'src/contracts/protocol/libraries/math/WadRayMath.sol';
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 import {Errors} from 'src/contracts/protocol/libraries/helpers/Errors.sol';
 import {AggregatorInterface} from 'src/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
 import {RwaAToken} from 'src/contracts/protocol/tokenization/RwaAToken.sol';
 import {LiquidationDataProvider} from 'src/contracts/helpers/LiquidationDataProvider.sol';
 import {TestnetProcedures} from 'tests/utils/TestnetProcedures.sol';
@@ -757,7 +757,7 @@ contract PoolLiquidationsHorizonTests is TestnetProcedures {
 
   function removeRwaAccountAuthorization(address rwaToken, address account) public {
     vm.prank(poolAdmin);
-    TestnetRWAERC20(rwaToken).authorize(account, false);
+    TestnetRwaERC20(rwaToken).authorize(account, false);
   }
 
   function _mockPrice(address token, int256 priceImpactPercent) internal {

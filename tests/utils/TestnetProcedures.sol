@@ -13,7 +13,7 @@ import {AaveV3TestListing} from 'tests/mocks/AaveV3TestListing.sol';
 import {ACLManager, Errors} from 'src/contracts/protocol/configuration/ACLManager.sol';
 import {AccessControl} from 'src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol';
 import {WETH9} from 'src/contracts/dependencies/weth/WETH9.sol';
-import {TestnetRWAERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRWAERC20.sol';
+import {TestnetRwaERC20} from 'src/contracts/mocks/testnet-helpers/TestnetRwaERC20.sol';
 import {TestnetERC20} from 'src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {RwaATokenInstance} from 'src/contracts/instances/RwaATokenInstance.sol';
 import {ATokenInstance} from 'src/contracts/instances/ATokenInstance.sol';
@@ -82,9 +82,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   TestnetERC20 internal usdx;
   TestnetERC20 internal wbtc;
-  TestnetRWAERC20 internal buidl;
-  TestnetRWAERC20 internal ustb;
-  TestnetRWAERC20 internal wtgxx;
+  TestnetRwaERC20 internal buidl;
+  TestnetRwaERC20 internal ustb;
+  TestnetRwaERC20 internal wtgxx;
   WETH9 internal weth;
 
   address internal rwaATokenManagerOwner;
@@ -149,9 +149,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
     usdx = TestnetERC20(tokenList.usdx);
     wbtc = TestnetERC20(tokenList.wbtc);
-    buidl = TestnetRWAERC20(tokenList.buidl);
-    ustb = TestnetRWAERC20(tokenList.ustb);
-    wtgxx = TestnetRWAERC20(tokenList.wtgxx);
+    buidl = TestnetRwaERC20(tokenList.buidl);
+    ustb = TestnetRwaERC20(tokenList.ustb);
+    wtgxx = TestnetRwaERC20(tokenList.wtgxx);
     weth = WETH9(payable(tokenList.weth));
 
     vm.label(tokenList.usdx, 'USDX');
@@ -235,7 +235,7 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
   function _seedLiquidity(address token, uint256 amount, bool isRwa) internal {
     if (isRwa) {
       vm.prank(poolAdmin);
-      TestnetRWAERC20(token).authorize(liquidityProvider, true);
+      TestnetRwaERC20(token).authorize(liquidityProvider, true);
     }
 
     vm.prank(poolAdmin);
