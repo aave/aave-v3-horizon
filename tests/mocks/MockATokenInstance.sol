@@ -20,6 +20,9 @@ contract MockATokenInstance is ATokenInstance {
     return this.ATOKEN_REVISION();
   }
 
+  /// @dev We use _cast to convert the view function to a pure function
+  /// This allows us to perform an external call to ATOKEN_REVISION(),
+  /// which is mocked in the constructor.
   function getRevision() internal pure virtual override returns (uint256) {
     return _cast(getMockRevision)();
   }
