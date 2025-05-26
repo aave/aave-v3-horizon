@@ -3,9 +3,11 @@ pragma solidity ^0.8.10;
 
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {RwaATokenInstance} from '../../src/contracts/instances/RwaATokenInstance.sol';
-import {Test} from 'forge-std/Test.sol';
+import {Vm} from 'forge-std/Vm.sol';
 
-contract MockRwaATokenInstance is RwaATokenInstance, Test {
+contract MockRwaATokenInstance is RwaATokenInstance {
+  Vm private constant vm = Vm(address(bytes20(uint160(uint256(keccak256('hevm cheat code'))))));
+
   constructor(IPool pool, uint256 mockRevision) RwaATokenInstance(pool) {
     vm.mockCall(
       address(this),
