@@ -32,7 +32,7 @@ contract PoolHorizonTests is TestnetProcedures {
     _seedLiquidity({token: tokenList.buidl, amount: 50_000e6, isRwa: true});
   }
 
-  function test_fuzz_reverts_borrow_TransferUnderlyingTo_OperationNotSupported(
+  function test_fuzz_reverts_borrow_OperationNotSupported(
     uint256 borrowAmount
   ) public {
     borrowAmount = bound(borrowAmount, 1, 8_000e6);
