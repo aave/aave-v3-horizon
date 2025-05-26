@@ -10,7 +10,7 @@ import {ConfiguratorInputTypes} from '../../../../src/contracts/protocol/pool/Po
 import {IDefaultInterestRateStrategyV2} from '../../../../src/contracts/misc/DefaultReserveInterestRateStrategyV2.sol';
 import {TestnetProcedures, TestVars, TestReserveConfig} from '../../../utils/TestnetProcedures.sol';
 
-contract PoolConfiguratorInitReservesTests is TestnetProcedures {
+contract PoolConfiguratorInitReservesTest is TestnetProcedures {
   event ReserveInitialized(
     address indexed asset,
     address indexed aToken,
