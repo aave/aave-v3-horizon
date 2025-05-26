@@ -11,21 +11,21 @@ contract VariableDebtTokenEventsRwaTests is VariableDebtTokenEventsTests {
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
   function test_balanceOf() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
   function test_scaledBalanceOf() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
   function test_totalScaledSupply() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 
   /// @dev skipping this tests, borrowing is not supported for RWA aTokens
   function test_totalSupply() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 }

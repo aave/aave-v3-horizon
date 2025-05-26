@@ -95,7 +95,7 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
 
   /// @dev skipping as it is not applicable for RWAs
   function test_partial_liquidate_atokens_variable_borrow() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 
   /// @dev overwriting to make `params.receiveAToken` false
@@ -147,12 +147,12 @@ contract PoolLiquidationRwaTests is PoolLiquidationTests {
     public
     override
   {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 
   /// @dev overwriting to skip: test only applies if receiveAToken is true,
   /// @dev which is not applicable for RWAs
   function test_self_liquidate_position_shoulKeepCollateralEnabled() public override {
-    vm.skip(true, 'Not applicable for RWAs');
+    vm.skip(true, 'Not applicable to RWAs');
   }
 }
