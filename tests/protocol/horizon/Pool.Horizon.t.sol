@@ -100,7 +100,7 @@ contract PoolHorizonTests is TestnetProcedures {
     });
   }
 
-  function test_reverts_mintToTreasury() public {
+  function test_reverts_mintToTreasury_OperationNotSupported() public {
     vm.startPrank(poolAdmin);
     // set buidl borrowing config
     contracts.poolConfiguratorProxy.setReserveBorrowing(tokenList.buidl, true);
