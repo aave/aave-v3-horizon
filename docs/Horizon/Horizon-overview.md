@@ -12,7 +12,7 @@ The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool wil
 
 From an Issuer perspective, aTokens are an extension of the RWA tokens, which are securities. The aTokens will signify ownership of the supplied underlying RWA Token. To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
-As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins for borrowing, such as USDC and GHO, among others.
+As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins for borrowing, among others.
 
 ## Implementation Overview
 
@@ -48,6 +48,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - RWA aToken Manager contract address granted the RwaAToken admin role in the ACL Manager.
   - further granular RwaAToken admin permissions will be configured in the RWA aToken Manager contract itself.
   - Token Issuers or relevant admin will be granted admin permissions on the RwaAToken corresponding to their specific RWA asset.
+- No bridges/portals will be configured, hence no unbacked RwaATokens can be minted. 
 
 #### Edge Cases of Note
 
