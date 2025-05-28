@@ -29,6 +29,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
   - can only be supplied by permissioned users allowlisted to hold RWA Token (will rely on underlying RWA asset-level permissioning).
   - can be supplied as collateral, through proper risk configuration (non-zero LTV and Liquidation Threshold).
   - cannot supply `onBehalfOf` (to align with restricting RwaAToken transfers; via RwaAToken implementation, this action will revert on `mint`).
+    - as a consequence, meta transactions are not supported.
 - Borrow
   - cannot be borrowed or flashborrowed (via RwaAToken implementation, this action will revert on `transferUnderlyingTo`; also via asset configuration).
 - Repay
