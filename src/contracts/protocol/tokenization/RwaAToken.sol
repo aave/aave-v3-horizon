@@ -94,7 +94,7 @@ abstract contract RwaAToken is AToken, IRwaAToken {
     address,
     address,
     uint256
-  ) public virtual override(AToken, IRwaAToken) {
+  ) external virtual override(AToken, IRwaAToken) {
     revert(Errors.OPERATION_NOT_SUPPORTED);
   }
 
