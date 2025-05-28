@@ -39,7 +39,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
   - liquidators are implicitly permissioned to those already allowlisted to receive underlying RWA asset (will rely on underlying RWA asset-level permissioning).
     - technically any user allowlisted to hold RWA token asset can liquidate; any further permissioning to a smaller subset of liquidators will be governed off-chain.
 - Withdrawal
-  - users can withdraw RWA assets to any particular address (via the `to` address in the `withdraw` function), as long as the receiver is an authorized holder of the RWA Token; this can be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token.
+  - users can withdraw RWA assets to any particular address (via the `to` address in the `withdraw` function); this can be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token.
 
 #### Configuration
 
