@@ -45,7 +45,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 - `enabledToBorrow` set to `false` to prevent borrowing.
 - Liquidation Protocol Fee set to `0` (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`).
-- RWA aToken Manager contract address granted the RwaAToken admin role in the ACL Manager.
+- RwaATokenManager contract address granted the RwaAToken admin role in the ACL Manager.
   - further granular RwaAToken admin permissions will be configured in the RWA aToken Manager contract itself.
   - Token Issuers or relevant admin will be granted admin permissions on the RwaAToken corresponding to their specific RWA asset.
 - No bridges/portals will be configured, hence no unbacked RwaATokens can be minted. 
