@@ -43,19 +43,21 @@ git-diff :
 
 # Deploy
 deploy-libs-one	:;
-	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 150
+	forge script scripts/misc/LibraryPreCompileOne.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
 deploy-libs-two	:;
-	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 150
+	forge script scripts/misc/LibraryPreCompileTwo.sol --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
 
 # STEP 1: Deploy Libraries
 deploy-libs :
 	make deploy-libs-one RPC_URL=${RPC_URL}
-	npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${CHAIN_ID}/run-latest.json
+	# npx catapulta-verify -b broadcast/LibraryPreCompileOne.sol/${CHAIN_ID}/run-latest.json
 	make deploy-libs-two RPC_URL=${RPC_URL}
-	npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${CHAIN_ID}/run-latest.json
+	# npx catapulta-verify -b broadcast/LibraryPreCompileTwo.sol/${CHAIN_ID}/run-latest.json
 
 # STEP 2: Deploy Pool Contracts once libraries are deployed and updated on .env
-deploy-v3-batched-broadcast :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 150
+deploy-v3-batched-broadcast :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
+
+configure-vtestnet :; forge script scripts/misc/ConfigureVTestnet.sol:ConfigureVTestnet --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
 
 # Invariants
 echidna:
