@@ -10,7 +10,9 @@
 
 The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
-From an Issuer perspective, aTokens are an extension of the RWA tokens, which are securities. The aTokens will signify ownership of the supplied underlying RWA Token. To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
+From an Issuer perspective, aTokens are an extension of the RWA Tokens, which are securities. The aTokens will signify receipt of ownership of the supplied underlying RWA Token. Holders will still retain control over their RWA Token, but t.
+
+To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
 As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins for borrowing.
 
