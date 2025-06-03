@@ -10,7 +10,9 @@
 
 The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
-From an Issuer perspective, aTokens are an extension of the RWA Tokens, which are securities. The aTokens will signify receipt of ownership of the supplied underlying RWA Token. Holders will still retain control over their RWA Token, but t.
+From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens will signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them within collateralization limits. 
+
+However, holding an RwaAToken is purposefully more restrictive than merely holding an RWA Token. RWA Tokens subject holders to Issuer whitelisting and transfer mechanisms, but RwaATokens are fully locked and cannot be transferred by holders themselves.
 
 To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
@@ -24,9 +26,11 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 - RwaAToken transfers
   - users cannot transfer their own RwaATokens (transfer and allowance related methods will revert).
-  - new `ATOKEN_ADMIN` can forcibly transfer users' RwaATokens without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor).
+  - new `ATOKEN_ADMIN` role, which can forcibly transfer any RwaAToken without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor). This role will be given to the `RwaATokenManager` contract, which will further delegate authorization on a per-RwaAToken basis. 
 - `RwaATokenManager` contract
-  - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE`).
+  - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE` for specific RwaATokens).
+  - it is expected that only trusted parties (such as token Issuers) will be granted `AUTHORIZED_TRANSFER_ROLE`, and that RwaAToken authorized transfers will only occur in extenuating circumstances.
+    - it is left to Authorized Transfer Admin to execute transfers that adhere to the underlying RWA Token mechanics and legal compliance (for example, ensuring that RwaAToken recipients are allowlisted to hold the corresponding RWA Token).
 - Supply
   - can only be supplied by permissioned users allowlisted to hold RWA Token (will rely on underlying RWA asset-level permissioning).
   - can be supplied as collateral, through proper risk configuration (non-zero LTV and Liquidation Threshold).
@@ -46,12 +50,27 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 #### Configuration
 
-- `borrowingEnabled` set to `false` to prevent borrowing.
-- Liquidation Protocol Fee set to `0` (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`).
 - RwaATokenManager contract address granted the RwaAToken admin role in the ACL Manager.
   - further granular RwaAToken admin permissions will be configured in the RwaATokenManager contract itself.
   - Token Issuers or relevant admin will be granted admin permissions on the RwaAToken corresponding to their specific RWA asset.
 - No bridges/portals will be configured, hence no unbacked RwaATokens can be minted. 
+
+Reserve
+
+- priceFeed: different per asset, but will be required to be Chainlink-compatible
+- rateStrategyParams: n/a
+- borrowingEnabled: false (to prevent its borrowing)
+- borrowableInIsolation: false
+- withSiloedBorrowing: false
+- flashloanable: false
+- LTV: different per asset, <100%
+- liqThreshold: different per asset, <100%
+- liqBonus: different per asset, >100%
+- reserveFactor: 0
+- supplyCap: different per asset
+- borrowCap: 0
+- debtCeiling: non-zero if the RWA asset is in isolation
+- liqProtocolFee: 0 (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
 #### Edge Cases of Note
 
@@ -62,7 +81,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
   - open a new borrow position from new wallet.
 - User creates a position in Horizon but then becomes sanctioned. Their actions will need to be blocked until further resolution. Issuers can resolve using:
   - `ATOKEN_ADMIN` to move maximum allowable RwaAToken collateral to temporary wallet, preventing further borrowing.
-  - prevent the liquidation of the sanctioned user's position through off-chain coordination.
+  - Technically any wallet whitelisted to hold the underlying RWA Token can be a liquidator. Therefore, to prevent the liquidation of any specific sanctioned user's position, off-chain coordination or legal agreements are required between Issuers and relevant parties. 
 
 ### Stablecoins (Borrowable Asset)
 
@@ -70,8 +89,22 @@ Stablecoins can be supplied permissionlessly to earn yield. However, they will o
 
 #### Configuration
 
-- LTV set to `0` to prevent their utilization as collateral assets.
-- authorized flashborrowers to be configured.
+Reserve
+
+- priceFeed: different per asset, but will be required to be Chainlink-compatible
+- rateStrategyParams: different per asset 
+- borrowingEnabled: true 
+- borrowableInIsolation: false
+- withSiloedBorrowing: false
+- flashloanable: true (authorized flashborrowers also will be configured)
+- LTV: 0 
+- liqThreshold: 0 (to disable its use as collateral)
+- liqBonus: 100% (as it won't apply for a non-collateral asset)
+- reserveFactor: different per asset
+- supplyCap: different per asset
+- borrowCap: different per asset
+- debtCeiling: 0 (only applies to isolated asset)
+- liqProtocolFee: 0 (as it won't apply for a non-collateral asset)
 
 ## References
 
