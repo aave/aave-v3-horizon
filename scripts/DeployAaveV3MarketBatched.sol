@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {DeployAaveV3MarketBatchedBase} from './misc/DeployAaveV3MarketBatchedBase.sol';
 
-import { VTestnetInput } from "src/deployments/inputs/VTestnetInput.sol";
+import {VTestnetInput} from 'src/deployments/inputs/VTestnetInput.sol';
+import {VTestnetInputSuperstate} from 'src/deployments/inputs/VTestnetInputSuperstate.sol';
 
-contract Default is DeployAaveV3MarketBatchedBase, VTestnetInput {}
+contract Default is DeployAaveV3MarketBatchedBase, VTestnetInputSuperstate {}
