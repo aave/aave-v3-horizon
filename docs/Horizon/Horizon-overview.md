@@ -72,14 +72,36 @@ Reserve
 - debtCeiling: non-zero if the RWA asset is in isolation
 - liqProtocolFee: 0 (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
-#### Edge Cases of Note
+## Edge Cases of Note
 
-- User has a borrow position but loses private keys to wallet. This position will need to be migrated to a new wallet. Issuers can resolve using:
-  - authorized flashborrow to borrow enough stablecoin to repay a user's debt.
-  - repay `onBehalfOf` to repay debt on behalf of user.
-  - `ATOKEN_ADMIN` to move RwaAToken collateral to new wallet.
-  - open a new borrow position from new wallet.
-- User creates a position in Horizon but then becomes sanctioned. Their actions will need to be blocked until further resolution. Issuers can resolve using:
+### RWA Holder Loses Private Keys to Wallet
+
+If a user has a borrow position but loses private keys to their wallet, this position can be migrated to a new wallet by the Issuer. Consider the following scenario involving the example permissioned `RWA_1` token:
+
+- `ALICE` supply `100 RWA_1`
+- `ALICE` borrow `50 DAI`
+- `ALICE` loses the wallet key
+
+At this point, the `RWA_1` issuer `RWA_1_ISSUER` (which may be granted "authorized flashborrower" role) can resolve this by:
+
+`RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE`, with 1 of 1 signers, `NEW_ALICE_WALLET`.
+
+Separately, `RWA_1_ISSUER` flashloan `50 DAI` (0 premium to pay because it's an "authorized flashborrower") by executing `Pool.flashLoan(...)`. In the flashloan callback, `RWA_1_ISSUER` will:
+
+1. repay onBehalfOf `ALICE` the `50 DAI` debt
+1. execute `RwaATokenManager.transferRwaAToken(RWA_1, ALICE, NEW_ALICE_WALLET, 100)`
+1. `RWA_1_ISSUER` opens a new borrow position from `NEW_ALICE_WALLET` for `50 DAI`
+1. `RWA_1_ISSUER` repays flashloan using newly borrowed `50 DAI`
+1. `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, leaving `ALICE` as the sole remaining signer
+
+At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt and collateral positions to `NEW_ALICE_WALLET`. It is not strictly necessary for `RWA_1_ISSUER` to be an "authorized flashborrower", but this will be helpful in cases where the debt position is large, ensuring that `RWA_1_ISSUER` will not be required to consistently maintain a liquidity buffer on hand to resolve this situation. 
+
+There also may not be ample liquidity in the Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to resolve as needed.
+
+### RWA Holder Becomes Sanctioned After Creating a Horizon Borrow Position
+
+If a user creates a position in Horizon but then becomes sanctioned, their actions will need to be blocked until further resolution. Issuers can resolve using:
+
   - `ATOKEN_ADMIN` to move maximum allowable RwaAToken collateral to temporary wallet, preventing further borrowing.
   - Technically any wallet whitelisted to hold the underlying RWA Token can be a liquidator. Therefore, to prevent the liquidation of any specific sanctioned user's position, off-chain coordination or legal agreements are required between Issuers and relevant parties. 
 
