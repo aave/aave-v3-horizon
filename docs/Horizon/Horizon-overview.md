@@ -72,6 +72,29 @@ Reserve
 - debtCeiling: non-zero if the RWA asset is in isolation
 - liqProtocolFee: 0 (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
+### Stablecoins (Borrowable Asset)
+
+Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting LTV to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins. Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
+
+#### Configuration
+
+Reserve
+
+- priceFeed: different per asset, but will be required to be Chainlink-compatible
+- rateStrategyParams: different per asset 
+- borrowingEnabled: true 
+- borrowableInIsolation: false
+- withSiloedBorrowing: false
+- flashloanable: true (authorized flashborrowers also will be configured)
+- LTV: 0 
+- liqThreshold: 0 (to disable its use as collateral)
+- liqBonus: 100% (as it won't apply for a non-collateral asset)
+- reserveFactor: different per asset
+- supplyCap: different per asset
+- borrowCap: different per asset
+- debtCeiling: 0 (only applies to isolated asset)
+- liqProtocolFee: 0 (as it won't apply for a non-collateral asset)
+
 ## Edge Cases of Note
 
 ### RWA Holder Loses Private Keys to Wallet
@@ -100,33 +123,25 @@ There also may not be ample liquidity in the Pool to cover via flashloan the deb
 
 ### RWA Holder Becomes Sanctioned After Creating a Horizon Borrow Position
 
-If a user creates a position in Horizon but then becomes sanctioned, their actions will need to be blocked until further resolution. Issuers can resolve using:
+If a user creates a position in Horizon but then becomes sanctioned, their actions will need to be blocked until further resolution. Consider the following scenario involving the example permissioned `RWA_1` token:
 
-  - `ATOKEN_ADMIN` to move maximum allowable RwaAToken collateral to temporary wallet, preventing further borrowing.
-  - Technically any wallet whitelisted to hold the underlying RWA Token can be a liquidator. Therefore, to prevent the liquidation of any specific sanctioned user's position, off-chain coordination or legal agreements are required between Issuers and relevant parties. 
+- `ALICE` supply `1000 RWA_1` with a value of `$1000 `and `80% LTV`
+- `ALICE` borrow `100 DAI`. With `80% LTV`, she could borrow `700 DAI` more.
+- At this point `RWA_1_ISSUER` sanctions `ALICE`
 
-### Stablecoins (Borrowable Asset)
+`RWA_1_ISSUER` can resolve this by:
 
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting LTV to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins. Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
+#### Option 1
 
-#### Configuration
+- `RWA_1_ISSUER` repays onBehalfOf `ALICE` `100 DAI` debt
+- `RWA_1_ISSUER` calls `RwaAToken.authorizedTransfer` to move all collateral to a separate trusted address to be custodied until the sanction case is resolved
 
-Reserve
+#### Option 2
 
-- priceFeed: different per asset, but will be required to be Chainlink-compatible
-- rateStrategyParams: different per asset 
-- borrowingEnabled: true 
-- borrowableInIsolation: false
-- withSiloedBorrowing: false
-- flashloanable: true (authorized flashborrowers also will be configured)
-- LTV: 0 
-- liqThreshold: 0 (to disable its use as collateral)
-- liqBonus: 100% (as it won't apply for a non-collateral asset)
-- reserveFactor: different per asset
-- supplyCap: different per asset
-- borrowCap: different per asset
-- debtCeiling: 0 (only applies to isolated asset)
-- liqProtocolFee: 0 (as it won't apply for a non-collateral asset)
+- `RWA_1_ISSUER` moves as much `RWA_1` as they can (at the limit of `ALICE`'s Health Factor to be 1)
+- when interest accrual pushes `ALICE`'s Health Factor lower than 1 (making her position liquidatable), `RWA_1_ISSUER` communicates off-chain with permissioned liquidators to prevent liquidation, leaving the debt position until sanction is resolved
+
+Note: technically speaking, any wallet whitelisted to hold the underlying RWA Token can perform liquidations. Therefore, if the need arises to prevent the liquidation of any specific user's position (such as in a sanctioned user case), off-chain coordination or legal agreements are required between Issuers and relevant parties. 
 
 ## References
 
