@@ -20,11 +20,11 @@ contract VTestnetListing is AaveV3Payload {
   address public constant ATOKEN_IMPL = 0x8D4c23FAB1B0eB6852ceb3fFF7306ABDc2EF784B;
   address public constant RWA_ATOKEN_IMPL = 0xb912925542214a008d75a8514a223aa5E18adB9c;
 
-  address public constant BUIDL = 0x7712c34205737192402172409a8F7ccef8aA2AEc;
-  address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  // wisdomtree WTGXX
+  // https://etherscan.io/token/0x1feCF3d9d4Fee7f2c02917A66028a48C6706c179
+  address public constant WTGXX = 0x1feCF3d9d4Fee7f2c02917A66028a48C6706c179;
 
-  address public constant BUIDL_PRICE_FEED = 0xb9BD795BB71012c0F3cd1D9c9A4c686F2d3524A4;
-  address public constant USDC_PRICE_FEED = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
+  address public constant WTGXX_PRICE_FEED = address(0); // TBD
 
   constructor(IEngine engine) AaveV3Payload(engine) {}
 
@@ -34,7 +34,7 @@ contract VTestnetListing is AaveV3Payload {
     override
     returns (IEngine.ListingWithCustomImpl[] memory)
   {
-    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](2);
+    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](1);
 
     IEngine.InterestRateInputData memory rateParams = IEngine.InterestRateInputData({
       optimalUsageRatio: 45_00,
@@ -45,34 +45,9 @@ contract VTestnetListing is AaveV3Payload {
 
     listingsCustom[0] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
-        asset: USDC,
-        assetSymbol: 'USDC',
-        priceFeed: USDC_PRICE_FEED,
-        rateStrategyParams: rateParams,
-        enabledToBorrow: EngineFlags.ENABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
-        flashloanable: EngineFlags.ENABLED,
-        ltv: 0,
-        liqThreshold: 0,
-        liqBonus: 0,
-        reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 0,
-        borrowCap: 0,
-        debtCeiling: 0,
-        liqProtocolFee: 0
-      }),
-      IEngine.TokenImplementations({
-        aToken: ATOKEN_IMPL,
-        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
-      })
-    );
-
-    listingsCustom[1] = IEngine.ListingWithCustomImpl(
-      IEngine.Listing({
-        asset: BUIDL,
-        assetSymbol: 'BUIDL',
-        priceFeed: BUIDL_PRICE_FEED,
+        asset: WTGXX,
+        assetSymbol: 'WTGXX',
+        priceFeed: WTGXX_PRICE_FEED,
         rateStrategyParams: rateParams,
         enabledToBorrow: EngineFlags.DISABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
@@ -116,30 +91,50 @@ contract ConfigureVTestnet is Script {
     // ACLManager(vTestnetListing.ACL_MANAGER()).addPoolAdmin(address(vTestnetListing));
     // vTestnetListing.execute();
     // vm.stopBroadcast();
-    // (address aBUIDL, , ) = AaveProtocolDataProvider(PROTOCOL_DATA_PROVIDER)
-    //   .getReserveTokensAddresses(vTestnetListing.BUIDL());
-    // console2.log(aBUIDL);
 
-    fork_test_supply();
+    // (address aWTGXX, , ) = AaveProtocolDataProvider(PROTOCOL_DATA_PROVIDER)
+    //   .getReserveTokensAddresses(vTestnetListing.WTGXX());
+    // console2.log('aWTGXX', aWTGXX);
+
+    fork_test();
   }
 
-  // cannot do this until WTGXX has whitelisted aToken contract /
-  function fork_test_supply() public {
-    address buidl = 0x7712c34205737192402172409a8F7ccef8aA2AEc;
+  function fork_test() public {
+    address WTGXX = 0x1feCF3d9d4Fee7f2c02917A66028a48C6706c179;
     address usdc = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
-    address sender = 0x2FD94A349Bba31bc1Ff4a781228CeE08Cd1A662D;
-    // 0x93A8876215A690b4EADFAb0efDBdB18BA1B450d3
+    address sender = 0x93A8876215A690b4EADFAb0efDBdB18BA1B450d3;
+
+    console2.log('sender %e', IERC20(WTGXX).balanceOf(sender));
+    console2.log('sender %e', IERC20(usdc).balanceOf(sender));
+
+    console2.log('wallet1 %e', IERC20(WTGXX).balanceOf(0x2FD94A349Bba31bc1Ff4a781228CeE08Cd1A662D));
+    console2.log('wallet1 %e', IERC20(usdc).balanceOf(0x2FD94A349Bba31bc1Ff4a781228CeE08Cd1A662D));
+
+    console2.log('wallet2 %e', IERC20(WTGXX).balanceOf(0xF2f3C4641A346545CD5877a7894C54f1617E3752));
+    console2.log('wallet2 %e', IERC20(usdc).balanceOf(0xF2f3C4641A346545CD5877a7894C54f1617E3752));
+
+    console2.log('wallet3 %e', IERC20(WTGXX).balanceOf(0x0a8E0e2B35Ae023Db1D1Fa8b1CC66d0eE114A651));
+    console2.log('wallet3 %e', IERC20(usdc).balanceOf(0x0a8E0e2B35Ae023Db1D1Fa8b1CC66d0eE114A651));
 
     vm.startPrank(sender);
-    IERC20(buidl).approve(POOL, 10e6);
+    IERC20(WTGXX).approve(POOL, 10e18);
     IERC20(usdc).approve(POOL, 10e6);
-    IPool(POOL).supply(buidl, 10e6, sender, 0);
+    // IPool(POOL).supply(WTGXX, 10e18, sender, 0);
     IPool(POOL).supply(usdc, 10e6, sender, 0);
-    IPool(POOL).borrow(usdc, 5e6, 2, 0, sender);
+    // IPool(POOL).borrow(usdc, 5e6, 2, 0, sender);
     vm.stopPrank();
 
-    console2.log(IERC20(buidl).balanceOf(sender));
-    console2.log(IERC20(usdc).balanceOf(sender));
+    console2.log('sender %e', IERC20(WTGXX).balanceOf(sender));
+    console2.log('sender %e', IERC20(usdc).balanceOf(sender));
+
+    console2.log('wallet1 %e', IERC20(WTGXX).balanceOf(0x2FD94A349Bba31bc1Ff4a781228CeE08Cd1A662D));
+    console2.log('wallet1 %e', IERC20(usdc).balanceOf(0x2FD94A349Bba31bc1Ff4a781228CeE08Cd1A662D));
+
+    console2.log('wallet2 %e', IERC20(WTGXX).balanceOf(0xF2f3C4641A346545CD5877a7894C54f1617E3752));
+    console2.log('wallet2 %e', IERC20(usdc).balanceOf(0xF2f3C4641A346545CD5877a7894C54f1617E3752));
+
+    console2.log('wallet3 %e', IERC20(WTGXX).balanceOf(0x0a8E0e2B35Ae023Db1D1Fa8b1CC66d0eE114A651));
+    console2.log('wallet3 %e', IERC20(usdc).balanceOf(0x0a8E0e2B35Ae023Db1D1Fa8b1CC66d0eE114A651));
   }
 }
