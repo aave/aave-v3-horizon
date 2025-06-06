@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
-contract VTestnetInput is MarketInput {
-  address public constant DEPLOYER = 0x93A8876215A690b4EADFAb0efDBdB18BA1B450d3;
+contract SepoliaVTestnetInput is MarketInput {
+  address public constant DEPLOYER = 0x4646bce888521E63c3D71D3EE66Ee5bd1cad888C;
 
   function _getMarketInput(
     address
@@ -28,11 +28,11 @@ contract VTestnetInput is MarketInput {
     config.oracleDecimals = 8;
     config.flashLoanPremiumTotal = 0.0005e4;
     config.flashLoanPremiumToProtocol = 0.0004e4;
-    config.wrappedNativeToken = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    config.wrappedNativeToken = 0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9; // WETH on Sepolia
 
     config
-      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // eth-usd chainlink price feed
-    config.networkBaseTokenPriceInUsdProxyAggregator = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // eth-usd chainlink price feed
+      .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x694AA1769357215DE4FAC081bf1f309aDC325306; // eth-usd chainlink price feed
+    config.networkBaseTokenPriceInUsdProxyAggregator = 0x694AA1769357215DE4FAC081bf1f309aDC325306; // eth-usd chainlink price feed
 
     return (roles, config, flags, deployedContracts);
   }

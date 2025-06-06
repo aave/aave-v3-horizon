@@ -57,6 +57,8 @@ deploy-libs :
 # STEP 2: Deploy Pool Contracts once libraries are deployed and updated on .env
 deploy-v3-batched-broadcast :; forge script scripts/DeployAaveV3MarketBatched.sol:Default --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
 
+verify-v3-batched-broadcast :; npx catapulta-verify -b broadcast/DeployAaveV3MarketBatched.sol/${CHAIN_ID}/run-latest.json -r ${RPC_URL} -e ${ETHERSCAN_URL} -k ${ETHERSCAN_API_KEY}
+
 configure-vtestnet :; forge script scripts/misc/ConfigureVTestnet.sol:ConfigureVTestnet --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} --sender ${SENDER} --slow --broadcast --gas-estimate-multiplier 1500
 
 # Invariants
