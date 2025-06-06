@@ -5,6 +5,6 @@ import {DeployAaveV3MarketBatchedBase} from './misc/DeployAaveV3MarketBatchedBas
 
 import {VTestnetInput} from 'src/deployments/inputs/VTestnetInput.sol';
 // import {VTestnetInputSuperstate} from 'src/deployments/inputs/VTestnetInputSuperstate.sol';
-import {SepoliaVTestnetInput} from 'src/deployments/inputs/SepoliaTestnetInput.sol';
+import {SepoliaTestnetInput} from 'src/deployments/inputs/SepoliaTestnetInput.sol';
 
-contract Default is DeployAaveV3MarketBatchedBase, SepoliaVTestnetInput {}
+contract Default is DeployAaveV3MarketBatchedBase, SepoliaTestnetInput {}

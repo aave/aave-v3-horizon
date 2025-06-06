@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
-contract SepoliaVTestnetInput is MarketInput {
+contract SepoliaTestnetInput is MarketInput {
   address public constant DEPLOYER = 0x4646bce888521E63c3D71D3EE66Ee5bd1cad888C;
 
   function _getMarketInput(
