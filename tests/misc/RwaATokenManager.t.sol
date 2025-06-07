@@ -17,6 +17,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     TestnetRwaERC20 rwaToken;
     address rwaAToken;
     address rwaATokenAdmin;
+    address reserveAddress;
   }
 
   address internal aBuidlAdmin;
@@ -40,21 +41,30 @@ contract RwaATokenManagerTest is TestnetProcedures {
       RwaATokenInfo({
         rwaToken: TestnetRwaERC20(tokenList.buidl),
         rwaAToken: rwaATokenList.aBuidl,
-        rwaATokenAdmin: aBuidlAdmin
+        rwaATokenAdmin: aBuidlAdmin,
+        reserveAddress: contracts.poolProxy.getReserveAddressById(
+          contracts.poolProxy.getReserveData(tokenList.buidl).id
+        )
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
         rwaToken: TestnetRwaERC20(tokenList.ustb),
         rwaAToken: rwaATokenList.aUstb,
-        rwaATokenAdmin: aUstbAdmin
+        rwaATokenAdmin: aUstbAdmin,
+        reserveAddress: contracts.poolProxy.getReserveAddressById(
+          contracts.poolProxy.getReserveData(tokenList.ustb).id
+        )
       })
     );
     rwaATokenInfos.push(
       RwaATokenInfo({
         rwaToken: TestnetRwaERC20(tokenList.wtgxx),
         rwaAToken: rwaATokenList.aWtgxx,
-        rwaATokenAdmin: aWtgxxAdmin
+        rwaATokenAdmin: aWtgxxAdmin,
+        reserveAddress: contracts.poolProxy.getReserveAddressById(
+          contracts.poolProxy.getReserveData(tokenList.wtgxx).id
+        )
       })
     );
   }
@@ -63,15 +73,27 @@ contract RwaATokenManagerTest is TestnetProcedures {
     assertEq(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), keccak256('AUTHORIZED_TRANSFER'));
   }
 
-  function test_fuzz_getAuthorizedTransferRole(address aTokenAddress) public view {
+  function test_fuzz_reverts_getAuthorizedTransferRole_InvalidATokenAddress(
+    address reserveAddress
+  ) public {
+    vm.assume(contracts.poolProxy.getReserveAToken(reserveAddress) == address(0));
+    vm.expectRevert('Invalid aToken address');
+    rwaATokenManager.getAuthorizedTransferRole(reserveAddress);
+  }
+
+  function test_fuzz_getAuthorizedTransferRole(uint256 rwaATokenIndex) public view {
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+
+    address reserveAddress = rwaATokenInfos[rwaATokenIndex].reserveAddress;
+    address aTokenAddress = contracts.poolProxy.getReserveAToken(reserveAddress);
     assertEq(
-      rwaATokenManager.getAuthorizedTransferRole(aTokenAddress),
+      rwaATokenManager.getAuthorizedTransferRole(reserveAddress),
       keccak256(abi.encode(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), aTokenAddress))
     );
   }
 
   function test_getAuthorizedTransferRole() public view {
-    test_fuzz_getAuthorizedTransferRole(rwaATokenList.aBuidl);
+    test_fuzz_getAuthorizedTransferRole(0);
   }
 
   function test_fuzz_reverts_grantAuthorizedTransferRole_AccountIsMissingDefaultAdminRole(
@@ -93,7 +115,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     vm.prank(sender);
     rwaATokenManager.grantAuthorizedTransferRole(
-      rwaATokenInfo.rwaAToken,
+      rwaATokenInfo.reserveAddress,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
@@ -105,20 +127,29 @@ contract RwaATokenManagerTest is TestnetProcedures {
     });
   }
 
+  function test_fuzz_reverts_grantAuthorizedTransferRole_InvalidATokenAddress(
+    address reserveAddress,
+    address rwaATokenAdmin
+  ) public {
+    vm.assume(contracts.poolProxy.getReserveAToken(reserveAddress) == address(0));
+    vm.expectRevert('Invalid aToken address');
+    rwaATokenManager.grantAuthorizedTransferRole(reserveAddress, rwaATokenAdmin);
+  }
+
   function test_fuzz_grantAuthorizedTransferRole(uint256 rwaATokenIndex) public {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
     vm.expectEmit(address(rwaATokenManager));
     emit IAccessControl.RoleGranted(
-      rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.rwaAToken),
+      rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.reserveAddress),
       rwaATokenInfo.rwaATokenAdmin,
       rwaATokenManagerOwner
     );
 
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.grantAuthorizedTransferRole(
-      rwaATokenInfo.rwaAToken,
+      rwaATokenInfo.reserveAddress,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
@@ -129,7 +160,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.recordLogs();
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.grantAuthorizedTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
+    rwaATokenManager.grantAuthorizedTransferRole(rwaATokenInfos[0].reserveAddress, aBuidlAdmin);
 
     // assert no event was emitted (since role was already granted)
     Vm.Log[] memory entries = vm.getRecordedLogs();
@@ -155,7 +186,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     vm.prank(sender);
     rwaATokenManager.revokeAuthorizedTransferRole(
-      rwaATokenInfo.rwaAToken,
+      rwaATokenInfo.reserveAddress,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
@@ -167,6 +198,15 @@ contract RwaATokenManagerTest is TestnetProcedures {
     });
   }
 
+  function test_fuzz_reverts_revokeAuthorizedTransferRole_InvalidATokenAddress(
+    address rwaATokenAdmin,
+    address reserveAddress
+  ) public {
+    vm.assume(contracts.poolProxy.getReserveAToken(reserveAddress) == address(0));
+    vm.expectRevert('Invalid aToken address');
+    rwaATokenManager.revokeAuthorizedTransferRole(reserveAddress, rwaATokenAdmin);
+  }
+
   function test_fuzz_revokeAuthorizedTransferRole(uint256 rwaATokenIndex) public {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
@@ -175,14 +215,14 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     vm.expectEmit(address(rwaATokenManager));
     emit IAccessControl.RoleRevoked(
-      rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.rwaAToken),
+      rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.reserveAddress),
       rwaATokenInfo.rwaATokenAdmin,
       rwaATokenManagerOwner
     );
 
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.revokeAuthorizedTransferRole(
-      rwaATokenInfo.rwaAToken,
+      rwaATokenInfo.reserveAddress,
       rwaATokenInfo.rwaATokenAdmin
     );
   }
@@ -195,7 +235,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.revokeAuthorizedTransferRole(
-      rwaATokenInfo.rwaAToken,
+      rwaATokenInfo.reserveAddress,
       rwaATokenInfo.rwaATokenAdmin
     );
 
@@ -204,7 +244,16 @@ contract RwaATokenManagerTest is TestnetProcedures {
     assertEq(entries.length, 0);
   }
 
-  function test_fuzz_hasAuthorizedTransferRole_true(uint256 rwaATokenIndex) public {
+  function test_fuzz_reverts_hasAuthorizedTransferRole_InvalidATokenAddress(
+    address rwaATokenAdmin,
+    address reserveAddress
+  ) public {
+    vm.assume(contracts.poolProxy.getReserveAToken(reserveAddress) == address(0));
+    vm.expectRevert('Invalid aToken address');
+    rwaATokenManager.hasAuthorizedTransferRole(reserveAddress, rwaATokenAdmin);
+  }
+
+  function test_fuzz_hasAuthorizedTransferRole_True(uint256 rwaATokenIndex) public {
     rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
     RwaATokenInfo memory rwaATokenInfo = rwaATokenInfos[rwaATokenIndex];
 
@@ -212,31 +261,41 @@ contract RwaATokenManagerTest is TestnetProcedures {
 
     assertTrue(
       rwaATokenManager.hasAuthorizedTransferRole(
-        rwaATokenInfo.rwaAToken,
+        rwaATokenInfo.reserveAddress,
         rwaATokenInfo.rwaATokenAdmin
       )
     );
   }
 
   function test_fuzz_hasAuthorizedTransferRole_False(
-    address aTokenAddress,
+    uint256 rwaATokenIndex,
     address account
   ) public view {
-    assertFalse(rwaATokenManager.hasAuthorizedTransferRole(aTokenAddress, account));
+    rwaATokenIndex = bound(rwaATokenIndex, 0, rwaATokenInfos.length - 1);
+    assertFalse(
+      rwaATokenManager.hasAuthorizedTransferRole(
+        rwaATokenInfos[rwaATokenIndex].reserveAddress,
+        account
+      )
+    );
   }
 
   /// @dev Grant role to aBuidl admin, then revoke role
   function test_fuzz_hasAuthorizedTransfer_False_Scenario() public {
-    address aTokenAddress = rwaATokenInfos[0].rwaAToken;
+    uint256 rwaATokenIndex = 0;
+    address aTokenAddress = rwaATokenInfos[rwaATokenIndex].rwaAToken;
 
-    test_fuzz_hasAuthorizedTransferRole_true(0);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, poolAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[2].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_True(rwaATokenIndex);
+    test_fuzz_hasAuthorizedTransferRole_False(rwaATokenIndex, poolAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(rwaATokenIndex, rwaATokenInfos[1].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(rwaATokenIndex, rwaATokenInfos[2].rwaATokenAdmin);
 
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.revokeAuthorizedTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
+    rwaATokenManager.revokeAuthorizedTransferRole(
+      rwaATokenInfos[rwaATokenIndex].reserveAddress,
+      aBuidlAdmin
+    );
+    test_fuzz_hasAuthorizedTransferRole_False(rwaATokenIndex, rwaATokenInfos[1].rwaATokenAdmin);
   }
 
   function test_fuzz_reverts_transferRwaAToken_NotATokenTransferRole(
@@ -254,12 +313,12 @@ contract RwaATokenManagerTest is TestnetProcedures {
         'AccessControl: account ',
         vm.toLowercase(vm.toString(sender)),
         ' is missing role ',
-        vm.toString(rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.rwaAToken))
+        vm.toString(rwaATokenManager.getAuthorizedTransferRole(rwaATokenInfo.reserveAddress))
       )
     );
 
     vm.prank(sender);
-    rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
+    rwaATokenManager.transferRwaAToken(rwaATokenInfo.reserveAddress, from, to, amount);
   }
 
   function test_reverts_transferRwaAToken_NotATokenTransferRole() public {
@@ -289,7 +348,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.expectRevert(stdError.arithmeticError);
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
-    rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
+    rwaATokenManager.transferRwaAToken(rwaATokenInfo.reserveAddress, from, to, amount);
   }
 
   function test_fuzz_reverts_transferRwaAToken_CallerNotATokenTransferAdmin(
@@ -314,7 +373,7 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
-    rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
+    rwaATokenManager.transferRwaAToken(rwaATokenInfo.reserveAddress, from, to, amount);
   }
 
   function test_fuzz_reverts_transferRwaAToken_AuthorizedTransferFails(
@@ -337,7 +396,18 @@ contract RwaATokenManagerTest is TestnetProcedures {
     vm.expectRevert(bytes('INTERNAL_RWA_ATOKEN_REVERT'));
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
-    rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
+    rwaATokenManager.transferRwaAToken(rwaATokenInfo.reserveAddress, from, to, amount);
+  }
+
+  function test_fuzz_reverts_transferRwaAToken_InvalidATokenAddress(
+    address from,
+    address to,
+    uint256 amount,
+    address reserveAddress
+  ) public {
+    vm.assume(contracts.poolProxy.getReserveAToken(reserveAddress) == address(0));
+    vm.expectRevert('Invalid aToken address');
+    rwaATokenManager.transferRwaAToken(reserveAddress, from, to, amount);
   }
 
   function test_fuzz_transferRwaAToken(
@@ -392,7 +462,12 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
-    bool success = rwaATokenManager.transferRwaAToken(rwaATokenInfo.rwaAToken, from, to, amount);
+    bool success = rwaATokenManager.transferRwaAToken(
+      rwaATokenInfo.reserveAddress,
+      from,
+      to,
+      amount
+    );
 
     assertTrue(success);
 
