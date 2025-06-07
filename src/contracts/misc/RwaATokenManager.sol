@@ -40,14 +40,6 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   /// @inheritdoc IRwaATokenManager
-  function hasAuthorizedTransferRole(
-    address reserveAddress,
-    address account
-  ) external view override returns (bool) {
-    return hasRole(getAuthorizedTransferRole(reserveAddress), account);
-  }
-
-  /// @inheritdoc IRwaATokenManager
   function transferRwaAToken(
     address reserveAddress,
     address from,
@@ -57,6 +49,14 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
     address aTokenAddress = _getATokenAddress(reserveAddress);
     emit TransferRwaAToken(msg.sender, aTokenAddress, from, to, amount);
     return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
+  }
+
+  /// @inheritdoc IRwaATokenManager
+  function hasAuthorizedTransferRole(
+    address reserveAddress,
+    address account
+  ) external view override returns (bool) {
+    return hasRole(getAuthorizedTransferRole(reserveAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
