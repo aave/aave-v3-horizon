@@ -10,7 +10,11 @@
 
 The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
-From an Issuer perspective, aTokens are an extension of the RWA tokens, which are securities. The aTokens will signify ownership of the supplied underlying RWA Token. To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
+From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens will signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them within collateralization limits. 
+
+However, holding an RwaAToken is purposefully more restrictive than merely holding an RWA Token. RWA Tokens subject holders to Issuer whitelisting and transfer mechanisms, but RwaATokens are fully locked and cannot be transferred by holders themselves.
+
+To accommodate edge cases, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
 As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins for borrowing.
 
@@ -22,9 +26,12 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 - RwaAToken transfers
   - users cannot transfer their own RwaATokens (transfer and allowance related methods will revert).
-  - new `ATOKEN_ADMIN` can forcibly transfer users' RwaATokens without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor).
+  - new `ATOKEN_ADMIN` role, which can forcibly transfer any RwaAToken without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor). This role will be given to the `RwaATokenManager` contract, which will granularly delegate authorization to individual accounts on a per-RwaAToken basis. 
+  - note that `ATOKEN_ADMIN` can also forcibly transfer RwaATokens from the treasury address. While the treasury address currently does not receive RwaATokens of any sort, if this changes in the future there must be restrictions in place to protect RwaATokens owned by treasury.
 - `RwaATokenManager` contract
-  - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE`).
+  - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE` for specific RwaATokens).
+  - it is expected that only trusted parties (such as token Issuers) will be granted `AUTHORIZED_TRANSFER_ROLE`, and that RwaAToken authorized transfers will only occur in extenuating circumstances (such as resolving [specific edge cases](#edge-cases-of-note)).
+  - it is left to Authorized Transfer Admin to execute authorized transfers that adhere to the underlying RWA Token mechanics and legal compliance (for example, ensuring that RwaAToken recipients are allowlisted to hold the corresponding RWA Token).
 - Supply
   - can only be supplied by permissioned users allowlisted to hold RWA Token (will rely on underlying RWA asset-level permissioning).
   - can be supplied as collateral, through proper risk configuration (non-zero LTV and Liquidation Threshold).
@@ -44,32 +51,124 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 #### Configuration
 
-- `enabledToBorrow` set to `false` to prevent borrowing.
-- Liquidation Protocol Fee set to `0` (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`).
 - RwaATokenManager contract address granted the RwaAToken admin role in the ACL Manager.
   - further granular RwaAToken admin permissions will be configured in the RwaATokenManager contract itself.
   - Token Issuers or relevant admin will be granted admin permissions on the RwaAToken corresponding to their specific RWA asset.
 - No bridges/portals will be configured, hence no unbacked RwaATokens can be minted. 
 
-#### Edge Cases of Note
+#### Reserve
 
-- User has a borrow position but loses private keys to wallet. This position will need to be migrated to a new wallet. Issuers can resolve using:
-  - authorized flashborrow to borrow enough stablecoin to repay a user's debt.
-  - repay `onBehalfOf` to repay debt on behalf of user.
-  - `ATOKEN_ADMIN` to move RwaAToken collateral to new wallet.
-  - open a new borrow position from new wallet.
-- User creates a position in Horizon but then becomes sanctioned. Their actions will need to be blocked until further resolution. Issuers can resolve using:
-  - `ATOKEN_ADMIN` to move maximum allowable RwaAToken collateral to temporary wallet, preventing further borrowing.
-  - prevent the liquidation of the sanctioned user's position through off-chain coordination.
+- priceFeed: different per asset, but will be required to be Chainlink-compatible
+- rateStrategyParams: n/a
+- borrowingEnabled: false (to prevent its borrowing)
+- borrowableInIsolation: false
+- withSiloedBorrowing: false
+- flashloanable: false
+- LTV: different per asset, <100%
+- liqThreshold: different per asset, <100%
+- liqBonus: different per asset, >100%
+- reserveFactor: 0
+- supplyCap: different per asset
+- borrowCap: 0
+- debtCeiling: non-zero if the RWA asset is in isolation
+- liqProtocolFee: 0 (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
 ### Stablecoins (Borrowable Asset)
 
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting LTV to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins. Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
+Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential edge case [here](#non-allowlisted-address-receives-rwaatokens)). Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
 
-#### Configuration
+#### Reserve Configuration
 
-- LTV set to `0` to prevent their utilization as collateral assets.
-- authorized flashborrowers to be configured.
+- priceFeed: different per asset, but will be required to be Chainlink-compatible
+- rateStrategyParams: different per asset 
+- borrowingEnabled: true 
+- borrowableInIsolation: false
+- withSiloedBorrowing: false
+- flashloanable: true (flashborrowers also will be configured)
+- LTV: 0 
+- liqThreshold: 0 (to disable its use as collateral)
+- liqBonus: 100% (as it won't apply for a non-collateral asset)
+- reserveFactor: different per asset
+- supplyCap: different per asset
+- borrowCap: different per asset
+- debtCeiling: 0 (only applies to isolated asset)
+- liqProtocolFee: 0 (as it won't apply for a non-collateral asset)
+
+## Edge Cases of Note
+
+### RWA Holder Loses Private Keys to Wallet
+
+If a user has a borrow position but loses private keys to their wallet, this position can be migrated to a new wallet by the Issuer. Consider the following scenario involving the example permissioned `RWA_1` token. 
+
+#### Assumptions
+
+- `RWA_1_ISSUER` has been granted the role "flashborrower". The account will not pay a premium on the flashloan amount loaned.
+- `RWA_1_ISSUER` has an off-chain agreement with `RWA_1` suppliers to migrate their lost positions if needed.
+
+#### Context
+
+1. `ALICE` supply `100 RWA_1`, receiving `100 aRWA_1`.
+1. `ALICE` borrow `50 USDC`.
+1. `ALICE` loses the wallet key.
+
+#### Resolution
+
+1. `RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE` with 1 of 1 signers (`NEW_ALICE_WALLET`) which will eventually be transferred to `ALICE`.
+1. `RWA_1_ISSUER` executes a "complex" flashloan for `50 USDC` by calling `Pool.flashLoan(...)`. In the flashloan callback, `RWA_1_ISSUER` will:
+    - repay the `50 USDC` debt onBehalfOf `ALICE`.
+    - execute `RwaATokenManager.transferRwaAToken(RWA_1, ALICE, NEW_ALICE_WALLET, 100)` to transfer `100 aRWA_1`.
+    - `RWA_1_ISSUER` opens a new borrow position from `NEW_ALICE_WALLET` for `50 USDC`.
+    - `RWA_1_ISSUER` repays flashloan using newly borrowed `50 USDC`.
+    - `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, transferring ownership to `ALICE`.
+
+At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt and collateral positions to `NEW_ALICE_WALLET`. It is not strictly necessary for `RWA_1_ISSUER` to be a "flashborrower", but this will be helpful in cases where the debt position is large, ensuring that `RWA_1_ISSUER` will not be required to consistently maintain a liquidity buffer on hand to resolve this situation without paying a premium for flashloaned amount.
+
+Limitations
+- There may not be ample liquidity in the Horizon Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to resolve as needed.
+
+### RWA Holder Becomes Sanctioned After Creating a Horizon Debt Position
+
+If a user creates a position in Horizon but then becomes sanctioned, their actions will need to be blocked until further resolution. Consider the following scenario involving the example permissioned `RWA_1` token.
+
+#### Assumptions
+
+- `RWA_1` has a `80% LTV` in Horizon.
+
+#### Context
+
+- `ALICE` supply `1000 RWA_1` with a value of `$1000`, receiving `1000 aRWA_1`.
+- `ALICE` borrow `100 USDC`. With `80% LTV`, she could borrow `700 USDC` more.
+- At this point `RWA_1_ISSUER` sanctions `ALICE`.
+
+#### Resolution
+
+Option 1
+
+- `RWA_1_ISSUER` repays `100 USDC` debt onBehalfOf `ALICE`.
+- `RWA_1_ISSUER` calls `RwaAToken.authorizedTransfer` to move all `1000 aRWA_1` collateral to a separate trusted address to be custodied until the sanction case is resolved.
+
+Option 2
+
+- `RWA_1_ISSUER` moves as much `RWA_1` as they can (at the limit of `ALICE`'s Health Factor to be 1).
+- When interest accrual reduces `ALICE`'s Health Factor lower than 1 (making her position liquidatable), `RWA_1_ISSUER` coordinates off-chain with permissioned liquidators to prevent liquidation, leaving the debt position until sanction is resolved.
+
+#### Limitations
+
+- It's possible that the accrued interest could lead to bad debt and deficit accounting if the remaining collateral is not enough to cover the liquidation operation.
+- Technically speaking, any wallet whitelisted to hold the underlying RWA Token can perform liquidations. Therefore, if the need arises to prevent the liquidation of any specific user's position (such as in a sanctioned user case), off-chain coordination or legal agreements are required between Issuers and relevant parties. 
+
+### Non Allowlisted Address Receives RwaATokens
+
+`authorizedTransfer` of RwaATokens do not validate that recipient addresses belong to the allowlist of the underlying RWA Token. It is left to Authorized Transfer Admin to execute authorized transfers that adhere to the underlying RWA Token mechanics and legal compliance. This theoretically allows recipients to open stablecoin debt positions without owning underlying RWA Tokens.
+
+Assumptions:
+- `ATOKEN_TRANSFER_ADMIN` is granted aToken Transfer Admin role
+- `ALICE` is allowlisted to hold `RWA_2` and has supplied `100 RWA_2` to Horizon, receiving `100 aRWA_2`
+- `BOB` is not allowlisted to hold `RWA_2`
+
+1. `ATOKEN_TRANSFER_ADMIN` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_2`
+1. `BOB` sets `RWA_2` as collateral
+1. `BOB` borrows `50 USDC` against their `aRWA_2`
 
 ## References
 
