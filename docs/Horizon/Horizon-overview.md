@@ -10,7 +10,7 @@
 
 The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
-From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens will signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them within collateralization limits. 
+From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens (which are themselves not securities) will simply signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them as desired within collateralization limits.
 
 However, holding an RwaAToken is purposefully more restrictive than merely holding an RWA Token. RWA Tokens subject holders to Issuer whitelisting and transfer mechanisms, but RwaATokens are fully locked and cannot be transferred by holders themselves.
 
@@ -22,21 +22,23 @@ As with the standard Aave instance, an asset can be listed in Horizon through th
 
 ### RWA Asset (Collateral Asset)
 
-RWA assets can be listed by utilizing a newly developed aToken contract, `RwaAToken`, which restricts the functionality of the underlying asset within the Aave Pool. These RWA assets are aimed to be used as collateral only, which is achieved through proper Pool configuration.
+RWA assets can be listed by utilizing a newly developed aToken contract, `RwaAToken`, which restricts the functionality of the underlying asset within the Aave Pool. These RWA assets are aimed to be used as collateral only, which is achieved through proper Pool configuration (ie setting `Liquidation Threshold` for RWA Tokens to `0`).
 
 - RwaAToken transfers
-  - users cannot transfer their own RwaATokens (transfer and allowance related methods will revert).
+  - users cannot transfer their own RwaATokens (transfer, allowance, and permit related methods will revert).
   - new `ATOKEN_ADMIN` role, which can forcibly transfer any RwaAToken without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor). This role will be given to the `RwaATokenManager` contract, which will granularly delegate authorization to individual accounts on a per-RwaAToken basis. 
-  - note that `ATOKEN_ADMIN` can also forcibly transfer RwaATokens from the treasury address. While the treasury address currently does not receive RwaATokens of any sort, if this changes in the future there must be restrictions in place to protect RwaATokens owned by treasury.
+  - note that `ATOKEN_ADMIN` can also forcibly transfer RwaATokens from the treasury address. While the treasury address currently does not receive RwaATokens of any sort through Reserve Factor or Liquidation Bonus, if this changes in the future there must be restrictions in place to protect RwaATokens earned by treasury.
 - `RwaATokenManager` contract
   - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE` for specific RwaATokens).
-  - it is expected that only trusted parties (such as token Issuers) will be granted `AUTHORIZED_TRANSFER_ROLE`, and that RwaAToken authorized transfers will only occur in extenuating circumstances (such as resolving [specific edge cases](#edge-cases-of-note)).
-  - it is left to Authorized Transfer Admin to execute authorized transfers that adhere to the underlying RWA Token mechanics and legal compliance (for example, ensuring that RwaAToken recipients are allowlisted to hold the corresponding RWA Token).
+  - it is expected that only trusted parties (such as token Issuers) will be granted `AUTHORIZED_TRANSFER_ROLE`, and that RwaAToken authorized transfers will only occur in emergency situations (such as resolving [specific edge cases](#edge-cases-of-note)), rather than within the typical flow of operations.
+  - it is left to Authorized Transfer Admin to execute authorized transfers that ensure compliance (for example, ensuring that RwaAToken recipients are allowlisted to hold the corresponding RWA Token). This scenario is described [here](#non-allowlisted-account-can-receive-rwaatokens). 
 - Supply
   - can only be supplied by permissioned users allowlisted to hold RWA Token (will rely on underlying RWA asset-level permissioning).
   - can be supplied as collateral, through proper risk configuration (non-zero LTV and Liquidation Threshold).
   - cannot supply `onBehalfOf` (to align with restricting RwaAToken transfers; via RwaAToken implementation, this action will revert on `mint`).
-    - as a consequence, meta transactions are not supported.
+    - as a consequence, meta transactions submitted by relayers on behalf of a user are not supported.
+- Withdraw
+  - users can withdraw RWA assets to any specified address (via the `to` address argument in the `withdraw` function); this should be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token. This scenario is described [here](#withdraw-as-a-transfer-of-underlying-rwa-token).
 - Borrow
   - cannot be borrowed or flashborrowed (via RwaAToken implementation, this action will revert on `transferUnderlyingTo`; also via asset configuration).
 - Repay
@@ -44,10 +46,9 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - Liquidation
   - cannot liquidate into RwaATokens, by reverting on `transferOnLiquidation` when `receiveAToken` is set to `true` (only underlying RWA Token collateral can be liquidated).
   - disbursement of Liquidation Protocol Fee is disabled (if fee is set greater than 0, it will revert on `transferOnLiquidation`; also via asset configuration).
+  - this should be considered a standard ERC20 transfer between liquidated user and liquidator, and will adhere to the same restrictions imposed by the underlying RWA Token. This scenario is described [here](#liquidation-as-a-transfer-of-underlying-rwa-token).
   - liquidators are implicitly permissioned to those already allowlisted to receive underlying RWA asset (will rely on underlying RWA asset-level permissioning imposed by RWA's `transfer` function).
     - technically any user allowlisted to hold RWA token asset can liquidate; any further permissioning to a smaller subset of liquidators will be governed off-chain.
-- Withdrawal
-  - users can withdraw RWA assets to any particular address (via the `to` address in the `withdraw` function); this can be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token.
 
 #### Configuration
 
@@ -75,7 +76,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 ### Stablecoins (Borrowable Asset)
 
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential edge case [here](#non-allowlisted-address-receives-rwaatokens)). Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
+Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential edge case [here](#non-allowlisted-account-can-receive-rwaatokens)). Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
 
 #### Reserve Configuration
 
@@ -96,9 +97,11 @@ Stablecoins can be supplied permissionlessly to earn yield. However, they will o
 
 ## Edge Cases of Note
 
+Consider the following scenarios involving the example permissioned `RWA_1` token.
+
 ### RWA Holder Loses Private Keys to Wallet
 
-If a user has a borrow position but loses private keys to their wallet, this position can be migrated to a new wallet by the Issuer. Consider the following scenario involving the example permissioned `RWA_1` token. 
+If a user has a borrow position but loses private keys to their wallet, this position can be migrated to a new wallet by the Issuer.
 
 #### Assumptions
 
@@ -157,18 +160,113 @@ Option 2
 - It's possible that the accrued interest could lead to bad debt and deficit accounting if the remaining collateral is not enough to cover the liquidation operation.
 - Technically speaking, any wallet whitelisted to hold the underlying RWA Token can perform liquidations. Therefore, if the need arises to prevent the liquidation of any specific user's position (such as in a sanctioned user case), off-chain coordination or legal agreements are required between Issuers and relevant parties. 
 
-### Non Allowlisted Address Receives RwaATokens
+## Additional Considerations
 
-`authorizedTransfer` of RwaATokens do not validate that recipient addresses belong to the allowlist of the underlying RWA Token. It is left to Authorized Transfer Admin to execute authorized transfers that adhere to the underlying RWA Token mechanics and legal compliance. This theoretically allows recipients to open stablecoin debt positions without owning underlying RWA Tokens.
+### Non Allowlisted Account Can Receive RwaATokens
+
+`authorizedTransfer` of RwaATokens do not validate that recipient addresses belong to the allowlist of the underlying RWA Token. It is left to Authorized Transfer Admin to execute authorized transfers that adhere to the proper underlying RWA Token mechanics and ensure legal compliance. 
+
+This theoretically allows recipients to open stablecoin debt positions without owning underlying RWA Tokens. See the following example. 
 
 Assumptions:
-- `ATOKEN_TRANSFER_ADMIN` is granted aToken Transfer Admin role
-- `ALICE` is allowlisted to hold `RWA_2` and has supplied `100 RWA_2` to Horizon, receiving `100 aRWA_2`
-- `BOB` is not allowlisted to hold `RWA_2`
+- `ATOKEN_TRANSFER_ADMIN` is granted aToken Transfer Admin role, and is a trusted Issuer of `RWA_1`
+- `ALICE` is allowlisted to hold `RWA_1` and has supplied `100 RWA_1` to Horizon, receiving `100 aRWA_1`
+- `BOB` is not allowlisted to hold `RWA_1`
 
-1. `ATOKEN_TRANSFER_ADMIN` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_2`
-1. `BOB` sets `RWA_2` as collateral
-1. `BOB` borrows `50 USDC` against their `aRWA_2`
+1. `ATOKEN_TRANSFER_ADMIN` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_1`
+1. `BOB` sets `RWA_1` as collateral
+1. `BOB` borrows `50 USDC` against their `aRWA_1`
+
+The `ATOKEN_TRANSFER_ADMIN` bears responsibility to avoid this scenario if it violates underlying `RWA_1` operations through proper execution of the `authorizedTransfer` mechanism. 
+
+### `Withdraw` as a Transfer of Underlying RWA Token
+
+By specifying a separate `to` address argument in the `withdraw` function, users who have supplied RWA Tokens can withdraw them to any account. This should be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token.
+
+Consider the scenario:
+- `Bob` supply `100 RWA_1`
+- `Bob` withdraw `50 RWA_1` with `to` set to `ALICE`'s wallet address
+  - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert
+  - if `ALICE` has been allowlisted to hold `RWA_1`, she will receive `50 RWA_1`
+
+Outcome
+
+Assuming `ALICE` has been allowlisted, the two following events will be emitted:
+
+```
+emit Withdraw(params.asset, msg.sender, params.to, amountToWithdraw);
+```
+
+where 
+- `params.asset` (address) is the `RWA_1` token address
+- `msg.sender (address) is `BOB`'s account
+- `params.to` (address) is `ALICE`'s account
+- `amountToWithdraw` (uint256) is `50`, with corresponding decimals units appended (ex. if decimals is 6, this value will be `50_000_000`)
+
+```
+event Transfer(address indexed from, address indexed to, uint256 value);
+```
+
+where 
+- `from` (address) is the `RWA_1` **RwaAToken** address
+  - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
+- `to` (address) is `ALICE`'s account
+- `value` (uint256) will match `amountToWithdraw` value
+
+The Issuer's Transfer Agent must take care to record this officially as a transfer of `RWA_1` between `BOB` and `ALICE`, rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`. 
+
+### `Liquidation` as a Transfer of Underlying RWA Token
+
+During a liquidation, collateral seized from the user being liquidated will be transferred to the liquidator. This should also be considered a standard ERC20 transfer. 
+
+Assumptions:
+- `BOB` and `ALICE` are allowlisted to hold `RWA_1`
+- `ALICE` has an off-chain legal agreement with `RWA_1_ISSUER` to be able to be a liquidator
+- `LTV` of `RWA_1` is `>80%`
+- `RWA_1` has decimals of 8
+
+Consider the scenario:
+- `BOB` supply `100 RWA_1`, and borrows `80 USDC`
+- time flies and `Bob`'s `USDC` debt grows to `120 USDC` through accumulation of interest. His position is no longer healthy and it becomes liquidatable. 
+- `ALICE` executes a `liquidationCall` on `BOB`'s position, and is able to earn all of `BOB`'s seized `100 RWA_1` (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt
+- `ALICE` receives `100 RWA_1`
+
+Outcome
+
+Two events will be emitted involving the collateral:
+
+```
+event Transfer(address indexed from, address indexed to, uint256 value);
+```
+
+where 
+- `from` (address) is the `RWA_1` **RwaAToken** address
+  - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
+- `to` (address) is `ALICE`'s account
+- `value` (uint256) will be the liquidated `RWA_1` collateral amount, ie `10_000_000` including decimals
+
+```
+emit LiquidationCall(
+  params.collateralAsset,
+  params.debtAsset,
+  params.user,
+  vars.actualDebtToLiquidate,
+  vars.actualCollateralToLiquidate,
+  msg.sender,
+  params.receiveAToken
+);
+```
+
+where
+- `params.collateralAsset` (address) is the `RWA_1` collateral token address
+- `params.debtAsset` (address) is the `USDC` debt token address
+- `params.user` (address) is the liquidated user account, `BOB`
+- `vars.actualDebtToLiquidate` (uint256) is the amount of debt asset, `USDC`, to liquidate, with corresponding decimals units appended (ex. if decimals is 6, this value will be `120_000_000`). 
+- `vars.actualCollateralToLiquidate` (uint256) is the amount of collateral asset to liquidate, which is `10_000_000 RWA_1`  
+- `msg.sender` (address) is the liquidator address, ie `ALICE`'s account
+- `params.receiveAToken` (bool) will be false, as `receiveAToken` is not allowed
+
+The Issuer's Transfer Agent must take care to record this officially as a transfer of `RWA_1` between `BOB` (liquidated user) and `ALICE` (liquidator), rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`.
 
 ## References
 
