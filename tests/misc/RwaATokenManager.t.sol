@@ -9,7 +9,7 @@ import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {IRwaAToken} from '../../src/contracts/interfaces/IRwaAToken.sol';
 import {stdError} from 'forge-std/Test.sol';
 import {Vm} from 'forge-std/Vm.sol';
-import {RwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
+import {RwaATokenManager, IRwaATokenManager} from '../../src/contracts/misc/RwaATokenManager.sol';
 import {TestnetProcedures} from '../utils/TestnetProcedures.sol';
 
 contract RwaATokenManagerTest is TestnetProcedures {
@@ -380,6 +380,15 @@ contract RwaATokenManagerTest is TestnetProcedures {
         IPool.finalizeTransfer,
         (address(rwaATokenInfo.rwaToken), from, to, amount, fromBalanceBefore, toBalanceBefore)
       )
+    );
+
+    vm.expectEmit(address(rwaATokenManager));
+    emit IRwaATokenManager.TransferRwaAToken(
+      rwaATokenInfo.rwaATokenAdmin,
+      address(rwaATokenInfo.rwaAToken),
+      from,
+      to,
+      amount
     );
 
     vm.prank(rwaATokenInfo.rwaATokenAdmin);
