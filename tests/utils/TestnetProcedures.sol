@@ -202,7 +202,9 @@ contract TestnetProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput {
 
   function _rwaInit() internal {
     rwaATokenManagerOwner = makeAddr('RWA_ATOKEN_MANAGER_OWNER');
-    rwaATokenTransferAdmin = address(new RwaATokenManager(rwaATokenManagerOwner));
+    rwaATokenTransferAdmin = address(
+      new RwaATokenManager(rwaATokenManagerOwner, contracts.poolAddressesProvider)
+    );
 
     (rwaATokenList.aBuidl, , ) = contracts.protocolDataProvider.getReserveTokensAddresses(
       tokenList.buidl

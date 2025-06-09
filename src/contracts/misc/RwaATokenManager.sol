@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {AccessControl} from '../dependencies/openzeppelin/contracts/AccessControl.sol';
 import {IRwaAToken} from '../interfaces/IRwaAToken.sol';
 import {IRwaATokenManager} from '../interfaces/IRwaATokenManager.sol';
+import {IPoolAddressesProvider} from '../interfaces/IPoolAddressesProvider.sol';
+import {IPool} from '../interfaces/IPool.sol';
+import {AccessControl} from '../dependencies/openzeppelin/contracts/AccessControl.sol';
 
 /**
  * @title RwaATokenManager
@@ -15,44 +17,56 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   /// @inheritdoc IRwaATokenManager
   bytes32 public constant override AUTHORIZED_TRANSFER_ROLE = keccak256('AUTHORIZED_TRANSFER');
 
+  IPool internal immutable _POOL;
+
   /**
    * @dev Constructor
    * @param owner The address of the default admin role
    */
-  constructor(address owner) {
+  constructor(address owner, IPoolAddressesProvider poolAddressesProvider) {
     _setupRole(DEFAULT_ADMIN_ROLE, owner);
+    _POOL = IPool(poolAddressesProvider.getPool());
   }
 
   /// @inheritdoc IRwaATokenManager
-  function grantAuthorizedTransferRole(address aTokenAddress, address account) external override {
-    grantRole(getAuthorizedTransferRole(aTokenAddress), account);
+  function grantAuthorizedTransferRole(address reserveAddress, address account) external override {
+    grantRole(getAuthorizedTransferRole(reserveAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function revokeAuthorizedTransferRole(address aTokenAddress, address account) external override {
-    revokeRole(getAuthorizedTransferRole(aTokenAddress), account);
+  function revokeAuthorizedTransferRole(address reserveAddress, address account) external override {
+    revokeRole(getAuthorizedTransferRole(reserveAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
   function transferRwaAToken(
-    address aTokenAddress,
+    address reserveAddress,
     address from,
     address to,
     uint256 amount
-  ) external override onlyRole(getAuthorizedTransferRole(aTokenAddress)) returns (bool) {
+  ) external override onlyRole(getAuthorizedTransferRole(reserveAddress)) returns (bool) {
+    address aTokenAddress = _getATokenAddress(reserveAddress);
     return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
   }
 
   /// @inheritdoc IRwaATokenManager
   function hasAuthorizedTransferRole(
-    address aTokenAddress,
+    address reserveAddress,
     address account
   ) external view override returns (bool) {
-    return hasRole(getAuthorizedTransferRole(aTokenAddress), account);
+    return hasRole(getAuthorizedTransferRole(reserveAddress), account);
   }
 
   /// @inheritdoc IRwaATokenManager
-  function getAuthorizedTransferRole(address aTokenAddress) public pure override returns (bytes32) {
-    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, aTokenAddress));
+  function getAuthorizedTransferRole(
+    address reserveAddress
+  ) public view override returns (bytes32) {
+    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, _getATokenAddress(reserveAddress)));
+  }
+
+  function _getATokenAddress(address reserveAddress) internal view returns (address) {
+    address aTokenAddress = _POOL.getReserveAToken(reserveAddress);
+    require(aTokenAddress != address(0), 'Invalid aToken address');
+    return aTokenAddress;
   }
 }
