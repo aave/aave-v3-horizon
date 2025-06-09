@@ -8,6 +8,22 @@ pragma solidity ^0.8.0;
  */
 interface IRwaATokenManager {
   /**
+   * @dev Emitted when an authorized transfer of RWA aTokens occurs
+   * @param caller The address performing the authorized transfer
+   * @param aTokenAddress The address of the RWA aToken being transferred
+   * @param from The user whose tokens are being transferred
+   * @param to The recipient
+   * @param amount The amount being transferred
+   */
+  event TransferRwaAToken(
+    address indexed caller,
+    address indexed aTokenAddress,
+    address indexed from,
+    address to,
+    uint256 amount
+  );
+
+  /**
    * @notice Grants the authorized transfer role for a specific RWA aToken to a designated account.
    * @param aTokenAddress The address of the RWA aToken
    * @param account The address of the account to which permission is granted
