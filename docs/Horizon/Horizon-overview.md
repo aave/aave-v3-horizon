@@ -26,7 +26,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 - RwaAToken transfers
   - users cannot transfer their own RwaATokens (transfer, allowance, and permit related methods will revert).
-  - new `ATOKEN_ADMIN` role, which can forcibly transfer any RwaAToken without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor). This role will be given to the `RwaATokenManager` contract, which will granularly delegate authorization to individual accounts on a per-RwaAToken basis. 
+  - new `ATOKEN_ADMIN` role, which can forcibly transfer any RwaAToken without needing approval (but can still only transfer an RwaAToken amount up to a healthy collateralization/health factor). This role is expected to be given to the `RwaATokenManager` contract, which will granularly delegate authorization to individual accounts on a per-RwaAToken basis. 
   - note that `ATOKEN_ADMIN` can also forcibly transfer RwaATokens from the treasury address. While the treasury address currently does not receive RwaATokens of any sort through Reserve Factor or Liquidation Bonus, if this changes in the future there must be restrictions in place to protect RwaATokens earned by treasury.
 - `RwaATokenManager` contract
   - external RwaAToken manager smart contract which encodes granular authorized RwaAToken transfer permissions (by granting `AUTHORIZED_TRANSFER_ROLE` for specific RwaATokens).
@@ -60,7 +60,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 #### Reserve
 
 - priceFeed: different per asset, but will be required to be Chainlink-compatible
-- rateStrategyParams: n/a
+- rateStrategyParams: N/A (can be left empty)
 - borrowingEnabled: false (to prevent its borrowing)
 - borrowableInIsolation: false
 - withSiloedBorrowing: false
@@ -72,21 +72,21 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - supplyCap: different per asset
 - borrowCap: 0
 - debtCeiling: non-zero if the RWA asset is in isolation
-- liqProtocolFee: 0 (otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
+- liqProtocolFee: 0 (must be 0, otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
 ### Stablecoins (Borrowable Asset)
 
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential edge case [here](#non-allowlisted-account-can-receive-rwaatokens)). Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
+Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential case [here](#non-allowlisted-account-can-receive-rwaatokens)). Other existing functionality remains the same as in v3.3. Stablecoin assets will be listed as usual, also working in a standard way.
 
 #### Reserve Configuration
 
 - priceFeed: different per asset, but will be required to be Chainlink-compatible
 - rateStrategyParams: different per asset 
 - borrowingEnabled: true 
-- borrowableInIsolation: false
+- borrowableInIsolation: true
 - withSiloedBorrowing: false
 - flashloanable: true (flashborrowers also will be configured)
-- LTV: 0 
+- LTV: 0
 - liqThreshold: 0 (to disable its use as collateral)
 - liqBonus: 100% (as it won't apply for a non-collateral asset)
 - reserveFactor: different per asset
@@ -106,32 +106,35 @@ If a user has a borrow position but loses private keys to their wallet, this pos
 #### Assumptions
 
 - `RWA_1_ISSUER` has been granted the role "flashborrower". The account will not pay a premium on the flashloan amount loaned.
-- `RWA_1_ISSUER` has an off-chain agreement with `RWA_1` suppliers to migrate their lost positions if needed.
+- `RWA_1_ISSUER` has an off-chain agreement with `RWA_1` suppliers to migrate supplier lost positions if needed.
 
 #### Context
 
 1. `ALICE` supply `100 RWA_1`, receiving `100 aRWA_1`.
 1. `ALICE` borrow `50 USDC`.
-1. `ALICE` loses the wallet key.
+1. `ALICE` loses her wallet private key.
+1. `ALICE` position is effectively unreachable in the protocol. 
+
+`ALICE` creates a new wallet, `ALICE2`. 
 
 #### Resolution
 
-1. `RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE` with 1 of 1 signers (`NEW_ALICE_WALLET`) which will eventually be transferred to `ALICE`.
+1. `RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE2` with 1 of 1 signers (`NEW_ALICE_WALLET`) which will eventually be fully transferred to `ALICE2`.
 1. `RWA_1_ISSUER` executes a "complex" flashloan for `50 USDC` by calling `Pool.flashLoan(...)`. In the flashloan callback, `RWA_1_ISSUER` will:
-    - repay the `50 USDC` debt onBehalfOf `ALICE`.
-    - execute `RwaATokenManager.transferRwaAToken(RWA_1, ALICE, NEW_ALICE_WALLET, 100)` to transfer `100 aRWA_1`.
+    - repay the `50 USDC` debt `onBehalfOf` `ALICE`.
+    - execute `RwaATokenManager.transferRwaAToken(RWA_1, ALICE, NEW_ALICE_WALLET, 100)` to transfer `100 aRWA_1` to `NEW_ALICE_WALLET`.
     - `RWA_1_ISSUER` opens a new borrow position from `NEW_ALICE_WALLET` for `50 USDC`.
     - `RWA_1_ISSUER` repays flashloan using newly borrowed `50 USDC`.
-    - `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, transferring ownership to `ALICE`.
+    - `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, fully transferring ownership to `ALICE2`.
 
-At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt and collateral positions to `NEW_ALICE_WALLET`. It is not strictly necessary for `RWA_1_ISSUER` to be a "flashborrower", but this will be helpful in cases where the debt position is large, ensuring that `RWA_1_ISSUER` will not be required to consistently maintain a liquidity buffer on hand to resolve this situation without paying a premium for flashloaned amount.
+At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt and collateral positions to `NEW_ALICE_WALLET`. It is not strictly necessary for `RWA_1_ISSUER` to be a "flashborrower", but this will be helpful in cases where the debt position is large, ensuring that `RWA_1_ISSUER` will not be required to consistently maintain a liquidity buffer on hand to resolve this situation. This also allows for the position to be migrated without paying a premium for the flashloaned amount.
 
 Limitations
-- There may not be ample liquidity in the Horizon Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to resolve as needed.
+- There may not be ample liquidity in the Horizon Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to provide liquidity as needed.
 
-### RWA Holder Becomes Sanctioned After Creating a Horizon Debt Position
+### RWA Holder Becomes Sanctioned After Creating a Debt Position
 
-If a user creates a position in Horizon but then becomes sanctioned, their actions will need to be blocked until further resolution. Consider the following scenario involving the example permissioned `RWA_1` token.
+If a user creates a debt position but then becomes sanctioned, their actions may need to be blocked until further resolution. Consider the following scenario involving the example permissioned `RWA_1` token.
 
 #### Assumptions
 
@@ -141,26 +144,31 @@ If a user creates a position in Horizon but then becomes sanctioned, their actio
 
 - `ALICE` supply `1000 RWA_1` with a value of `$1000`, receiving `1000 aRWA_1`.
 - `ALICE` borrow `100 USDC`. With `80% LTV`, she could borrow `700 USDC` more.
-- At this point `RWA_1_ISSUER` sanctions `ALICE`.
+- At this point `ALICE` becomes sanctioned.
 
 #### Resolution
 
 Option 1
 
 - `RWA_1_ISSUER` repays `100 USDC` debt onBehalfOf `ALICE`.
-- `RWA_1_ISSUER` calls `RwaAToken.authorizedTransfer` to move all `1000 aRWA_1` collateral to a separate trusted address to be custodied until the sanction case is resolved.
+- `RWA_1_ISSUER` calls `RwaAToken.authorizedTransfer` to move all `1000 aRWA_1` collateral to a separate trusted address (`RWA_1_TRUSTED`) to be custodied until the sanction case is resolved.
+- `RWA_1_ISSUER` retains off-chain agreement with `ALICE` to recoup `100 USDC` repaid debt.
 
 Option 2
 
-- `RWA_1_ISSUER` moves as much `RWA_1` as they can (at the limit of `ALICE`'s Health Factor to be 1).
-- When interest accrual reduces `ALICE`'s Health Factor lower than 1 (making her position liquidatable), `RWA_1_ISSUER` coordinates off-chain with permissioned liquidators to prevent liquidation, leaving the debt position until sanction is resolved.
+- `RWA_1_ISSUER` calls `RwaAToken.authorizedTransfer` to move as much `aRWA_1` as they can (at the limit of `ALICE`'s Health Factor to be 1) to a separate trusted address (`RWA_1_TRUSTED`) to be custodied until the sanction case is resolved.
+- When interest accrual reduces `ALICE`'s Health Factor below 1 (making her position liquidatable), `RWA_1_ISSUER` coordinates off-chain with permissioned liquidators to prevent liquidation, leaving the debt position in Horizon unaddressed until sanction is resolved.
+
+At the conclusion, `aRWA_1` custodied by `RWA_1_TRUSTED` can be returned or moved elsewhere to ensure legal compliance. It is left to `RWA_1_ISSUER` to adjudicate as required. 
 
 #### Limitations
 
-- It's possible that the accrued interest could lead to bad debt and deficit accounting if the remaining collateral is not enough to cover the liquidation operation.
-- Technically speaking, any wallet whitelisted to hold the underlying RWA Token can perform liquidations. Therefore, if the need arises to prevent the liquidation of any specific user's position (such as in a sanctioned user case), off-chain coordination or legal agreements are required between Issuers and relevant parties. 
+- It's possible that the accrued interest could lead to bad debt and deficit accounting if the remaining collateral is insufficient to cover the remaining debt during a liquidation operation.
+- Technically speaking, any wallet whitelisted to hold the underlying RWA Token can perform liquidations. Therefore, if the need arises to prevent the liquidation of any specific user's position (such as in a sanctioned user case), off-chain coordination or legal agreements are required to be in place between Issuers and any relevant parties. 
 
 ## Additional Considerations
+
+Consider the following scenarios involving the example permissioned `RWA_1` token.
 
 ### Non Allowlisted Account Can Receive RwaATokens
 
@@ -169,13 +177,13 @@ Option 2
 This theoretically allows recipients to open stablecoin debt positions without owning underlying RWA Tokens. See the following example. 
 
 Assumptions:
-- `ATOKEN_TRANSFER_ADMIN` is granted aToken Transfer Admin role, and is a trusted Issuer of `RWA_1`
-- `ALICE` is allowlisted to hold `RWA_1` and has supplied `100 RWA_1` to Horizon, receiving `100 aRWA_1`
-- `BOB` is not allowlisted to hold `RWA_1`
+- `ATOKEN_TRANSFER_ADMIN` is granted aToken Transfer Admin role, and is a trusted Issuer of `RWA_1`.
+- `ALICE` is allowlisted to hold `RWA_1` and has supplied `100 RWA_1` to Horizon, receiving `100 aRWA_1`.
+- `BOB` is not allowlisted to hold `RWA_1`.
 
-1. `ATOKEN_TRANSFER_ADMIN` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_1`
-1. `BOB` sets `RWA_1` as collateral
-1. `BOB` borrows `50 USDC` against their `aRWA_1`
+1. `ATOKEN_TRANSFER_ADMIN` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_1`.
+1. `BOB` sets `RWA_1` as collateral.
+1. `BOB` borrows `50 USDC` against their `aRWA_1`.
 
 The `ATOKEN_TRANSFER_ADMIN` bears responsibility to avoid this scenario if it violates underlying `RWA_1` operations through proper execution of the `authorizedTransfer` mechanism. 
 
@@ -184,34 +192,34 @@ The `ATOKEN_TRANSFER_ADMIN` bears responsibility to avoid this scenario if it vi
 By specifying a separate `to` address argument in the `withdraw` function, users who have supplied RWA Tokens can withdraw them to any account. This should be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token.
 
 Consider the scenario:
-- `Bob` supply `100 RWA_1`
-- `Bob` withdraw `50 RWA_1` with `to` set to `ALICE`'s wallet address
-  - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert
-  - if `ALICE` has been allowlisted to hold `RWA_1`, she will receive `50 RWA_1`
+- `Bob` supply `100 RWA_1`.
+- `Bob` withdraw `50 RWA_1` with `to` set to `ALICE`'s wallet address.
+  - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert.
+  - if `ALICE` has been allowlisted to hold `RWA_1`, she will receive `50 RWA_1`.
 
 Outcome
 
-Assuming `ALICE` has been allowlisted, the two following events will be emitted:
+Assuming `ALICE` has been allowlisted, the two following helpful events will be emitted:
 
 ```
 emit Withdraw(params.asset, msg.sender, params.to, amountToWithdraw);
 ```
 
 where 
-- `params.asset` (address) is the `RWA_1` token address
-- `msg.sender (address) is `BOB`'s account
-- `params.to` (address) is `ALICE`'s account
-- `amountToWithdraw` (uint256) is `50`, with corresponding decimals units appended (ex. if decimals is 6, this value will be `50_000_000`)
+- `params.asset` (address) is the `RWA_1` token address.
+- `msg.sender (address) is `BOB`'s account.
+- `params.to` (address) is `ALICE`'s account.
+- `amountToWithdraw` (uint256) is `50`, with corresponding decimals units appended (ex. if decimals is 6, this value will be `50_000_000`).
 
 ```
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
 where 
-- `from` (address) is the `RWA_1` **RwaAToken** address
+- `from` (address) is the `RWA_1` **RwaAToken** address.
   - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
-- `to` (address) is `ALICE`'s account
-- `value` (uint256) will match `amountToWithdraw` value
+- `to` (address) is `ALICE`'s account.
+- `value` (uint256) will match `amountToWithdraw` value.
 
 The Issuer's Transfer Agent must take care to record this officially as a transfer of `RWA_1` between `BOB` and `ALICE`, rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`. 
 
@@ -220,30 +228,30 @@ The Issuer's Transfer Agent must take care to record this officially as a transf
 During a liquidation, collateral seized from the user being liquidated will be transferred to the liquidator. This should also be considered a standard ERC20 transfer. 
 
 Assumptions:
-- `BOB` and `ALICE` are allowlisted to hold `RWA_1`
-- `ALICE` has an off-chain legal agreement with `RWA_1_ISSUER` to be able to be a liquidator
-- `LTV` of `RWA_1` is `>80%`
-- `RWA_1` has decimals of 8
+- `BOB` and `ALICE` are allowlisted to hold `RWA_1`.
+- `ALICE` has an off-chain legal agreement with `RWA_1_ISSUER` to be able to be a liquidator.
+- `LTV` of `RWA_1` is `>80%` in Horizon.
+- `RWA_1` has decimals of 8.
 
 Consider the scenario:
-- `BOB` supply `100 RWA_1`, and borrows `80 USDC`
+- `BOB` supply `100 RWA_1`, and borrows `80 USDC`.
 - time flies and `Bob`'s `USDC` debt grows to `120 USDC` through accumulation of interest. His position is no longer healthy and it becomes liquidatable. 
-- `ALICE` executes a `liquidationCall` on `BOB`'s position, and is able to earn all of `BOB`'s seized `100 RWA_1` (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt
-- `ALICE` receives `100 RWA_1`
+- `ALICE` executes a `liquidationCall` on `BOB`'s position, and is able to earn all of `BOB`'s seized `100 RWA_1` (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt.
+- `ALICE` receives `100 RWA_1`.
 
 Outcome
 
-Two events will be emitted involving the collateral:
+Two helpful events will be emitted involving the collateral:
 
 ```
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
 where 
-- `from` (address) is the `RWA_1` **RwaAToken** address
+- `from` (address) is the `RWA_1` **RwaAToken** address.
   - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
-- `to` (address) is `ALICE`'s account
-- `value` (uint256) will be the liquidated `RWA_1` collateral amount, ie `10_000_000` including decimals
+- `to` (address) is `ALICE`'s account.
+- `value` (uint256) will be the liquidated `RWA_1` collateral amount, ie `10_000_000` including decimals.
 
 ```
 emit LiquidationCall(
@@ -258,15 +266,19 @@ emit LiquidationCall(
 ```
 
 where
-- `params.collateralAsset` (address) is the `RWA_1` collateral token address
-- `params.debtAsset` (address) is the `USDC` debt token address
-- `params.user` (address) is the liquidated user account, `BOB`
+- `params.collateralAsset` (address) is the `RWA_1` collateral token address.
+- `params.debtAsset` (address) is the `USDC` debt token address.
+- `params.user` (address) is the liquidated user account, `BOB`.
 - `vars.actualDebtToLiquidate` (uint256) is the amount of debt asset, `USDC`, to liquidate, with corresponding decimals units appended (ex. if decimals is 6, this value will be `120_000_000`). 
-- `vars.actualCollateralToLiquidate` (uint256) is the amount of collateral asset to liquidate, which is `10_000_000 RWA_1`  
-- `msg.sender` (address) is the liquidator address, ie `ALICE`'s account
-- `params.receiveAToken` (bool) will be false, as `receiveAToken` is not allowed
+- `vars.actualCollateralToLiquidate` (uint256) is the amount of collateral asset to liquidate, which is `10_000_000 RWA_1`.
+- `msg.sender` (address) is the liquidator address, ie `ALICE`'s account.
+- `params.receiveAToken` (bool) will be false, as `receiveAToken` is not allowed.
 
 The Issuer's Transfer Agent must take care to record this officially as a transfer of `RWA_1` between `BOB` (liquidated user) and `ALICE` (liquidator), rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`.
+
+### Further Configuration
+
+Exact configuration details for eMode, isolated mode, flash loan premiums, and liquidity mining rewards  are in progress.
 
 ## References
 
