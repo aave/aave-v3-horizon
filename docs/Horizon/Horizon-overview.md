@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins. Permissioning occurs at the asset level, with each RWA Token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
+The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins (or other permissionless non-RWA assets). Permissioning occurs at the asset level, with each RWA Token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
 From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens (which are themselves not securities) will simply signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them as desired within collateralization limits.
 
@@ -16,7 +16,7 @@ However, holding an RwaAToken is purposefully more restrictive than merely holdi
 
 For added security and robustness, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
-As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins to be borrowed by RWA holders.
+As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins (or other non-RWA assets) to be borrowed by RWA holders.
 
 ## Implementation
 
@@ -74,11 +74,11 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - debtCeiling: non-zero if the RWA asset is in isolation
 - liquidationProtocolFee: 0 (must be 0, otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
-### Stablecoins (Borrowable Asset)
+### Stablecoins / Permissionless Non-RWA Assets (Borrowable Asset)
 
-Stablecoins can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins (except in a potential case [here](#non-allowlisted-account-can-receive-rwaatokens)). 
+Stablecoins, or other non-RWA assets, can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins or other permissionless non-RWA assets (except in a potential case [here](#non-allowlisted-account-can-receive-rwaatokens)). 
 
-All other existing functionality remains unchanged from v3.3. Stablecoin assets will be listed and operate as usual, following the standard process.
+All other existing functionality remains unchanged from v3.3. Stablecoins, or other non-RWA assets, will be listed and operate as usual, following the standard process.
 
 #### Reserve Configuration
 
@@ -96,6 +96,8 @@ All other existing functionality remains unchanged from v3.3. Stablecoin assets 
 - borrowCap: different per asset
 - debtCeiling: 0 (only applies to isolated asset)
 - liquidationProtocolFee: 0 (as it won't apply for a non-collateral asset)
+
+Stablecoins, or other non-RWA permissionless assets, may also be configured as collateral in the future, by setting `liquidationThreshold` above 0. In such case, permissionless supplying and borrowing would also be enabled within the instance.
 
 ## Edge Cases of Note
 
