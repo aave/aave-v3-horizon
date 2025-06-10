@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
 interface IRwaAToken {
   /**
    * @dev Emitted during the authorizedTransfer action
-   * @param caller The address performing the authorizedTransfer
+   * @param caller The address performing the authorized transfer
    * @param from The user whose tokens are being transferred
    * @param to The recipient
    * @param amount The amount being transferred
