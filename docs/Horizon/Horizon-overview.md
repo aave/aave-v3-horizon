@@ -278,7 +278,7 @@ The Issuer's Transfer Agent must take care to record this officially as a transf
 
 ### Further Configuration
 
-Exact configuration details for eMode, isolated mode, flash loan premiums, and liquidity mining rewards  are in progress.
+Exact configuration details for eMode, isolated mode, flash loan premiums, and liquidity mining rewards are in progress.
 
 ## References
 
