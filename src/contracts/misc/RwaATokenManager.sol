@@ -65,7 +65,7 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   function _getATokenAddress(address asset) internal view returns (address) {
-    address aTokenAddress = POOL.getReserveData(asset).aTokenAddress;
+    address aTokenAddress = POOL.getReserveAToken(asset);
     require(aTokenAddress != address(0), 'INVALID_RESERVE');
     return aTokenAddress;
   }
