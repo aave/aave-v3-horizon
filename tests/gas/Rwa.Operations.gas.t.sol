@@ -42,19 +42,15 @@ contract RwaOperations_gas_Tests is Testhelpers {
   }
 
   function test_transferRwaAToken() external {
-    address reserve = contracts.poolProxy.getReserveAddressById(
-      contracts.poolProxy.getReserveData(tokenList.buidl).id
-    );
-
     vm.prank(rwaATokenManagerOwner);
-    rwaATokenManager.grantAuthorizedTransferRole(reserve, carol);
+    rwaATokenManager.grantAuthorizedTransferRole(tokenList.buidl, carol);
 
     vm.prank(alice);
     contracts.poolProxy.supply(tokenList.buidl, 100e6, alice, 0);
 
     vm.prank(carol);
     rwaATokenManager.transferRwaAToken({
-      reserveAddress: reserve,
+      asset: tokenList.buidl,
       from: alice,
       to: bob,
       amount: 100e6

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IPool} from './IPool.sol';
+
 /**
  * @title IRwaATokenManager
  * @author Aave
@@ -52,6 +54,12 @@ interface IRwaATokenManager {
    * @return The id of the AuthorizedTransfer role
    */
   function AUTHORIZED_TRANSFER_ROLE() external pure returns (bytes32);
+
+  /**
+   * @notice The pool associated with the RwaATokenManager
+   * @return The pool address
+   */
+  function POOL() external view returns (IPool);
 
   /**
    * @notice Returns the role id required to perform transfers of the specified RWA aToken
