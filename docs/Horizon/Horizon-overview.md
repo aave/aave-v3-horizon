@@ -76,7 +76,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 
 ### Stablecoins / Permissionless Non-RWA Assets (Borrowable Asset)
 
-Stablecoins, or other non-RWA assets, can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins or other permissionless non-RWA assets (except in a potential case [here](#non-allowlisted-account-can-receive-rwaatokens)). 
+Stablecoins, or other non-RWA assets, can be supplied permissionlessly to earn yield. However, they will only be able to be borrowed, but disabled as collateral assets (via asset configuration, by setting Liquidation Threshold to 0). Borrowing will be implicitly permissioned because only users that have supplied RWA assets can borrow stablecoins or other permissionless non-RWA assets (except in a potential edge case described [here](#non-allowlisted-account-can-receive-rwaatokens)). 
 
 All other existing functionality remains unchanged from v3.3. Stablecoins, or other non-RWA assets, will be listed and operate as usual, following the standard process.
 
@@ -97,7 +97,7 @@ All other existing functionality remains unchanged from v3.3. Stablecoins, or ot
 - debtCeiling: 0 (only applies to isolated asset)
 - liquidationProtocolFee: 0 (as it won't apply for a non-collateral asset)
 
-Stablecoins, or other non-RWA permissionless assets, may also be configured as collateral in the future, by setting `liquidationThreshold` above 0. In such case, permissionless supplying and borrowing would also be enabled within the instance.
+Stablecoins, or other non-RWA permissionless assets, may also be configured as collateral in the future, by setting `liquidationThreshold` above `0`. In such case, natively permissionless borrowing would therefore be enabled within the instance.
 
 ## Edge Cases of Note
 
@@ -109,7 +109,7 @@ If a user has a borrow position but loses private keys to their wallet, this pos
 
 #### Assumptions
 
-- `RWA_1_ISSUER` has been granted the role `FLASH_BORROWER_ROLE`. The account will not pay a premium on the flashloan amount loaned.
+- `RWA_1_ISSUER` has been granted `FLASH_BORROWER_ROLE`. The account will not pay a fee on the flashloan amount loaned.
 - `RWA_1_ISSUER` has been granted `AUTHORIZED_TRANSFER_ROLE` in the RwaATokenManager contract for `aRWA_1`.
 - `RWA_1_ISSUER` has an off-chain agreement with `RWA_1` suppliers to migrate supplier lost positions if needed.
 
@@ -193,7 +193,7 @@ By specifying an arbitrary `to` address argument in the `withdraw` function, use
   - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert.
   - if `ALICE` has been allowlisted to hold `RWA_1`, she will receive `50 RWA_1`.
 
-Outcome
+#### Outcome
 
 Assuming `ALICE` has been allowlisted, the following helpful events will be emitted:
 
@@ -235,7 +235,7 @@ Consider the following scenario:
 - `ALICE` executes a `liquidationCall` on `BOB`'s position, and is able to earn all of `BOB`'s seized `100 RWA_1` (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt.
 - `ALICE` receives `100 RWA_1`.
 
-Outcome
+#### Outcome
 
 Multiple events will be emitted involving the `RWA_1` collateral asset, including two `Transfer` events - one from the underlying `RWA_1` token and one from the `aRWA_1` token being burned. 
 
