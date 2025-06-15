@@ -11,28 +11,28 @@ import {IPool} from './IPool.sol';
 interface IRwaATokenManager {
   /**
    * @notice Grants the authorized transfer role for a specific RWA aToken to a designated account.
-   * @param reserveAddress The address of the RWA reserve
+   * @param asset The address of the RWA asset
    * @param account The address of the account to which permission is granted
    */
-  function grantAuthorizedTransferRole(address reserveAddress, address account) external;
+  function grantAuthorizedTransferRole(address asset, address account) external;
 
   /**
    * @notice Revokes the authorized transfer role for a specific RWA aToken from a designated account.
-   * @param reserveAddress The address of the RWA reserve
+   * @param asset The address of the RWA asset
    * @param account  The address of the account to which permission is revoked
    */
-  function revokeAuthorizedTransferRole(address reserveAddress, address account) external;
+  function revokeAuthorizedTransferRole(address asset, address account) external;
 
   /**
    * @notice Performs an authorized transfer of RWA aTokens from one account to another
-   * @param reserveAddress The address of the RWA reserve
+   * @param asset The address of the RWA asset
    * @param from The address from which the RWA aTokens are transferred
    * @param to The address that will receive the RWA aTokens
    * @param amount The amount of RWA aTokens to transfer
    * @return True if the transfer was successful, false otherwise
    */
   function transferRwaAToken(
-    address reserveAddress,
+    address asset,
     address from,
     address to,
     uint256 amount
@@ -40,14 +40,11 @@ interface IRwaATokenManager {
 
   /**
    * @notice Returns whether the account holds the authorized transfer role for a specific RWA aToken
-   * @param reserveAddress The address of the RWA reserve
+   * @param asset The address of the RWA asset
    * @param account The address of the account
    * @return True if the given address has the authorized transfer role for the RWA aToken, false otherwise
    */
-  function hasAuthorizedTransferRole(
-    address reserveAddress,
-    address account
-  ) external view returns (bool);
+  function hasAuthorizedTransferRole(address asset, address account) external view returns (bool);
 
   /**
    * @notice Returns the identifier of the AuthorizedTransfer role
@@ -63,8 +60,8 @@ interface IRwaATokenManager {
 
   /**
    * @notice Returns the role id required to perform transfers of the specified RWA aToken
-   * @param reserveAddress The address of the RWA reserve
+   * @param asset The address of the RWA asset
    * @return The bytes32 identifier of the role required to transfer the RWA aToken
    */
-  function getAuthorizedTransferRole(address reserveAddress) external view returns (bytes32);
+  function getAuthorizedTransferRole(address asset) external view returns (bytes32);
 }
