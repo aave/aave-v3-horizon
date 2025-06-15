@@ -40,8 +40,9 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
     address to,
     uint256 amount
   ) external override onlyRole(getAuthorizedTransferRole(aTokenAddress)) returns (bool) {
+    bool result = IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
     emit TransferRwaAToken(msg.sender, aTokenAddress, from, to, amount);
-    return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
+    return result;
   }
 
   /// @inheritdoc IRwaATokenManager
