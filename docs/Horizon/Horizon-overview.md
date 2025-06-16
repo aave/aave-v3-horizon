@@ -87,7 +87,7 @@ All other existing functionality remains unchanged from v3.3. Stablecoins, or ot
 - borrowingEnabled: true 
 - borrowableInIsolation: true
 - withSiloedBorrowing: false
-- flashloanable: true (flashborrowers also will be configured)
+- flashloanable: true (authorized flashborrowers can be configured)
 - LTV: 0
 - liquidationThreshold: 0 (to disable its use as collateral)
 - liquidationBonus: N/A (can be 0)
@@ -116,19 +116,19 @@ If a user has a borrow position but loses private keys to their wallet, this pos
 #### Context
 
 1. `ALICE` supplies `100 RWA_1`, receiving `100 aRWA_1`.
-1. `ALICE` borrows `50 USDC`.
-1. `ALICE` loses her wallet private key.
+2. `ALICE` borrows `50 USDC`.
+3. `ALICE` loses her wallet private key.
 
 #### Resolution
 
 1. `ALICE` creates a new wallet, `ALICE2`. 
-1. `RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE2` with 1 of 2 signers (`NEW_ALICE_WALLET`) which will eventually be fully transferred to `ALICE2`.
-1. `RWA_1_ISSUER` executes a "complex" flashloan for `50 USDC` by calling `Pool.flashLoan(...)`. In the flashloan callback, `RWA_1_ISSUER`:
+2. `RWA_1_ISSUER` creates a new multisig wallet controlled by `RWA_1_ISSUER` and `ALICE2` with 1 of 2 signers (`NEW_ALICE_WALLET`) which will eventually be fully transferred to `ALICE2`.
+3. `RWA_1_ISSUER` executes a "complex" flashloan for `50 USDC` by calling `Pool.flashLoan(...)`. In the flashloan callback, `RWA_1_ISSUER`:
     - repays the `50 USDC` debt `onBehalfOf` `ALICE`.
     - executes `RwaATokenManager.transferRwaAToken` to transfer `100 aRWA_1` to `NEW_ALICE_WALLET`.
     - `RWA_1_ISSUER` opens a new borrow position from `NEW_ALICE_WALLET` for `50 USDC`.
     - `RWA_1_ISSUER` repays flashloan using newly borrowed `50 USDC`.
-1. `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, fully transferring ownership to `ALICE2`.
+4. `RWA_1_ISSUER` revokes its signing role from `NEW_ALICE_WALLET`, fully transferring ownership to `ALICE2`.
 
 At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt and collateral positions to `NEW_ALICE_WALLET`, which will be fully controlled by `ALICE2`. It is not strictly necessary for `RWA_1_ISSUER` to be granted the `FLASH_BORROWER_ROLE`, but this will be helpful in cases where the position to migrate is large, ensuring that `RWA_1_ISSUER` will not be required to consistently maintain a liquidity buffer on hand to resolve this situation. This also allows for the position to be migrated without paying a premium for the flashloaned amount.
 
@@ -179,45 +179,64 @@ Assumptions:
 - `BOB` is not allowlisted to hold `RWA_1`.
 
 1. `RWA_1_ISSUER` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_1`.
-1. `BOB` sets `RWA_1` to be used as collateral.
-1. `BOB` borrows `50 USDC` against their `aRWA_1`.
+2. `BOB` sets `RWA_1` to be used as collateral.
+3. `BOB` borrows `50 USDC` against their `aRWA_1`.
 
 `BOB` then has created a debt position without having held any underlying RWA Token. `RWA_1_ISSUER` bears responsibility to avoid this scenario through proper execution of `authorizedTransfer`.
 
 ### `Withdraw` as a Transfer of Underlying RWA Token
 
-By specifying an arbitrary `to` address argument in the `withdraw` function, users who have supplied RWA Tokens can withdraw them to any other allowlisted account. This should be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token. Consider the following scenario.
+By specifying an arbitrary `to` address argument in the `withdraw` function, users who have supplied RWA Tokens can withdraw them to any other allowlisted account. This should be considered a standard ERC20 transfer and will adhere to the same restrictions imposed by the underlying RWA Token. 
+
+Assumptions:
+- `ALICE` has been allowlisted.
+- `RWA_1` and `aRWA_1` have decimals of 6.
+
+Consider the following scenario.
 
 - `Bob` supplies `100 RWA_1`.
-- `Bob` withdraws `50 RWA_1` with `to` set to `ALICE`'s wallet address.
-  - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert.
+- `Bob` withdraws `50 RWA_1` with `to` set to `ALICE`'s account.
+  - if `ALICE` has **not** been allowlisted to hold `RWA_1`, this transaction will revert on the transfer of underlying `RWA_1`.
   - if `ALICE` has been allowlisted to hold `RWA_1`, she will receive `50 RWA_1`.
 
 #### Outcome
 
-Assuming `ALICE` has been allowlisted, the following helpful events will be emitted:
+Multiple events will be emitted, including two `Transfer` events - one from the underlying `RWA_1` token and one from the `aRWA_1` token being burned.
 
-```
-event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
-```
-
-where 
-- `reserve` is the `RWA_1` token address.
-- `user` is `BOB`'s account.
-- `to` is `ALICE`'s account.
-- `amount` is `50`, with corresponding decimals units appended (ex. if decimals is 6, this value will be `50_000_000`).
+`aRWA_1` Transfer
 
 ```
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
-where 
+From `ScaledBalanceTokenBase.sol`, where:
+- `from` is the user account whose tokens are withdrawn, `BOB`.
+- `to` is the zero address to signify a `burn` action.
+- `value` is the amount of `aRWA_1` being burned when collateral is withdrawn, including `aToken` decimals (ie `50_000_000`).
+
+Underlying `RWA_1` Transfer
+
+```
+event Transfer(address indexed from, address indexed to, uint256 value);
+```
+
+From the RWA `ERC20` Token contract itself, where:
 - `from` is the `RWA_1` **RwaAToken** address.
   - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
 - `to` is `ALICE`'s account.
-- `value` will match `amountToWithdraw` value.
+- `value` is the amount of `RWA_1` withdrawn, including decimals (ie `50_000_000`).
 
-The `RWA_1` Transfer Agent must properly record this officially as a transfer of `RWA_1` between `BOB` and `ALICE` (rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`).
+```
+event Withdraw(address indexed reserve, address indexed user, address indexed to, uint256 amount);
+```
+
+From `Pool.sol`, where:
+- `reserve` is the `RWA_1` token address.
+- `user` is `BOB`'s account.
+- `to` is `ALICE`'s account.
+- `amount` is the amount of `aRWA_1` withdrawn, including decimals (ie `50_000_000`).
+
+The `RWA_1` Transfer Agent must properly record this action officially as a transfer of `RWA_1` between `BOB` and `ALICE` (rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`).
 
 ### `Liquidation` as a Transfer of Underlying RWA Token
 
@@ -227,17 +246,17 @@ Assumptions:
 - `BOB` and `ALICE` are allowlisted to hold `RWA_1`.
 - `ALICE` has an off-chain legal agreement with `RWA_1_ISSUER` to be able to be a liquidator.
 - `LTV` of `RWA_1` is `>80%` in Horizon.
-- `RWA_1` has decimals of 8.
+- `RWA_1` and `aRWA_1` have decimals of 8.
 
 Consider the following scenario:
 - `BOB` supplies `100 RWA_1`, and borrows `80 USDC`.
 - time flies and `Bob`'s `USDC` debt grows to `120 USDC` through accumulation of interest. His position is no longer healthy and it becomes eligible for liquidation. 
-- `ALICE` executes a `liquidationCall` on `BOB`'s position, and is able to earn all of `BOB`'s seized `100 RWA_1` (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt.
+- `ALICE` executes a `liquidationCall` on `BOB`'s position, and receives all of `BOB`'s `100 RWA_1` collateral (which includes the liquidation bonus) by repaying `BOB`'s `120 USDC` debt.
 - `ALICE` receives `100 RWA_1`.
 
 #### Outcome
 
-Multiple events will be emitted involving the `RWA_1` collateral asset, including two `Transfer` events - one from the underlying `RWA_1` token and one from the `aRWA_1` token being burned. 
+Multiple events will be emitted, including two `Transfer` events - one from the underlying `RWA_1` token and one from the `aRWA_1` token being burned.
 
 `aRWA_1` Transfer
 
@@ -245,10 +264,10 @@ Multiple events will be emitted involving the `RWA_1` collateral asset, includin
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
-where 
-- `from` is the user being liquidated, `BOB`.
+From `ScaledBalanceTokenBase.sol`, where:
+- `from` is the user account being liquidated, `BOB`.
 - `to` is the zero address to signify a `burn` action.
-- `value` is the amount of `aRWA_1` being burned when collateral is liquidated, ie `10_000_000_000` including decimals.
+- `value` is the amount of `aRWA_1` being burned when collateral is liquidated, including decimals (ie `10_000_000_000 aRWA_1`).
 
 Underlying `RWA_1` Transfer
 
@@ -256,11 +275,11 @@ Underlying `RWA_1` Transfer
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
-where 
+From the RWA ERC20 Token contract itself, where:
 - `from` is the `RWA_1` **RwaAToken** address.
   - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
 - `to` is `ALICE`'s account.
-- `value` will be the liquidated `RWA_1` collateral amount, ie `10_000_000_000` including decimals.
+- `value` will be the liquidated `RWA_1` collateral amount, including decimals (ie `10_000_000_000 RWA_1`).
 
 ```
 event LiquidationCall(
@@ -274,14 +293,14 @@ event LiquidationCall(
 );
 ```
 
-where
+From `Pool.sol`, where:
 - `collateralAsset` is the `RWA_1` collateral token address.
 - `debtAsset` is the `USDC` debt token address.
 - `user` is the liquidated user account, `BOB`.
-- `debtToCover` is the debt amount of borrowed `asset`, `USDC`, the liquidator wants to cover, with corresponding decimals units appended (ex. if decimals is 6, this value will be `120_000_000`). 
-- `liquidatedCollateralAmount` is the amount of collateral asset to liquidate, with corresponding decimals units appended, which is `10_000_000_000 RWA_1`.
-- `liquidator` is the liquidator address, ie `ALICE`'s account.
-- `receiveAToken` will be false, as `receiveAToken` is not allowed.
+- `debtToCover` is the debt amount of borrowed `asset`, `USDC`, the liquidator wants to cover, including decimals (ie `120_000_000 USDC`).
+- `liquidatedCollateralAmount` is the amount of collateral asset to liquidate, including decimals (ie `10_000_000_000 RWA_1`).
+- `liquidator` is the liquidator address, `ALICE`'s account.
+- `receiveAToken` will be `false`, as `receiveAToken` set to `true` is not allowed.
 
 The Issuer's Transfer Agent must properly record this officially as a transfer of `RWA_1` between `BOB` (liquidated user) and `ALICE` (liquidator) (rather than a transfer between the `RWA_1` RwaAToken contract and `ALICE`).
 
