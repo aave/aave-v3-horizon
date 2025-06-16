@@ -275,7 +275,7 @@ Underlying `RWA_1` Transfer
 event Transfer(address indexed from, address indexed to, uint256 value);
 ```
 
-From the RWA ERC20 Token contract itself, where:
+From the RWA `ERC20` Token contract itself, where:
 - `from` is the `RWA_1` **RwaAToken** address.
   - Note that the emitted `from` address is the **RwaAToken** smart contract rather than `BOB`'s account. 
 - `to` is `ALICE`'s account.
