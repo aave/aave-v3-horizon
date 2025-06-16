@@ -47,8 +47,8 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
     address to,
     uint256 amount
   ) external override onlyRole(getAuthorizedTransferRole(asset)) returns (bool) {
-    address aTokenAddress = _getATokenAddress(asset);
-    return IRwaAToken(aTokenAddress).authorizedTransfer(from, to, amount);
+    address aToken = _getAToken(asset);
+    return IRwaAToken(aToken).authorizedTransfer(from, to, amount);
   }
 
   /// @inheritdoc IRwaATokenManager
@@ -61,12 +61,12 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
 
   /// @inheritdoc IRwaATokenManager
   function getAuthorizedTransferRole(address asset) public view override returns (bytes32) {
-    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, _getATokenAddress(asset)));
+    return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, _getAToken(asset)));
   }
 
-  function _getATokenAddress(address asset) internal view returns (address) {
-    address aTokenAddress = POOL.getReserveAToken(asset);
-    require(aTokenAddress != address(0), 'INVALID_RESERVE');
-    return aTokenAddress;
+  function _getAToken(address asset) internal view returns (address) {
+    address aToken = POOL.getReserveAToken(asset);
+    require(aToken != address(0), 'INVALID_RESERVE');
+    return aToken;
   }
 }
