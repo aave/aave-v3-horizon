@@ -64,6 +64,11 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
     return keccak256(abi.encode(AUTHORIZED_TRANSFER_ROLE, _getAToken(asset)));
   }
 
+  /**
+   * @notice Reverts if the asset does not have a valid aToken
+   * @param asset The address of the asset for which to get the aToken
+   * @return The address of the aToken for the given asset
+   */
   function _getAToken(address asset) internal view returns (address) {
     address aToken = POOL.getReserveAToken(asset);
     require(aToken != address(0), 'INVALID_RESERVE');
