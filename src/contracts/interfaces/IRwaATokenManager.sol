@@ -53,8 +53,8 @@ interface IRwaATokenManager {
   function AUTHORIZED_TRANSFER_ROLE() external pure returns (bytes32);
 
   /**
-   * @notice The pool associated with the RwaATokenManager
-   * @return The pool address
+   * @notice Returns the address of the Pool associated with the RwaATokenManager
+   * @return The address of the Pool
    */
   function POOL() external view returns (IPool);
 
