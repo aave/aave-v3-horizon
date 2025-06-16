@@ -65,7 +65,7 @@ contract RwaATokenManager is AccessControl, IRwaATokenManager {
   }
 
   /**
-   * @notice Reverts if the asset does not have a valid aToken
+   * @dev Reverts if the asset does not have a valid aToken
    * @param asset The address of the asset for which to get the aToken
    * @return The address of the aToken for the given asset
    */
