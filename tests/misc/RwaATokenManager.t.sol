@@ -63,10 +63,10 @@ contract RwaATokenManagerTest is TestnetProcedures {
     assertEq(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), keccak256('AUTHORIZED_TRANSFER'));
   }
 
-  function test_fuzz_getAuthorizedTransferRole(address aTokenAddress) public view {
+  function test_fuzz_getAuthorizedTransferRole(address aToken) public view {
     assertEq(
-      rwaATokenManager.getAuthorizedTransferRole(aTokenAddress),
-      keccak256(abi.encode(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), aTokenAddress))
+      rwaATokenManager.getAuthorizedTransferRole(aToken),
+      keccak256(abi.encode(rwaATokenManager.AUTHORIZED_TRANSFER_ROLE(), aToken))
     );
   }
 
@@ -218,25 +218,22 @@ contract RwaATokenManagerTest is TestnetProcedures {
     );
   }
 
-  function test_fuzz_hasAuthorizedTransferRole_False(
-    address aTokenAddress,
-    address account
-  ) public view {
-    assertFalse(rwaATokenManager.hasAuthorizedTransferRole(aTokenAddress, account));
+  function test_fuzz_hasAuthorizedTransferRole_False(address aToken, address account) public view {
+    assertFalse(rwaATokenManager.hasAuthorizedTransferRole(aToken, account));
   }
 
   /// @dev Grant role to aBuidl admin, then revoke role
   function test_fuzz_hasAuthorizedTransfer_False_Scenario() public {
-    address aTokenAddress = rwaATokenInfos[0].rwaAToken;
+    address aToken = rwaATokenInfos[0].rwaAToken;
 
     test_fuzz_hasAuthorizedTransferRole_true(0);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, poolAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[2].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, poolAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[1].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[2].rwaATokenAdmin);
 
     vm.prank(rwaATokenManagerOwner);
     rwaATokenManager.revokeAuthorizedTransferRole(rwaATokenList.aBuidl, aBuidlAdmin);
-    test_fuzz_hasAuthorizedTransferRole_False(aTokenAddress, rwaATokenInfos[1].rwaATokenAdmin);
+    test_fuzz_hasAuthorizedTransferRole_False(aToken, rwaATokenInfos[1].rwaATokenAdmin);
   }
 
   function test_fuzz_reverts_transferRwaAToken_NotATokenTransferRole(
