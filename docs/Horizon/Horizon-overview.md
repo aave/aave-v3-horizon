@@ -70,7 +70,7 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - liquidationBonus: different per asset, >100%
 - reserveFactor: 0
 - supplyCap: different per asset
-- borrowCap: 0
+- borrowCap: 0 (signifies no borrow cap, but cannot be borrowed due to borrowingEnabled set to false)
 - debtCeiling: non-zero if the RWA asset is in isolation
 - liquidationProtocolFee: 0 (must be 0, otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
 
