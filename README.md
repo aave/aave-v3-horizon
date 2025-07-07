@@ -98,7 +98,7 @@ In addition, Enigma Dark has adapted the Foundry-based fuzzing [invariant suite]
 **-> Horizon Aave v3.3 - July 2025**
 
 - [Certora](./audits/2025-05-30_Certora_Horizon-v3.3.0.pdf)
-- [StErMi](./audits/2025-07-05_Stermi_Horizon-v3.3.0.pdf)
+- [StErMi](./audits/2025-07-05_StErMi_Horizon-v3.3.0.pdf)
 
 <br>
 
