@@ -305,7 +305,7 @@ contract ATokenTransferTests is TestnetProcedures {
     contracts.poolProxy.borrow(tokenList.usdx, 200_000e6, 2, 0, carol);
 
     // wait to inflate the index
-    vm.warp(block.timestamp + timePassed);
+    vm.warp(vm.getBlockTimestamp() + timePassed);
     // transfer the usdx
     vm.prank(alice);
     aToken.transfer(mockReceiver, amount);
