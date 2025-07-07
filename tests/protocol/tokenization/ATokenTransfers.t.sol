@@ -297,7 +297,7 @@ contract ATokenTransferTests is TestnetProcedures {
   ) public {
     uint256 aliceBalance = IERC20(aToken).balanceOf(alice);
     vm.assume(amount <= aliceBalance);
-    vm.assume(timePassed > 0);
+    timePassed = uint64(bound(timePassed, 1, type(uint64).max - vm.getBlockTimestamp() - 1));
     address mockReceiver = vm.addr(42);
 
     // borrow all available usdx
