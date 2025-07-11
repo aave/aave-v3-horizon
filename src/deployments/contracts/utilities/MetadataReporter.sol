@@ -11,7 +11,7 @@ contract MetadataReporter is IMetadataReporter {
 
   Vm private constant vm = Vm(address(bytes20(uint160(uint256(keccak256('hevm cheat code'))))));
 
-  function writeJsonReportMarket(MarketReport memory report) external {
+  function writeJsonReportMarket(MarketReport memory report) external returns (string memory filePath) {
     string memory factoryV3Commit;
     string memory factoryV3Branch;
 
@@ -95,7 +95,8 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapRepayAdapter
     );
 
-    vm.writeJson(output, string.concat('./reports/', timestamp, '-market-deployment.json'));
+    filePath = string.concat('./reports/', timestamp, '-market-deployment.json');
+    vm.writeJson(output, filePath);
   }
 
   function writeJsonReportLibraryBatch1(LibrariesReport memory libraries) external {
