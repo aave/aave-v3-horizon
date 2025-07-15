@@ -19,7 +19,7 @@ contract MockAggregator {
     return 1;
   }
 
-  function decimals() external pure returns (uint8) {
+  function decimals() external view virtual returns (uint8) {
     return 8;
   }
 }
