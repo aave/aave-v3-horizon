@@ -69,10 +69,12 @@ contract AaveV3TestListing is AaveV3Payload {
     );
 
     USTB_ADDRESS = address(new TestnetRwaERC20('USTB', 'USTB', 6, erc20Owner));
-    USTB_MOCK_PRICE_FEED = address(new ScaledPriceAdapter(address(new MockAggregator(10e8))));
+    USTB_MOCK_PRICE_FEED = address(
+      new ScaledPriceAdapter(address(new MockAggregatorMetadata(10e6, 6)))
+    );
 
     WTGXX_ADDRESS = address(new TestnetRwaERC20('WTGXX', 'WTGXX', 18, erc20Owner));
-    WTGXX_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
+    WTGXX_MOCK_PRICE_FEED = address(new ScaledPriceAdapter(address(new MockAggregator(1e8))));
 
     GHO_ADDRESS = address(new TestnetERC20('GHO', 'GHO', 18, erc20Owner));
     GHO_MOCK_PRICE_FEED = address(new MockAggregator(1e8));
