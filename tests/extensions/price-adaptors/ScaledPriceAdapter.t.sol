@@ -21,7 +21,7 @@ contract ScaledPriceAdapterTests is TestnetProcedures {
 
   function test_fuzz_adapter(uint256 sourceDecimals, int256 price) public {
     sourceDecimals = bound(sourceDecimals, 1, 36);
-    price = bound(price, 1, int256(10 ** sourceDecimals));
+    price = bound(price, 0, int256(10 ** (10 + sourceDecimals)));
     address source = address(new MockAggregatorMetadata(price, uint8(sourceDecimals)));
     ScaledPriceAdapter adapter = new ScaledPriceAdapter(source);
 
