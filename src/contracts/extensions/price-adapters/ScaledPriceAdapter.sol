@@ -14,19 +14,22 @@ contract ScaledPriceAdapter is IScaledPriceAdapter {
 
   uint8 internal constant _BASE_DECIMALS = 8;
   bool internal immutable _SCALE_UP;
-  uint256 internal immutable _SCALE;
+  uint256 internal immutable _SCALE_FACTOR;
 
   constructor(address source_) {
     _SOURCE = AggregatorInterface(source_);
     uint8 sourceDecimals = _SOURCE.decimals();
     _SCALE_UP = sourceDecimals < _BASE_DECIMALS;
-    _SCALE = 10 ** (_SCALE_UP ? _BASE_DECIMALS - sourceDecimals : sourceDecimals - _BASE_DECIMALS);
+    _SCALE_FACTOR =
+      10 ** (_SCALE_UP ? _BASE_DECIMALS - sourceDecimals : sourceDecimals - _BASE_DECIMALS);
   }
 
   /// @inheritdoc IScaledPriceAdapter
   function latestAnswer() external view returns (int256) {
     return
-      _SCALE_UP ? _SOURCE.latestAnswer() * int256(_SCALE) : _SOURCE.latestAnswer() / int256(_SCALE);
+      _SCALE_UP
+        ? _SOURCE.latestAnswer() * int256(_SCALE_FACTOR)
+        : _SOURCE.latestAnswer() / int256(_SCALE_FACTOR);
   }
 
   /// @inheritdoc IScaledPriceAdapter
@@ -41,7 +44,7 @@ contract ScaledPriceAdapter is IScaledPriceAdapter {
 
   /// @inheritdoc IScaledPriceAdapter
   function scale() external view returns (bool, uint256) {
-    return (_SCALE_UP, _SCALE);
+    return (_SCALE_UP, _SCALE_FACTOR);
   }
 
   /// @inheritdoc IScaledPriceAdapter
