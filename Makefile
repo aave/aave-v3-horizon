@@ -51,25 +51,30 @@ deploy-libs-two	:;
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
 		--verify --chain ${CHAIN}
 
-# STEP 1: Deploy Libraries
-deploy-libs :
-	make deploy-libs-one
-	make deploy-libs-two
-
-# STEP 2: Deploy Pool Contracts once libraries are deployed and updated on .env
-deploy-v3-batched-broadcast :; 
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/DeployAaveV3MarketBatched.sol:Default \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN}
-
+# STEP 1: Deploy scaled price adapters. `make deploy-scaled-price-adapter source=<PRICE_FEED_ADDRESS>`
 deploy-scaled-price-adapter :;
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployScaledPriceAdapter.sol:DeployScaledPriceAdapter \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
 		--verify --chain ${CHAIN} \
 		--sig "run(address)" ${source}
 
-# List Mainnet Assets
-list-assets :; forge script scripts/misc/ConfigureHorizonMainnet.sol:ConfigureHorizonMainnet --rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150
+# STEP 2: Deploy Libraries
+deploy-libs :
+	make deploy-libs-one
+	make deploy-libs-two
+
+# STEP 3: Deploy Pool Contracts once libraries are deployed and updated on .env
+deploy-v3-batched-broadcast :; 
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/DeployAaveV3MarketBatched.sol:Default \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${CHAIN}
+
+# STEP 4: List Phase One Assets. `make list-phase-one-assets reportPath=<PATH_TO_REPORT>`
+list-phase-one-assets :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/ConfigureHorizonPhaseOne.sol:ConfigureHorizonPhaseOne \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${CHAIN} \
+		--sig "run(string)" ${reportPath}
 
 # Invariants
 echidna:
