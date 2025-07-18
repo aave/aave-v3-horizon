@@ -35,8 +35,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   address public immutable USYC_ADDRESS;
   address public immutable USYC_PRICE_FEED;
 
-  bytes32 public constant POOL_ADMIN_ROLE_ID =
-    0x12ad05bde78c5ab75238ce885307f96ecd482bb402ef831f99e7018a0f169b7b;
+  bytes32 public constant POOL_ADMIN_EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
 
   constructor(MarketReport memory report) AaveV3Payload(IEngine(report.configEngine)) {
     ATOKEN_IMPLEMENTATION = report.aToken;
@@ -57,13 +56,13 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
     USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-    USTB_PRICE_FEED = 0x289B5036cd942e619E1Ee48670F98d214E745AAC;
+    USTB_PRICE_FEED = 0x63908721c77a27689fb0f5db78983135ddfBa56f;
 
     USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-    USCC_PRICE_FEED = 0xAfFd8F5578E8590665de561bdE9E7BAdb99300d9;
+    USCC_PRICE_FEED = 0x889f5Feb776Ed122e774D8859134b487c7A85B5d;
 
     USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
-    USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
+    USYC_PRICE_FEED = 0x9a4dCEf05fbe89ff81fda84420CA737D02dF21A6;
   }
 
   // list a token with virtual accounting deactivated (ex. GHO)
@@ -292,5 +291,6 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     CONFIGURATOR.setReservePause(USTB_ADDRESS, true, 0);
     CONFIGURATOR.setReservePause(USCC_ADDRESS, true, 0);
     CONFIGURATOR.setReservePause(USYC_ADDRESS, true, 0);
+    ACLManager(ACL_MANAGER).renounceRole(POOL_ADMIN_EMERGENCY_ADMIN_ROLE, address(this));
   }
 }
