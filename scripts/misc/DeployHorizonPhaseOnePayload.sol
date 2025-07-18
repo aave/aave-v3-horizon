@@ -8,7 +8,7 @@ import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils
 import {HorizonInput} from '../../src/deployments/inputs/HorizonInput.sol';
 import {Script} from 'forge-std/Script.sol';
 
-contract ConfigureHorizonPhaseOne is Script, DeployUtils, HorizonInput {
+contract DeployHorizonPhaseOnePayload is Script, DeployUtils, HorizonInput {
   function run(string memory reportPath) public returns (address) {
     IMetadataReporter metadataReporter = IMetadataReporter(
       _deployFromArtifacts('MetadataReporter.sol:MetadataReporter')

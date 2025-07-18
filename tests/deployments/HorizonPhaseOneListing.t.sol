@@ -6,7 +6,7 @@ import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.
 import {MarketReport, ContractsReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
-import {ConfigureHorizonPhaseOne} from '../../scripts/misc/ConfigureHorizonPhaseOne.sol';
+import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
@@ -446,7 +446,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     marketReport = metadataReporter.parseMarketReport(reportFilePath);
     contracts = MarketReportUtils.toContractsReport(marketReport);
 
-    address horizonPhaseOneListing = new ConfigureHorizonPhaseOne().run(reportFilePath);
+    address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
 
     vm.prank(ADVANCED_MULTISIG);
     (bool success, ) = getListingExecutor().call(

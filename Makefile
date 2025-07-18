@@ -55,7 +55,7 @@ deploy-libs-two	:;
 deploy-scaled-price-adapter :;
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployScaledPriceAdapter.sol:DeployScaledPriceAdapter \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN} \
+		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
 		--sig "run(address)" ${source}
 
 # STEP 2: Deploy Libraries
@@ -66,14 +66,14 @@ deploy-libs :
 # STEP 3: Deploy Pool Contracts once libraries are deployed and updated on .env
 deploy-v3-batched-broadcast :; 
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/DeployAaveV3MarketBatched.sol:Default \
-		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN}
+		--rpc-url ${CHAIN} --sender $$(cast wallet address --account ${ACCOUNT}) --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
+		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} -vvvv
 
-# STEP 4: List Phase One Assets. `make list-phase-one-assets reportPath=<PATH_TO_REPORT>`
-list-phase-one-assets :;
-	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/ConfigureHorizonPhaseOne.sol:ConfigureHorizonPhaseOne \
+# STEP 4: Deploys payload to list phase one assets. `make list-phase-one-assets reportPath=<PATH_TO_REPORT>`
+deploy-phase-one-payload :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseOnePayload.sol:DeployHorizonPhaseOnePayload \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
-		--verify --chain ${CHAIN} \
+		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
 		--sig "run(string)" ${reportPath}
 
 # Invariants
