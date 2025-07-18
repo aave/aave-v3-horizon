@@ -68,7 +68,7 @@ abstract contract HorizonListingBaseTest is Test {
 
   function getListingExecutor() internal view virtual returns (address);
 
-  function test_listingExecutor() public {
+  function check_listingExecutor() internal {
     address listingExecutor = getListingExecutor();
     assertFalse(
       IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isPoolAdmin(listingExecutor)
@@ -259,6 +259,10 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
       marketReport.rwaAToken,
       marketReport.variableDebtToken
     );
+  }
+
+  function test_listingExecutor() public {
+    check_listingExecutor();
   }
 
   function test_listing_GHO() public {
