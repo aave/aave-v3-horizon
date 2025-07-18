@@ -59,7 +59,8 @@ library AaveV3BatchOrchestration {
       flags.l2,
       initialReport.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
 
     SetupReport memory setupReport = setupBatch.setupAaveV3Market(
@@ -208,13 +209,15 @@ library AaveV3BatchOrchestration {
     bool l2Flag,
     address poolAddressesProvider,
     address sequencerUptimeOracle,
-    uint256 gracePeriod
+    uint256 gracePeriod,
+    address rwaATokenManagerAdmin
   ) internal returns (MiscReport memory) {
     AaveV3MiscBatch miscBatch = new AaveV3MiscBatch(
       l2Flag,
       poolAddressesProvider,
       sequencerUptimeOracle,
-      gracePeriod
+      gracePeriod,
+      rwaATokenManagerAdmin
     );
 
     return miscBatch.getMiscReport();
@@ -331,6 +334,7 @@ library AaveV3BatchOrchestration {
     report.staticATokenImplementation = staticATokenReport.staticATokenImplementation;
     report.transparentProxyFactory = staticATokenReport.transparentProxyFactory;
     report.revenueSplitter = peripheryReport.revenueSplitter;
+    report.rwaATokenManager = miscReport.rwaATokenManager;
 
     return report;
   }

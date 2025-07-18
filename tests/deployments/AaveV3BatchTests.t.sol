@@ -23,6 +23,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
   address deployer;
   address marketOwner;
   address emergencyAdmin;
+  address rwaATokenManagerAdmin;
 
   Roles roles;
   MarketConfig config;
@@ -51,8 +52,9 @@ contract AaveV3BatchTests is BatchTestProcedures {
     marketOwner = makeAddr('marketOwner');
     poolAdmin = makeAddr('poolAdmin');
     emergencyAdmin = makeAddr('emergencyAdmin');
+    rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
     bytes32 emptySalt;
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin);
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
       makeAddr('ethUsdOracle'),
@@ -156,7 +158,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
       flags.l2,
       marketReportOne.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
   }
 

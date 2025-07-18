@@ -46,8 +46,9 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     address marketOwner = makeAddr('marketOwner');
     address poolAdmin = makeAddr('poolAdmin');
     address emergencyAdmin = makeAddr('emergencyAdmin');
+    address rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
     bytes32 empty;
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin);
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
 
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
@@ -141,7 +142,8 @@ contract DeploymentsGasLimits is BatchTestProcedures {
       flags.l2,
       marketReportOne.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
   }
 
