@@ -9,30 +9,16 @@ import {HorizonInput} from '../../src/deployments/inputs/HorizonInput.sol';
 import {Script} from 'forge-std/Script.sol';
 
 contract ConfigureHorizonPhaseOne is Script, DeployUtils, HorizonInput {
-  function run(string memory reportPath) public {
-    _run(msg.sender, reportPath);
-  }
-
-  function _run(address deployer, string memory reportPath) internal {
-    // Configure Horizon Phase One Listing
+  function run(string memory reportPath) public returns (address) {
     IMetadataReporter metadataReporter = IMetadataReporter(
       _deployFromArtifacts('MetadataReporter.sol:MetadataReporter')
     );
     MarketReport memory report = metadataReporter.parseMarketReport(reportPath);
 
-    vm.startBroadcast(deployer);
+    vm.startBroadcast();
     HorizonPhaseOneListing horizonInitialListing = new HorizonPhaseOneListing(report);
-    (bool success, ) = PHASE_ONE_LISTING_EXECUTOR.call(
-      abi.encodeWithSignature(
-        'executeTransaction(address,uint256,string,bytes,bool)',
-        address(horizonInitialListing), // target
-        0, // value
-        'execute()', // signature
-        '', // data
-        true // withDelegatecall
-      )
-    );
-    require(success, 'Failed to execute transaction');
     vm.stopBroadcast();
+
+    return address(horizonInitialListing);
   }
 }

@@ -18,12 +18,6 @@ import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 
-contract ConfigureHorizonPhaseOneTest is Test, ConfigureHorizonPhaseOne {
-  function run(address deployer, string memory reportFilePath) public {
-    _run(deployer, reportFilePath);
-  }
-}
-
 abstract contract HorizonListingBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
@@ -75,10 +69,17 @@ abstract contract HorizonListingBaseTest is Test {
   function getListingExecutor() internal view virtual returns (address);
 
   function test_listingExecutor() public {
-    assertEq(
-      IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isPoolAdmin(getListingExecutor()),
-      false
+    address listingExecutor = getListingExecutor();
+    assertFalse(
+      IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isPoolAdmin(listingExecutor)
     );
+    assertTrue(
+      IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(listingExecutor)
+    );
+    assertTrue(
+      IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isAssetListingAdmin(listingExecutor)
+    );
+    assertTrue(IACLManager(pool.ADDRESSES_PROVIDER().getACLManager()).isRiskAdmin(listingExecutor));
   }
 
   function test_getConfiguration(address token, TokenListingParams memory params) private {
@@ -173,7 +174,7 @@ abstract contract HorizonListingBaseTest is Test {
 }
 
 contract HorizonListingMainnetTest is HorizonListingBaseTest {
-  address internal constant DEPLOYER = 0xA22f39d5fEb10489F7FA84C2C545BAc4EA48eBB7;
+  address internal constant ADVANCED_MULTISIG = 0x4444dE8a4AA3401a3AEC584de87B0f21E3e601CA;
   address internal constant LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
 
   address internal constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
@@ -235,8 +236,20 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     marketReport = metadataReporter.parseMarketReport(reportFilePath);
     contracts = MarketReportUtils.toContractsReport(marketReport);
 
-    ConfigureHorizonPhaseOneTest configureHorizonPhaseOneTest = new ConfigureHorizonPhaseOneTest();
-    configureHorizonPhaseOneTest.run(DEPLOYER, reportFilePath);
+    address horizonPhaseOneListing = new ConfigureHorizonPhaseOne().run(reportFilePath);
+
+    vm.prank(ADVANCED_MULTISIG);
+    (bool success, ) = getListingExecutor().call(
+      abi.encodeWithSignature(
+        'executeTransaction(address,uint256,string,bytes,bool)',
+        address(horizonPhaseOneListing), // target
+        0, // value
+        'execute()', // signature
+        '', // data
+        true // withDelegatecall
+      )
+    );
+    require(success, 'Failed to execute transaction');
 
     initEnvironment(
       marketReport.poolProxy,

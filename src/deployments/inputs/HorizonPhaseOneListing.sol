@@ -292,6 +292,5 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     CONFIGURATOR.setReservePause(USTB_ADDRESS, true, 0);
     CONFIGURATOR.setReservePause(USCC_ADDRESS, true, 0);
     CONFIGURATOR.setReservePause(USYC_ADDRESS, true, 0);
-    ACL_MANAGER.renounceRole(POOL_ADMIN_ROLE_ID, address(this));
   }
 }

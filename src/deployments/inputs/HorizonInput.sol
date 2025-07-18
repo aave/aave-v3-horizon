@@ -5,8 +5,11 @@ import './MarketInput.sol';
 contract HorizonInput is MarketInput {
   address public constant AAVE_DAO_EXECUTOR = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
   address public constant AAVE_DAO_COLLECTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
-  bytes32 public constant POOL_ADMIN_ROLE = keccak256('POOL_ADMIN');
   address public constant PHASE_ONE_LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
+
+  bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
+  bytes32 public constant RISK_ADMIN_ROLE = keccak256('RISK_ADMIN');
+  bytes32 public constant ASSET_LISTING_ADMIN_ROLE = keccak256('ASSET_LISTING_ADMIN');
 
   function _getMarketInput(
     address
@@ -21,8 +24,10 @@ contract HorizonInput is MarketInput {
       MarketReport memory deployedContracts
     )
   {
-    bytes[] memory additionalRoles = new bytes[](1);
-    additionalRoles[0] = abi.encode(POOL_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
+    bytes[] memory additionalRoles = new bytes[](3);
+    additionalRoles[0] = abi.encode(EMERGENCY_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
+    additionalRoles[1] = abi.encode(ASSET_LISTING_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
+    additionalRoles[2] = abi.encode(RISK_ADMIN_ROLE, PHASE_ONE_LISTING_EXECUTOR);
     roles = Roles({
       marketOwner: AAVE_DAO_EXECUTOR,
       emergencyAdmin: AAVE_DAO_EXECUTOR,
