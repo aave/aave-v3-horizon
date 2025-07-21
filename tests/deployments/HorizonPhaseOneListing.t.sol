@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import {Test, Vm} from 'forge-std/Test.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {MarketReport, ContractsReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
+import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
-import {MarketReportUtils} from '../../src/deployments/contracts/utilities/MarketReportUtils.sol';
 import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
@@ -220,7 +219,7 @@ abstract contract HorizonListingBaseTest is Test {
   }
 }
 
-contract HorizonListingMainnetTest is HorizonListingBaseTest {
+abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   address internal constant ADVANCED_MULTISIG = 0x4444dE8a4AA3401a3AEC584de87B0f21E3e601CA;
   address internal constant LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
 
@@ -424,51 +423,31 @@ contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
+    (
+      address _pool,
+      address _revenueSplitter,
+      address _defaultInterestRateStrategy,
+      address _aToken,
+      address _rwaAToken,
+      address _variableDebtToken
+    ) = loadDeployment();
+    initEnvironment(
+      _pool,
+      _revenueSplitter,
+      _defaultInterestRateStrategy,
+      _aToken,
+      _rwaAToken,
+      _variableDebtToken
+    );
   }
+
+  function loadDeployment()
+    internal
+    virtual
+    returns (address, address, address, address, address, address);
 
   function getListingExecutor() internal pure override returns (address) {
     return LISTING_EXECUTOR;
-  }
-}
-
-contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
-  MarketReport internal marketReport;
-  ContractsReport internal contracts;
-
-  function setUp() public override {
-    super.setUp();
-
-    string memory reportFilePath = run();
-
-    IMetadataReporter metadataReporter = IMetadataReporter(
-      _deployFromArtifacts('MetadataReporter.sol:MetadataReporter')
-    );
-    marketReport = metadataReporter.parseMarketReport(reportFilePath);
-    contracts = MarketReportUtils.toContractsReport(marketReport);
-
-    address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
-
-    vm.prank(ADVANCED_MULTISIG);
-    (bool success, ) = getListingExecutor().call(
-      abi.encodeWithSignature(
-        'executeTransaction(address,uint256,string,bytes,bool)',
-        address(horizonPhaseOneListing), // target
-        0, // value
-        'execute()', // signature
-        '', // data
-        true // withDelegatecall
-      )
-    );
-    require(success, 'Failed to execute transaction');
-
-    initEnvironment(
-      marketReport.poolProxy,
-      marketReport.revenueSplitter,
-      marketReport.defaultInterestRateStrategy,
-      marketReport.aToken,
-      marketReport.rwaAToken,
-      marketReport.variableDebtToken
-    );
   }
 
   function test_listingExecutor() public {
@@ -499,3 +478,54 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     test_listing(USYC_ADDRESS, USYC_TOKEN_LISTING_PARAMS);
   }
 }
+contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
+  function loadDeployment()
+    internal
+    override
+    returns (address, address, address, address, address, address)
+  {
+    string memory reportFilePath = run();
+
+    IMetadataReporter metadataReporter = IMetadataReporter(
+      _deployFromArtifacts('MetadataReporter.sol:MetadataReporter')
+    );
+    MarketReport memory marketReport = metadataReporter.parseMarketReport(reportFilePath);
+
+    address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
+
+    vm.prank(ADVANCED_MULTISIG);
+    (bool success, ) = getListingExecutor().call(
+      abi.encodeWithSignature(
+        'executeTransaction(address,uint256,string,bytes,bool)',
+        address(horizonPhaseOneListing), // target
+        0, // value
+        'execute()', // signature
+        '', // data
+        true // withDelegatecall
+      )
+    );
+    require(success, 'Failed to execute transaction');
+
+    return (
+      marketReport.poolProxy,
+      marketReport.revenueSplitter,
+      marketReport.defaultInterestRateStrategy,
+      marketReport.aToken,
+      marketReport.rwaAToken,
+      marketReport.variableDebtToken
+    );
+  }
+}
+
+// contract HorizonListingForkTest is HorizonListingMainnetTest {
+//   function loadDeployment() internal override returns (address, address, address, address, address, address) {
+//     address _pool = ; // todo
+//     address _revenueSplitter = ; // todo
+//     address _defaultInterestRateStrategy = ; // todo
+//     address _aToken = ; // todo
+//     address _rwaAToken = ; // todo
+//     address _variableDebtToken = ; // todo
+
+//     return (_pool, _revenueSplitter, _defaultInterestRateStrategy, _aToken, _rwaAToken, _variableDebtToken);
+//   }
+// }
