@@ -244,9 +244,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal GHO_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA GHO',
-      aTokenSymbol: 'aHRwaGHO',
+      aTokenSymbol: 'aHorRwaGHO',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt GHO',
-      variableDebtTokenSymbol: 'variableDebtHRwaGHO',
+      variableDebtTokenSymbol: 'variableDebtHorRwaGHO',
       isGho: true,
       isRwa: false,
       hasPriceAdapter: false,
@@ -274,9 +274,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal USDC_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA USDC',
-      aTokenSymbol: 'aHRwaUSDC',
+      aTokenSymbol: 'aHorRwaUSDC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USDC',
-      variableDebtTokenSymbol: 'variableDebtHRwaUSDC',
+      variableDebtTokenSymbol: 'variableDebtHorRwaUSDC',
       isGho: false,
       isRwa: false,
       hasPriceAdapter: false,
@@ -304,9 +304,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal RLUSD_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA RLUSD',
-      aTokenSymbol: 'aHRwaRLUSD',
+      aTokenSymbol: 'aHorRwaRLUSD',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt RLUSD',
-      variableDebtTokenSymbol: 'variableDebtHRwaRLUSD',
+      variableDebtTokenSymbol: 'variableDebtHorRwaRLUSD',
       isGho: false,
       isRwa: false,
       hasPriceAdapter: false,
@@ -334,9 +334,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal USTB_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA USTB',
-      aTokenSymbol: 'aHRwaUSTB',
+      aTokenSymbol: 'aHorRwaUSTB',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USTB',
-      variableDebtTokenSymbol: 'variableDebtHRwaUSTB',
+      variableDebtTokenSymbol: 'variableDebtHorRwaUSTB',
       isGho: false,
       isRwa: true,
       hasPriceAdapter: true,
@@ -364,9 +364,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal USCC_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA USCC',
-      aTokenSymbol: 'aHRwaUSCC',
+      aTokenSymbol: 'aHorRwaUSCC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USCC',
-      variableDebtTokenSymbol: 'variableDebtHRwaUSCC',
+      variableDebtTokenSymbol: 'variableDebtHorRwaUSCC',
       isGho: false,
       isRwa: true,
       hasPriceAdapter: true,
@@ -394,9 +394,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   TokenListingParams internal USYC_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA USYC',
-      aTokenSymbol: 'aHRwaUSYC',
+      aTokenSymbol: 'aHorRwaUSYC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USYC',
-      variableDebtTokenSymbol: 'variableDebtHRwaUSYC',
+      variableDebtTokenSymbol: 'variableDebtHorRwaUSYC',
       isGho: false,
       isRwa: true,
       hasPriceAdapter: true,

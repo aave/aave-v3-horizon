@@ -77,10 +77,10 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       underlyingAsset: GHO_ADDRESS,
       treasury: CONFIG_ENGINE.COLLECTOR(),
       incentivesController: CONFIG_ENGINE.REWARDS_CONTROLLER(),
-      aTokenName: 'Aave Horizon RWA GHO', // todo: decide names, see ListingEngine
-      aTokenSymbol: 'aHRwaGHO',
+      aTokenName: 'Aave Horizon RWA GHO',
+      aTokenSymbol: 'aHorRwaGHO',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt GHO',
-      variableDebtTokenSymbol: 'variableDebtHRwaGHO',
+      variableDebtTokenSymbol: 'variableDebtHorRwaGHO',
       params: bytes(''),
       interestRateData: abi.encode(
         IEngine.InterestRateInputData({
@@ -281,7 +281,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
-    return IEngine.PoolContext({networkName: 'Horizon RWA', networkAbbreviation: 'HRwa'});
+    return IEngine.PoolContext({networkName: 'Horizon RWA', networkAbbreviation: 'HorRwa'});
   }
 
   function _postExecute() internal override {
