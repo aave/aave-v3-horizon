@@ -80,7 +80,7 @@ abstract contract HorizonDeploymentBaseTest is Test {
   }
 }
 
-contract HorizonDeploymentMainnetTest is HorizonDeploymentBaseTest {
+abstract contract HorizonDeploymentMainnetTest is HorizonDeploymentBaseTest {
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
   }
