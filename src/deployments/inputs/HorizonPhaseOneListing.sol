@@ -5,7 +5,6 @@ import {ACLManager} from '../../contracts/protocol/configuration/ACLManager.sol'
 import {IPoolConfigurator} from '../../contracts/interfaces/IPoolConfigurator.sol';
 import {MarketReport} from '../interfaces/IMarketReportTypes.sol';
 import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
-import {ConfiguratorInputTypes} from '../../contracts/protocol/libraries/types/ConfiguratorInputTypes.sol';
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
@@ -27,10 +26,10 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   address public immutable RLUSD_PRICE_FEED;
 
   address public immutable USTB_ADDRESS;
-  address public immutable USTB_PRICE_FEED;
+  address public immutable USTB_PRICE_FEED_ADAPTER;
 
   address public immutable USCC_ADDRESS;
-  address public immutable USCC_PRICE_FEED;
+  address public immutable USCC_PRICE_FEED_ADAPTER;
 
   address public immutable USYC_ADDRESS;
   address public immutable USYC_PRICE_FEED;
@@ -56,67 +55,13 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
     USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-    USTB_PRICE_FEED = 0x63908721c77a27689fb0f5db78983135ddfBa56f;
+    USTB_PRICE_FEED_ADAPTER = 0x63908721c77a27689fb0f5db78983135ddfBa56f;
 
     USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-    USCC_PRICE_FEED = 0x889f5Feb776Ed122e774D8859134b487c7A85B5d;
+    USCC_PRICE_FEED_ADAPTER = 0x889f5Feb776Ed122e774D8859134b487c7A85B5d;
 
     USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
-    USYC_PRICE_FEED = 0x9a4dCEf05fbe89ff81fda84420CA737D02dF21A6;
-  }
-
-  // list a token with virtual accounting deactivated (ex. GHO)
-  function _preExecute() internal override {
-    ConfiguratorInputTypes.InitReserveInput[]
-      memory reserves = new ConfiguratorInputTypes.InitReserveInput[](1);
-    reserves[0] = ConfiguratorInputTypes.InitReserveInput({
-      aTokenImpl: ATOKEN_IMPLEMENTATION,
-      variableDebtTokenImpl: VARIABLE_DEBT_TOKEN_IMPLEMENTATION,
-      useVirtualBalance: false,
-      interestRateStrategyAddress: CONFIG_ENGINE.DEFAULT_INTEREST_RATE_STRATEGY(),
-      underlyingAsset: GHO_ADDRESS,
-      treasury: CONFIG_ENGINE.COLLECTOR(),
-      incentivesController: CONFIG_ENGINE.REWARDS_CONTROLLER(),
-      aTokenName: 'Aave Horizon RWA GHO',
-      aTokenSymbol: 'aHorRwaGHO',
-      variableDebtTokenName: 'Aave Horizon RWA Variable Debt GHO',
-      variableDebtTokenSymbol: 'variableDebtHorRwaGHO',
-      params: bytes(''),
-      interestRateData: abi.encode(
-        IEngine.InterestRateInputData({
-          optimalUsageRatio: 92_00,
-          baseVariableBorrowRate: 3_50,
-          variableRateSlope1: 1_25,
-          variableRateSlope2: 35_00
-        })
-      )
-    });
-    CONFIGURATOR.initReserves(reserves);
-  }
-
-  function priceFeedsUpdates() public view override returns (IEngine.PriceFeedUpdate[] memory) {
-    IEngine.PriceFeedUpdate[] memory feeds = new IEngine.PriceFeedUpdate[](1);
-    feeds[0] = IEngine.PriceFeedUpdate({asset: GHO_ADDRESS, priceFeed: GHO_PRICE_FEED});
-    return feeds;
-  }
-
-  function borrowsUpdates() public view override returns (IEngine.BorrowUpdate[] memory) {
-    IEngine.BorrowUpdate[] memory borrows = new IEngine.BorrowUpdate[](1);
-    borrows[0] = IEngine.BorrowUpdate({
-      asset: GHO_ADDRESS,
-      enabledToBorrow: EngineFlags.ENABLED,
-      borrowableInIsolation: EngineFlags.DISABLED,
-      withSiloedBorrowing: EngineFlags.DISABLED,
-      flashloanable: EngineFlags.ENABLED,
-      reserveFactor: 15_00
-    });
-    return borrows;
-  }
-
-  function capsUpdates() public view override returns (IEngine.CapsUpdate[] memory) {
-    IEngine.CapsUpdate[] memory caps = new IEngine.CapsUpdate[](1);
-    caps[0] = IEngine.CapsUpdate({asset: GHO_ADDRESS, supplyCap: 5_000_000, borrowCap: 4_000_000});
-    return caps;
+    USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
   }
 
   function newListingsCustom()
@@ -125,9 +70,39 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     override
     returns (IEngine.ListingWithCustomImpl[] memory)
   {
-    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](5);
+    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](6);
 
     listingsCustom[0] = IEngine.ListingWithCustomImpl(
+      IEngine.Listing({
+        asset: GHO_ADDRESS,
+        assetSymbol: 'GHO',
+        priceFeed: GHO_PRICE_FEED,
+        rateStrategyParams: IEngine.InterestRateInputData({
+          optimalUsageRatio: 92_00,
+          baseVariableBorrowRate: 3_50,
+          variableRateSlope1: 1_25,
+          variableRateSlope2: 35_00
+        }),
+        enabledToBorrow: EngineFlags.ENABLED,
+        borrowableInIsolation: EngineFlags.DISABLED,
+        withSiloedBorrowing: EngineFlags.DISABLED,
+        flashloanable: EngineFlags.ENABLED,
+        ltv: 0,
+        liqThreshold: 0,
+        liqBonus: 0,
+        reserveFactor: 15_00,
+        supplyCap: 5_000_000,
+        borrowCap: 4_000_000,
+        debtCeiling: 0,
+        liqProtocolFee: 0
+      }),
+      IEngine.TokenImplementations({
+        aToken: ATOKEN_IMPLEMENTATION,
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      })
+    );
+
+    listingsCustom[1] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
         asset: USDC_ADDRESS,
         assetSymbol: 'USDC',
@@ -157,7 +132,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       })
     );
 
-    listingsCustom[1] = IEngine.ListingWithCustomImpl(
+    listingsCustom[2] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
         asset: RLUSD_ADDRESS,
         assetSymbol: 'RLUSD',
@@ -187,41 +162,11 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       })
     );
 
-    listingsCustom[2] = IEngine.ListingWithCustomImpl(
+    listingsCustom[3] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
         asset: USTB_ADDRESS,
         assetSymbol: 'USTB',
-        priceFeed: USTB_PRICE_FEED,
-        rateStrategyParams: IEngine.InterestRateInputData({
-          optimalUsageRatio: 99_00,
-          baseVariableBorrowRate: 0,
-          variableRateSlope1: 0,
-          variableRateSlope2: 0
-        }),
-        enabledToBorrow: EngineFlags.DISABLED,
-        borrowableInIsolation: EngineFlags.DISABLED,
-        withSiloedBorrowing: EngineFlags.DISABLED,
-        flashloanable: EngineFlags.DISABLED,
-        ltv: 75_00,
-        liqThreshold: 80_00,
-        liqBonus: 12_00,
-        reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 3_000_000,
-        borrowCap: 0,
-        debtCeiling: 0,
-        liqProtocolFee: 0
-      }),
-      IEngine.TokenImplementations({
-        aToken: RWA_ATOKEN_IMPLEMENTATION,
-        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
-      })
-    );
-
-    listingsCustom[3] = IEngine.ListingWithCustomImpl(
-      IEngine.Listing({
-        asset: USCC_ADDRESS,
-        assetSymbol: 'USCC',
-        priceFeed: USCC_PRICE_FEED,
+        priceFeed: USTB_PRICE_FEED_ADAPTER,
         rateStrategyParams: IEngine.InterestRateInputData({
           optimalUsageRatio: 99_00,
           baseVariableBorrowRate: 0,
@@ -248,6 +193,36 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     );
 
     listingsCustom[4] = IEngine.ListingWithCustomImpl(
+      IEngine.Listing({
+        asset: USCC_ADDRESS,
+        assetSymbol: 'USCC',
+        priceFeed: USCC_PRICE_FEED_ADAPTER,
+        rateStrategyParams: IEngine.InterestRateInputData({
+          optimalUsageRatio: 99_00,
+          baseVariableBorrowRate: 0,
+          variableRateSlope1: 0,
+          variableRateSlope2: 0
+        }),
+        enabledToBorrow: EngineFlags.DISABLED,
+        borrowableInIsolation: EngineFlags.DISABLED,
+        withSiloedBorrowing: EngineFlags.DISABLED,
+        flashloanable: EngineFlags.DISABLED,
+        ltv: 75_00,
+        liqThreshold: 80_00,
+        liqBonus: 12_00,
+        reserveFactor: EngineFlags.KEEP_CURRENT,
+        supplyCap: 3_000_000,
+        borrowCap: 0,
+        debtCeiling: 0,
+        liqProtocolFee: 0
+      }),
+      IEngine.TokenImplementations({
+        aToken: RWA_ATOKEN_IMPLEMENTATION,
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      })
+    );
+
+    listingsCustom[5] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
         asset: USYC_ADDRESS,
         assetSymbol: 'USYC',

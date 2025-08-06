@@ -31,7 +31,6 @@ abstract contract HorizonListingBaseTest is Test {
   address internal variableDebtTokenImpl;
 
   struct TokenListingParams {
-    bool isGho;
     bool isRwa;
     bool hasPriceAdapter;
     address underlyingPiceFeed; // not the scaled adapter (if any)
@@ -94,7 +93,7 @@ abstract contract HorizonListingBaseTest is Test {
     DataTypes.ReserveConfigurationMap memory config = pool.getConfiguration(token);
     assertEq(config.getSupplyCap(), params.supplyCap, 'supplyCap');
     assertEq(config.getBorrowCap(), params.borrowCap, 'borrowCap');
-    assertEq(config.getIsVirtualAccActive(), !params.isGho, 'isVirtualAccActive');
+    assertEq(config.getIsVirtualAccActive(), true, 'isVirtualAccActive');
     assertEq(config.getBorrowingEnabled(), params.enabledToBorrow, 'borrowingEnabled');
     assertEq(
       config.getBorrowableInIsolation(),
@@ -233,13 +232,13 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   address internal constant RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
   address internal constant USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-  address internal constant USTB_UNDERLYING_PRICE_FEED = 0x289B5036cd942e619E1Ee48670F98d214E745AAC;
+  address internal constant USTB_PRICE_FEED = 0x289B5036cd942e619E1Ee48670F98d214E745AAC;
 
   address internal constant USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-  address internal constant USCC_UNDERLYING_PRICE_FEED = 0xAfFd8F5578E8590665de561bdE9E7BAdb99300d9;
+  address internal constant USCC_PRICE_FEED = 0xAfFd8F5578E8590665de561bdE9E7BAdb99300d9;
 
   address internal constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
-  address internal constant USYC_UNDERLYING_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
+  address internal constant USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
 
   TokenListingParams internal GHO_TOKEN_LISTING_PARAMS =
     TokenListingParams({
@@ -247,7 +246,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaGHO',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt GHO',
       variableDebtTokenSymbol: 'variableDebtHorRwaGHO',
-      isGho: true,
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: GHO_PRICE_FEED,
@@ -277,7 +275,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaUSDC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USDC',
       variableDebtTokenSymbol: 'variableDebtHorRwaUSDC',
-      isGho: false,
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: USDC_PRICE_FEED,
@@ -307,7 +304,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaRLUSD',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt RLUSD',
       variableDebtTokenSymbol: 'variableDebtHorRwaRLUSD',
-      isGho: false,
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: RLUSD_PRICE_FEED,
@@ -337,10 +333,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaUSTB',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USTB',
       variableDebtTokenSymbol: 'variableDebtHorRwaUSTB',
-      isGho: false,
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: USTB_UNDERLYING_PRICE_FEED,
+      underlyingPiceFeed: USTB_PRICE_FEED,
       supplyCap: 3_000_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -367,10 +362,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaUSCC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USCC',
       variableDebtTokenSymbol: 'variableDebtHorRwaUSCC',
-      isGho: false,
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: USCC_UNDERLYING_PRICE_FEED,
+      underlyingPiceFeed: USCC_PRICE_FEED,
       supplyCap: 3_000_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -397,10 +391,9 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       aTokenSymbol: 'aHorRwaUSYC',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt USYC',
       variableDebtTokenSymbol: 'variableDebtHorRwaUSYC',
-      isGho: false,
       isRwa: true,
-      hasPriceAdapter: true,
-      underlyingPiceFeed: USYC_UNDERLYING_PRICE_FEED,
+      hasPriceAdapter: false,
+      underlyingPiceFeed: USYC_PRICE_FEED,
       supplyCap: 3_000_000,
       borrowCap: 0,
       reserveFactor: 0,
