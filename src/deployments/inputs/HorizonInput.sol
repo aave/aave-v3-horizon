@@ -47,8 +47,8 @@ contract HorizonInput is MarketInput {
       providerId: 1,
       salt: bytes32(0),
       wrappedNativeToken: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
-      flashLoanPremiumTotal: 0.0005e4,
-      flashLoanPremiumToProtocol: 1e4,
+      flashLoanPremiumTotal: 5,
+      flashLoanPremiumToProtocol: 100_00,
       incentivesProxy: address(0),
       treasury: address(0),
       treasuryPartner: AAVE_DAO_COLLECTOR, // TreasuryCollector

@@ -107,49 +107,44 @@ contract MetadataReporter is IMetadataReporter {
     string memory reportFilePath
   ) external view returns (MarketReport memory report) {
     string memory json = vm.readFile(reportFilePath);
-    report.poolAddressesProviderRegistry = _parseAddr(json, '.poolAddressesProviderRegistry');
-    report.poolAddressesProvider = _parseAddr(json, '.poolAddressesProvider');
-    report.poolProxy = _parseAddr(json, '.poolProxy');
-    report.poolImplementation = _parseAddr(json, '.poolImplementation');
-    report.poolConfiguratorProxy = _parseAddr(json, '.poolConfiguratorProxy');
-    report.poolConfiguratorImplementation = _parseAddr(json, '.poolConfiguratorImplementation');
-    report.protocolDataProvider = _parseAddr(json, '.protocolDataProvider');
-    report.aaveOracle = _parseAddr(json, '.aaveOracle');
-    report.defaultInterestRateStrategy = _parseAddr(json, '.defaultInterestRateStrategy');
-    report.priceOracleSentinel = _parseAddr(json, '.priceOracleSentinel');
-    report.aclManager = _parseAddr(json, '.aclManager');
-    report.treasury = _parseAddr(json, '.treasury');
-    report.treasuryImplementation = _parseAddr(json, '.treasuryImplementation');
-    report.wrappedTokenGateway = _parseAddr(json, '.wrappedTokenGateway');
-    report.walletBalanceProvider = _parseAddr(json, '.walletBalanceProvider');
-    report.uiIncentiveDataProvider = _parseAddr(json, '.uiIncentiveDataProvider');
-    report.uiPoolDataProvider = _parseAddr(json, '.uiPoolDataProvider');
-    report.paraSwapLiquiditySwapAdapter = _parseAddr(json, '.paraSwapLiquiditySwapAdapter');
-    report.paraSwapRepayAdapter = _parseAddr(json, '.paraSwapRepayAdapter');
-    report.paraSwapWithdrawSwapAdapter = _parseAddr(json, '.paraSwapWithdrawSwapAdapter');
-    report.l2Encoder = _parseAddr(json, '.l2Encoder');
-    report.aToken = _parseAddr(json, '.aToken');
-    report.rwaAToken = _parseAddr(json, '.rwaAToken');
-    report.variableDebtToken = _parseAddr(json, '.variableDebtToken');
-    report.emissionManager = _parseAddr(json, '.emissionManager');
-    report.rewardsControllerImplementation = _parseAddr(json, '.rewardsControllerImplementation');
-    report.rewardsControllerProxy = _parseAddr(json, '.rewardsControllerProxy');
-    report.configEngine = _parseAddr(json, '.configEngine');
-    report.transparentProxyFactory = _parseAddr(json, '.transparentProxyFactory');
-    report.staticATokenFactoryImplementation = _parseAddr(
-      json,
+    report.poolAddressesProviderRegistry = json.readAddress('.poolAddressesProviderRegistry');
+    report.poolAddressesProvider = json.readAddress('.poolAddressesProvider');
+    report.poolProxy = json.readAddress('.poolProxy');
+    report.poolImplementation = json.readAddress('.poolImplementation');
+    report.poolConfiguratorProxy = json.readAddress('.poolConfiguratorProxy');
+    report.poolConfiguratorImplementation = json.readAddress('.poolConfiguratorImplementation');
+    report.protocolDataProvider = json.readAddress('.protocolDataProvider');
+    report.aaveOracle = json.readAddress('.aaveOracle');
+    report.defaultInterestRateStrategy = json.readAddress('.defaultInterestRateStrategy');
+    report.priceOracleSentinel = json.readAddress('.priceOracleSentinel');
+    report.aclManager = json.readAddress('.aclManager');
+    report.treasury = json.readAddress('.treasury');
+    report.treasuryImplementation = json.readAddress('.treasuryImplementation');
+    report.wrappedTokenGateway = json.readAddress('.wrappedTokenGateway');
+    report.walletBalanceProvider = json.readAddress('.walletBalanceProvider');
+    report.uiIncentiveDataProvider = json.readAddress('.uiIncentiveDataProvider');
+    report.uiPoolDataProvider = json.readAddress('.uiPoolDataProvider');
+    report.paraSwapLiquiditySwapAdapter = json.readAddress('.paraSwapLiquiditySwapAdapter');
+    report.paraSwapRepayAdapter = json.readAddress('.paraSwapRepayAdapter');
+    report.paraSwapWithdrawSwapAdapter = json.readAddress('.paraSwapWithdrawSwapAdapter');
+    report.l2Encoder = json.readAddress('.l2Encoder');
+    report.aToken = json.readAddress('.aToken');
+    report.rwaAToken = json.readAddress('.rwaAToken');
+    report.variableDebtToken = json.readAddress('.variableDebtToken');
+    report.emissionManager = json.readAddress('.emissionManager');
+    report.rewardsControllerImplementation = json.readAddress('.rewardsControllerImplementation');
+    report.rewardsControllerProxy = json.readAddress('.rewardsControllerProxy');
+    report.configEngine = json.readAddress('.configEngine');
+    report.transparentProxyFactory = json.readAddress('.transparentProxyFactory');
+    report.staticATokenFactoryImplementation = json.readAddress(
       '.staticATokenFactoryImplementation'
     );
-    report.staticATokenFactoryProxy = _parseAddr(json, '.staticATokenFactoryProxy');
-    report.staticATokenImplementation = _parseAddr(json, '.staticATokenImplementation');
-    report.revenueSplitter = _parseAddr(json, '.revenueSplitter');
-    report.dustBin = _parseAddr(json, '.dustBin');
-    report.emptyImplementation = _parseAddr(json, '.emptyImplementation');
-    report.rwaATokenManager = _parseAddr(json, '.rwaATokenManager');
-  }
-
-  function _parseAddr(string memory json, string memory key) internal view returns (address) {
-    return abi.decode(vm.parseJsonType(json, key, 'address'), (address));
+    report.staticATokenFactoryProxy = json.readAddress('.staticATokenFactoryProxy');
+    report.staticATokenImplementation = json.readAddress('.staticATokenImplementation');
+    report.revenueSplitter = json.readAddress('.revenueSplitter');
+    report.dustBin = json.readAddress('.dustBin');
+    report.emptyImplementation = json.readAddress('.emptyImplementation');
+    report.rwaATokenManager = json.readAddress('.rwaATokenManager');
   }
 
   function writeJsonReportLibraryBatch1(LibrariesReport memory libraries) external {
