@@ -34,6 +34,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   address public immutable USYC_ADDRESS;
   address public immutable USYC_PRICE_FEED;
 
+  address public immutable JTRSY_ADDRESS;
+  address public immutable JTRSY_PRICE_FEED_ADAPTER;
+
+  address public immutable JAAA_ADDRESS;
+  address public immutable JAAA_PRICE_FEED_ADAPTER;
+
   bytes32 public constant POOL_ADMIN_EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
 
   constructor(MarketReport memory report) AaveV3Payload(IEngine(report.configEngine)) {
@@ -62,6 +68,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
 
     USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
     USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
+
+    JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
+    JTRSY_PRICE_FEED_ADAPTER = 0xfAB6790E399f0481e1303167c655b3c39ee6e7A0;
+
+    JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
+    JAAA_PRICE_FEED_ADAPTER = 0xF77f2537dba4ffD60f77fACdfB2c1706364fA03d;
   }
 
   function eModeCategoriesUpdates()
@@ -70,7 +82,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     override
     returns (IEngine.EModeCategoryUpdate[] memory)
   {
-    IEngine.EModeCategoryUpdate[] memory eModeCategories = new IEngine.EModeCategoryUpdate[](6);
+    IEngine.EModeCategoryUpdate[] memory eModeCategories = new IEngine.EModeCategoryUpdate[](10);
 
     // USTB Stablecoins
     eModeCategories[0] = IEngine.EModeCategoryUpdate({
@@ -126,6 +138,42 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       label: 'USYC GHO'
     });
 
+    // JTRSY Stablecoins
+    eModeCategories[6] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 7,
+      ltv: 77_00,
+      liqThreshold: 83_00,
+      liqBonus: 4_50,
+      label: 'JTRSY Stablecoins'
+    });
+
+    // JTRSY GHO
+    eModeCategories[7] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 8,
+      ltv: 78_00,
+      liqThreshold: 84_00,
+      liqBonus: 4_50,
+      label: 'JTRSY GHO'
+    });
+
+    // JAAA Stablecoins
+    eModeCategories[8] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 9,
+      ltv: 71_00,
+      liqThreshold: 78_00,
+      liqBonus: 9_00,
+      label: 'JAAA Stablecoins'
+    });
+
+    // JAAA GHO
+    eModeCategories[9] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 10,
+      ltv: 72_00,
+      liqThreshold: 79_00,
+      liqBonus: 9_00,
+      label: 'JAAA GHO'
+    });
+
     return eModeCategories;
   }
 
@@ -135,7 +183,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     override
     returns (IEngine.ListingWithCustomImpl[] memory)
   {
-    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](6);
+    IEngine.ListingWithCustomImpl[] memory listingsCustom = new IEngine.ListingWithCustomImpl[](8);
 
     listingsCustom[0] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
@@ -317,11 +365,71 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       })
     );
 
+    listingsCustom[6] = IEngine.ListingWithCustomImpl(
+      IEngine.Listing({
+        asset: JTRSY_ADDRESS,
+        assetSymbol: 'JTRSY',
+        priceFeed: JTRSY_PRICE_FEED_ADAPTER,
+        rateStrategyParams: IEngine.InterestRateInputData({
+          optimalUsageRatio: 99_00,
+          baseVariableBorrowRate: 0,
+          variableRateSlope1: 0,
+          variableRateSlope2: 0
+        }),
+        enabledToBorrow: EngineFlags.DISABLED,
+        borrowableInIsolation: EngineFlags.DISABLED,
+        withSiloedBorrowing: EngineFlags.DISABLED,
+        flashloanable: EngineFlags.DISABLED,
+        ltv: 10,
+        liqThreshold: 50,
+        liqBonus: 4_50,
+        reserveFactor: EngineFlags.KEEP_CURRENT,
+        supplyCap: 23_650_000,
+        borrowCap: 0,
+        debtCeiling: 0,
+        liqProtocolFee: 0
+      }),
+      IEngine.TokenImplementations({
+        aToken: RWA_ATOKEN_IMPLEMENTATION,
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      })
+    );
+
+    listingsCustom[7] = IEngine.ListingWithCustomImpl(
+      IEngine.Listing({
+        asset: JAAA_ADDRESS,
+        assetSymbol: 'JAAA',
+        priceFeed: JAAA_PRICE_FEED_ADAPTER,
+        rateStrategyParams: IEngine.InterestRateInputData({
+          optimalUsageRatio: 99_00,
+          baseVariableBorrowRate: 0,
+          variableRateSlope1: 0,
+          variableRateSlope2: 0
+        }),
+        enabledToBorrow: EngineFlags.DISABLED,
+        borrowableInIsolation: EngineFlags.DISABLED,
+        withSiloedBorrowing: EngineFlags.DISABLED,
+        flashloanable: EngineFlags.DISABLED,
+        ltv: 10,
+        liqThreshold: 50,
+        liqBonus: 9_00,
+        reserveFactor: EngineFlags.KEEP_CURRENT,
+        supplyCap: 24_640_000,
+        borrowCap: 0,
+        debtCeiling: 0,
+        liqProtocolFee: 0
+      }),
+      IEngine.TokenImplementations({
+        aToken: RWA_ATOKEN_IMPLEMENTATION,
+        vToken: VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      })
+    );
+
     return listingsCustom;
   }
 
   function assetsEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
-    IEngine.AssetEModeUpdate[] memory assetsEMode = new IEngine.AssetEModeUpdate[](15);
+    IEngine.AssetEModeUpdate[] memory assetsEMode = new IEngine.AssetEModeUpdate[](25);
 
     uint256 index = 0;
 
@@ -423,6 +531,74 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
       asset: GHO_ADDRESS,
       eModeCategory: 6,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // JTRSY Stablecoins
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: JTRSY_ADDRESS,
+      eModeCategory: 7,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USDC_ADDRESS,
+      eModeCategory: 7,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: RLUSD_ADDRESS,
+      eModeCategory: 7,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // JTRSY GHO
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: JTRSY_ADDRESS,
+      eModeCategory: 8,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 8,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // JAAA Stablecoins
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: JAAA_ADDRESS,
+      eModeCategory: 9,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USDC_ADDRESS,
+      eModeCategory: 9,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: RLUSD_ADDRESS,
+      eModeCategory: 9,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // JAAA GHO
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: JAAA_ADDRESS,
+      eModeCategory: 10,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 10,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
     });

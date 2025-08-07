@@ -292,6 +292,12 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   address internal constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
   address internal constant USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
 
+  address internal constant JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
+  address internal constant JTRSY_PRICE_FEED = 0x23adce82907D20c509101E2Af0723A9e16224EFb;
+
+  address internal constant JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
+  address internal constant JAAA_PRICE_FEED = 0x1E41Ef40AC148706c114534E8192Ca608f80fC48;
+
   TokenListingParams internal GHO_TOKEN_LISTING_PARAMS =
     TokenListingParams({
       aTokenName: 'Aave Horizon RWA GHO',
@@ -526,6 +532,104 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
     });
 
+  TokenListingParams internal JTRSY_TOKEN_LISTING_PARAMS =
+    TokenListingParams({
+      aTokenName: 'Aave Horizon RWA JTRSY',
+      aTokenSymbol: 'aHorRwaJTRSY',
+      variableDebtTokenName: 'Aave Horizon RWA Variable Debt JTRSY',
+      variableDebtTokenSymbol: 'variableDebtHorRwaJTRSY',
+      isRwa: true,
+      hasPriceAdapter: true,
+      underlyingPiceFeed: JTRSY_PRICE_FEED,
+      supplyCap: 23_650_000,
+      borrowCap: 0,
+      reserveFactor: 0,
+      enabledToBorrow: false,
+      borrowableInIsolation: false,
+      withSiloedBorrowing: false,
+      flashloanable: false,
+      ltv: 10,
+      liquidationThreshold: 50,
+      liquidationBonus: 100_00 + 4_50,
+      debtCeiling: 0,
+      liqProtocolFee: 0,
+      interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
+        optimalUsageRatio: 0.99e27,
+        baseVariableBorrowRate: 0,
+        variableRateSlope1: 0,
+        variableRateSlope2: 0
+      })
+    });
+
+  EModeCategoryParams internal JTRSY_STABLECOINS_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 77_00,
+      liquidationThreshold: 83_00,
+      liquidationBonus: 100_00 + 4_50,
+      label: 'JTRSY Stablecoins',
+      collateralAssets: _toDynamicAddressArray(JTRSY_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+    });
+
+  EModeCategoryParams internal JTRSY_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 78_00,
+      liquidationThreshold: 84_00,
+      liquidationBonus: 100_00 + 4_50,
+      label: 'JTRSY GHO',
+      collateralAssets: _toDynamicAddressArray(JTRSY_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
+    });
+
+  TokenListingParams internal JAAA_TOKEN_LISTING_PARAMS =
+    TokenListingParams({
+      aTokenName: 'Aave Horizon RWA JAAA',
+      aTokenSymbol: 'aHorRwaJAAA',
+      variableDebtTokenName: 'Aave Horizon RWA Variable Debt JAAA',
+      variableDebtTokenSymbol: 'variableDebtHorRwaJAAA',
+      isRwa: true,
+      hasPriceAdapter: true,
+      underlyingPiceFeed: JAAA_PRICE_FEED,
+      supplyCap: 24_640_000,
+      borrowCap: 0,
+      reserveFactor: 0,
+      enabledToBorrow: false,
+      borrowableInIsolation: false,
+      withSiloedBorrowing: false,
+      flashloanable: false,
+      ltv: 10,
+      liquidationThreshold: 50,
+      liquidationBonus: 100_00 + 9_00,
+      debtCeiling: 0,
+      liqProtocolFee: 0,
+      interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
+        optimalUsageRatio: 0.99e27,
+        baseVariableBorrowRate: 0,
+        variableRateSlope1: 0,
+        variableRateSlope2: 0
+      })
+    });
+
+  EModeCategoryParams internal JAAA_STABLECOINS_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 71_00,
+      liquidationThreshold: 78_00,
+      liquidationBonus: 100_00 + 9_00,
+      label: 'JAAA Stablecoins',
+      collateralAssets: _toDynamicAddressArray(JAAA_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+    });
+
+  EModeCategoryParams internal JAAA_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 72_00,
+      liquidationThreshold: 79_00,
+      liquidationBonus: 100_00 + 9_00,
+      label: 'JAAA GHO',
+      collateralAssets: _toDynamicAddressArray(JAAA_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
+    });
+
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
     (
@@ -580,6 +684,18 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_eModeCategory(6, USYC_GHO_EMODE_PARAMS);
   }
 
+  function test_listing_JTRSY() public {
+    test_listing(JTRSY_ADDRESS, JTRSY_TOKEN_LISTING_PARAMS);
+    test_eModeCategory(7, JTRSY_STABLECOINS_EMODE_PARAMS);
+    test_eModeCategory(8, JTRSY_GHO_EMODE_PARAMS);
+  }
+
+  function test_listing_JAAA() public {
+    test_listing(JAAA_ADDRESS, JAAA_TOKEN_LISTING_PARAMS);
+    test_eModeCategory(9, JAAA_STABLECOINS_EMODE_PARAMS);
+    test_eModeCategory(10, JAAA_GHO_EMODE_PARAMS);
+  }
+
   function loadDeployment()
     internal
     virtual
@@ -602,6 +718,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     return array;
   }
 }
+
 contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   function loadDeployment()
     internal
