@@ -7,6 +7,7 @@ import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {EModeConfiguration} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
@@ -22,6 +23,7 @@ import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 
 abstract contract HorizonListingBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
+  using EModeConfiguration for uint128;
 
   IPool internal pool;
   IRevenueSplitter internal revenueSplitter;
@@ -51,6 +53,15 @@ abstract contract HorizonListingBaseTest is Test {
     uint256 debtCeiling;
     uint256 liqProtocolFee;
     IDefaultInterestRateStrategyV2.InterestRateDataRay interestRateData;
+  }
+
+  struct EModeCategoryParams {
+    uint256 ltv;
+    uint256 liquidationThreshold;
+    uint256 liquidationBonus;
+    string label;
+    address[] collateralAssets;
+    address[] borrowableAssets;
   }
 
   function initEnvironment(
@@ -182,6 +193,47 @@ abstract contract HorizonListingBaseTest is Test {
     assertEq(address(priceFeed), params.underlyingPiceFeed, 'priceFeed');
   }
 
+  function test_eModeCategory(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+    assertEq(pool.getEModeCategoryCollateralConfig(eModeCategory).ltv, params.ltv, 'emode.ltv');
+    assertEq(
+      pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationThreshold,
+      params.liquidationThreshold,
+      'emode.liquidationThreshold'
+    );
+    assertEq(
+      pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationBonus,
+      params.liquidationBonus,
+      'emode.liquidationBonus'
+    );
+    assertEq(pool.getEModeCategoryLabel(eModeCategory), params.label, 'emode.label');
+
+    uint128 collateralBitmap = pool.getEModeCategoryCollateralBitmap(eModeCategory);
+    uint128 recoveredCollateralBitmap = 0;
+    for (uint256 i = 0; i < params.collateralAssets.length; i++) {
+      uint256 reserveId = pool.getReserveData(params.collateralAssets[i]).id;
+      assertEq(
+        collateralBitmap.isReserveEnabledOnBitmap(reserveId),
+        true,
+        string.concat('emode.collateralAsset ', vm.toString(params.collateralAssets[i]))
+      );
+      recoveredCollateralBitmap = recoveredCollateralBitmap.setReserveBitmapBit(reserveId, true);
+    }
+    assertEq(collateralBitmap, recoveredCollateralBitmap, 'emode.collateralBitmap');
+
+    uint128 borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(eModeCategory);
+    uint128 recoveredBorrowableBitmap = 0;
+    for (uint256 i = 0; i < params.borrowableAssets.length; i++) {
+      uint256 reserveId = pool.getReserveData(params.borrowableAssets[i]).id;
+      assertEq(
+        borrowableBitmap.isReserveEnabledOnBitmap(reserveId),
+        true,
+        string.concat('emode.borrowableAsset ', vm.toString(params.borrowableAssets[i]))
+      );
+      recoveredBorrowableBitmap = recoveredBorrowableBitmap.setReserveBitmapBit(reserveId, true);
+    }
+    assertEq(borrowableBitmap, recoveredBorrowableBitmap, 'emode.borrowableBitmap');
+  }
+
   function test_listing(address token, TokenListingParams memory params) internal {
     test_getConfiguration(token, params);
     test_interestRateStrategy(token, params);
@@ -249,23 +301,23 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: GHO_PRICE_FEED,
-      supplyCap: 5_000_000,
-      borrowCap: 4_000_000,
-      reserveFactor: 15_00,
+      supplyCap: 25_000_000,
+      borrowCap: 22_500_000,
+      reserveFactor: 10_00,
       enabledToBorrow: true,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
-      flashloanable: true,
+      flashloanable: false,
       ltv: 0,
       liquidationThreshold: 0,
       liquidationBonus: 0,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
-        optimalUsageRatio: 0.92e27,
-        baseVariableBorrowRate: 0.035e27,
-        variableRateSlope1: 0.0125e27,
-        variableRateSlope2: 0.35e27
+        optimalUsageRatio: 0.99e27,
+        baseVariableBorrowRate: 0.0475e27,
+        variableRateSlope1: 0,
+        variableRateSlope2: 0
       })
     });
 
@@ -278,23 +330,23 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: USDC_PRICE_FEED,
-      supplyCap: 5_000_000,
-      borrowCap: 4_000_000,
+      supplyCap: 35_000_000,
+      borrowCap: 31_500_000,
       reserveFactor: 15_00,
       enabledToBorrow: true,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
-      flashloanable: true,
+      flashloanable: false,
       ltv: 0,
       liquidationThreshold: 0,
       liquidationBonus: 0,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
-        optimalUsageRatio: 0.925e27,
+        optimalUsageRatio: 0.9e27,
         baseVariableBorrowRate: 0,
-        variableRateSlope1: 0.055e27,
-        variableRateSlope2: 0.35e27
+        variableRateSlope1: 0.05e27,
+        variableRateSlope2: 0.15e27
       })
     });
 
@@ -307,23 +359,23 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: false,
       hasPriceAdapter: false,
       underlyingPiceFeed: RLUSD_PRICE_FEED,
-      supplyCap: 5_000_000,
-      borrowCap: 4_000_000,
+      supplyCap: 35_000_000,
+      borrowCap: 31_500_000,
       reserveFactor: 15_00,
       enabledToBorrow: true,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
-      flashloanable: true,
+      flashloanable: false,
       ltv: 0,
       liquidationThreshold: 0,
       liquidationBonus: 0,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
-        optimalUsageRatio: 0.8e27,
-        baseVariableBorrowRate: 0.04e27,
-        variableRateSlope1: 0.025e27,
-        variableRateSlope2: 0.5e27
+        optimalUsageRatio: 0.9e27,
+        baseVariableBorrowRate: 0,
+        variableRateSlope1: 0.05e27,
+        variableRateSlope2: 0.15e27
       })
     });
 
@@ -336,16 +388,16 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: true,
       hasPriceAdapter: true,
       underlyingPiceFeed: USTB_PRICE_FEED,
-      supplyCap: 3_000_000,
+      supplyCap: 46_090_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 75_00,
-      liquidationThreshold: 80_00,
-      liquidationBonus: 112_00,
+      ltv: 10,
+      liquidationThreshold: 50,
+      liquidationBonus: 100_00 + 3_00,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
@@ -354,6 +406,26 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         variableRateSlope1: 0,
         variableRateSlope2: 0
       })
+    });
+
+  EModeCategoryParams internal USTB_STABLECOINS_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 83_00,
+      liquidationThreshold: 88_00,
+      liquidationBonus: 100_00 + 3_00,
+      label: 'USTB Stablecoins',
+      collateralAssets: _toDynamicAddressArray(USTB_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+    });
+
+  EModeCategoryParams internal USTB_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 84_00,
+      liquidationThreshold: 88_00,
+      liquidationBonus: 100_00 + 3_00,
+      label: 'USTB GHO',
+      collateralAssets: _toDynamicAddressArray(USTB_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
     });
 
   TokenListingParams internal USCC_TOKEN_LISTING_PARAMS =
@@ -365,16 +437,16 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: true,
       hasPriceAdapter: true,
       underlyingPiceFeed: USCC_PRICE_FEED,
-      supplyCap: 3_000_000,
+      supplyCap: 15_400_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 75_00,
-      liquidationThreshold: 80_00,
-      liquidationBonus: 112_00,
+      ltv: 10,
+      liquidationThreshold: 50,
+      liquidationBonus: 100_00 + 7_50,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
@@ -383,6 +455,26 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         variableRateSlope1: 0,
         variableRateSlope2: 0
       })
+    });
+
+  EModeCategoryParams internal USCC_STABLECOINS_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 72_00,
+      liquidationThreshold: 79_00,
+      liquidationBonus: 100_00 + 7_50,
+      label: 'USCC Stablecoins',
+      collateralAssets: _toDynamicAddressArray(USCC_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+    });
+
+  EModeCategoryParams internal USCC_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 73_00,
+      liquidationThreshold: 80_00,
+      liquidationBonus: 100_00 + 7_50,
+      label: 'USCC GHO',
+      collateralAssets: _toDynamicAddressArray(USCC_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
     });
 
   TokenListingParams internal USYC_TOKEN_LISTING_PARAMS =
@@ -394,16 +486,16 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: true,
       hasPriceAdapter: false,
       underlyingPiceFeed: USYC_PRICE_FEED,
-      supplyCap: 3_000_000,
+      supplyCap: 28_050_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 75_00,
-      liquidationThreshold: 80_00,
-      liquidationBonus: 112_00,
+      ltv: 10,
+      liquidationThreshold: 50,
+      liquidationBonus: 100_00 + 3_10,
       debtCeiling: 0,
       liqProtocolFee: 0,
       interestRateData: IDefaultInterestRateStrategyV2.InterestRateDataRay({
@@ -412,6 +504,26 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         variableRateSlope1: 0,
         variableRateSlope2: 0
       })
+    });
+
+  EModeCategoryParams internal USYC_STABLECOINS_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 85_00,
+      liquidationThreshold: 89_00,
+      liquidationBonus: 100_00 + 3_10,
+      label: 'USYC Stablecoins',
+      collateralAssets: _toDynamicAddressArray(USYC_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+    });
+
+  EModeCategoryParams internal USYC_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 86_00,
+      liquidationThreshold: 90_00,
+      liquidationBonus: 100_00 + 3_10,
+      label: 'USYC GHO',
+      collateralAssets: _toDynamicAddressArray(USYC_ADDRESS),
+      borrowableAssets: _toDynamicAddressArray(GHO_ADDRESS)
     });
 
   function setUp() public virtual {
@@ -434,15 +546,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     );
   }
 
-  function loadDeployment()
-    internal
-    virtual
-    returns (address, address, address, address, address, address);
-
-  function getListingExecutor() internal pure override returns (address) {
-    return LISTING_EXECUTOR;
-  }
-
   function test_listingExecutor() public {
     check_listingExecutor();
   }
@@ -461,14 +564,42 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function test_listing_USTB() public {
     test_listing(USTB_ADDRESS, USTB_TOKEN_LISTING_PARAMS);
+    test_eModeCategory(1, USTB_STABLECOINS_EMODE_PARAMS);
+    test_eModeCategory(2, USTB_GHO_EMODE_PARAMS);
   }
 
   function test_listing_USCC() public {
     test_listing(USCC_ADDRESS, USCC_TOKEN_LISTING_PARAMS);
+    test_eModeCategory(3, USCC_STABLECOINS_EMODE_PARAMS);
+    test_eModeCategory(4, USCC_GHO_EMODE_PARAMS);
   }
 
   function test_listing_USYC() public {
     test_listing(USYC_ADDRESS, USYC_TOKEN_LISTING_PARAMS);
+    test_eModeCategory(5, USYC_STABLECOINS_EMODE_PARAMS);
+    test_eModeCategory(6, USYC_GHO_EMODE_PARAMS);
+  }
+
+  function loadDeployment()
+    internal
+    virtual
+    returns (address, address, address, address, address, address);
+
+  function getListingExecutor() internal pure override returns (address) {
+    return LISTING_EXECUTOR;
+  }
+
+  function _toDynamicAddressArray(address a) private pure returns (address[] memory) {
+    address[] memory array = new address[](1);
+    array[0] = a;
+    return array;
+  }
+
+  function _toDynamicAddressArray(address a, address b) private pure returns (address[] memory) {
+    address[] memory array = new address[](2);
+    array[0] = a;
+    array[1] = b;
+    return array;
   }
 }
 contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {

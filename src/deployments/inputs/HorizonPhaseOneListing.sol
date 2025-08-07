@@ -64,6 +64,71 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
   }
 
+  function eModeCategoriesUpdates()
+    public
+    pure
+    override
+    returns (IEngine.EModeCategoryUpdate[] memory)
+  {
+    IEngine.EModeCategoryUpdate[] memory eModeCategories = new IEngine.EModeCategoryUpdate[](6);
+
+    // USTB Stablecoins
+    eModeCategories[0] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 1,
+      ltv: 83_00,
+      liqThreshold: 88_00,
+      liqBonus: 3_00,
+      label: 'USTB Stablecoins'
+    });
+
+    // USTB GHO
+    eModeCategories[1] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 2,
+      ltv: 84_00,
+      liqThreshold: 88_00,
+      liqBonus: 3_00,
+      label: 'USTB GHO'
+    });
+
+    // USCC Stablecoins
+    eModeCategories[2] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 3,
+      ltv: 72_00,
+      liqThreshold: 79_00,
+      liqBonus: 7_50,
+      label: 'USCC Stablecoins'
+    });
+
+    // USCC GHO
+    eModeCategories[3] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 4,
+      ltv: 73_00,
+      liqThreshold: 80_00,
+      liqBonus: 7_50,
+      label: 'USCC GHO'
+    });
+
+    // USYC Stablecoins
+    eModeCategories[4] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 5,
+      ltv: 85_00,
+      liqThreshold: 89_00,
+      liqBonus: 3_10,
+      label: 'USYC Stablecoins'
+    });
+
+    // USYC GHO
+    eModeCategories[5] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 6,
+      ltv: 86_00,
+      liqThreshold: 90_00,
+      liqBonus: 3_10,
+      label: 'USYC GHO'
+    });
+
+    return eModeCategories;
+  }
+
   function newListingsCustom()
     public
     view
@@ -78,21 +143,21 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         assetSymbol: 'GHO',
         priceFeed: GHO_PRICE_FEED,
         rateStrategyParams: IEngine.InterestRateInputData({
-          optimalUsageRatio: 92_00,
-          baseVariableBorrowRate: 3_50,
-          variableRateSlope1: 1_25,
-          variableRateSlope2: 35_00
+          optimalUsageRatio: 99_00,
+          baseVariableBorrowRate: 4_75,
+          variableRateSlope1: 0,
+          variableRateSlope2: 0
         }),
         enabledToBorrow: EngineFlags.ENABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
-        flashloanable: EngineFlags.ENABLED,
+        flashloanable: EngineFlags.DISABLED,
         ltv: 0,
         liqThreshold: 0,
         liqBonus: 0,
-        reserveFactor: 15_00,
-        supplyCap: 5_000_000,
-        borrowCap: 4_000_000,
+        reserveFactor: 10_00,
+        supplyCap: 25_000_000,
+        borrowCap: 22_500_000,
         debtCeiling: 0,
         liqProtocolFee: 0
       }),
@@ -108,21 +173,21 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         assetSymbol: 'USDC',
         priceFeed: USDC_PRICE_FEED,
         rateStrategyParams: IEngine.InterestRateInputData({
-          optimalUsageRatio: 92_50,
+          optimalUsageRatio: 90_00,
           baseVariableBorrowRate: 0,
-          variableRateSlope1: 5_50,
-          variableRateSlope2: 35_00
+          variableRateSlope1: 5_00,
+          variableRateSlope2: 15_00
         }),
         enabledToBorrow: EngineFlags.ENABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
-        flashloanable: EngineFlags.ENABLED,
+        flashloanable: EngineFlags.DISABLED,
         ltv: 0,
         liqThreshold: 0,
         liqBonus: 0,
         reserveFactor: 15_00,
-        supplyCap: 5_000_000,
-        borrowCap: 4_000_000,
+        supplyCap: 35_000_000,
+        borrowCap: 31_500_000,
         debtCeiling: 0,
         liqProtocolFee: 0
       }),
@@ -138,21 +203,21 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         assetSymbol: 'RLUSD',
         priceFeed: RLUSD_PRICE_FEED,
         rateStrategyParams: IEngine.InterestRateInputData({
-          optimalUsageRatio: 80_00,
-          baseVariableBorrowRate: 4_00,
-          variableRateSlope1: 2_50,
-          variableRateSlope2: 50_00
+          optimalUsageRatio: 90_00,
+          baseVariableBorrowRate: 0,
+          variableRateSlope1: 5_00,
+          variableRateSlope2: 15_00
         }),
         enabledToBorrow: EngineFlags.ENABLED,
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
-        flashloanable: EngineFlags.ENABLED,
+        flashloanable: EngineFlags.DISABLED,
         ltv: 0,
         liqThreshold: 0,
         liqBonus: 0,
         reserveFactor: 15_00,
-        supplyCap: 5_000_000,
-        borrowCap: 4_000_000,
+        supplyCap: 35_000_000,
+        borrowCap: 31_500_000,
         debtCeiling: 0,
         liqProtocolFee: 0
       }),
@@ -177,11 +242,11 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.DISABLED,
-        ltv: 75_00,
-        liqThreshold: 80_00,
-        liqBonus: 12_00,
+        ltv: 10,
+        liqThreshold: 50,
+        liqBonus: 3_00,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 3_000_000,
+        supplyCap: 46_090_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -207,11 +272,11 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.DISABLED,
-        ltv: 75_00,
-        liqThreshold: 80_00,
-        liqBonus: 12_00,
+        ltv: 10,
+        liqThreshold: 50,
+        liqBonus: 7_50,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 3_000_000,
+        supplyCap: 15_400_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -237,11 +302,11 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         borrowableInIsolation: EngineFlags.DISABLED,
         withSiloedBorrowing: EngineFlags.DISABLED,
         flashloanable: EngineFlags.DISABLED,
-        ltv: 75_00,
-        liqThreshold: 80_00,
-        liqBonus: 12_00,
+        ltv: 10,
+        liqThreshold: 50,
+        liqBonus: 3_10,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 3_000_000,
+        supplyCap: 28_050_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -253,6 +318,118 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     );
 
     return listingsCustom;
+  }
+
+  function assetsEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
+    IEngine.AssetEModeUpdate[] memory assetsEMode = new IEngine.AssetEModeUpdate[](15);
+
+    uint256 index = 0;
+
+    // USTB Stablecoins
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USTB_ADDRESS,
+      eModeCategory: 1,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USDC_ADDRESS,
+      eModeCategory: 1,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: RLUSD_ADDRESS,
+      eModeCategory: 1,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // USTB GHO
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USTB_ADDRESS,
+      eModeCategory: 2,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 2,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // USCC Stablecoins
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USCC_ADDRESS,
+      eModeCategory: 3,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USDC_ADDRESS,
+      eModeCategory: 3,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: RLUSD_ADDRESS,
+      eModeCategory: 3,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // USCC GHO
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USCC_ADDRESS,
+      eModeCategory: 4,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 4,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // USYC Stablecoins
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USYC_ADDRESS,
+      eModeCategory: 5,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USDC_ADDRESS,
+      eModeCategory: 5,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: RLUSD_ADDRESS,
+      eModeCategory: 5,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    // USYC GHO
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: USYC_ADDRESS,
+      eModeCategory: 6,
+      collateral: EngineFlags.ENABLED,
+      borrowable: EngineFlags.DISABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 6,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+
+    assert(index == assetsEMode.length);
+
+    return assetsEMode;
   }
 
   function getPoolContext() public pure override returns (IEngine.PoolContext memory) {
