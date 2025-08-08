@@ -8,6 +8,7 @@ import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
+import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
@@ -18,12 +19,14 @@ import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {IACLManager} from '../../src/contracts/interfaces/IACLManager.sol';
 import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
+import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 
 abstract contract HorizonListingBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using EModeConfiguration for uint128;
+  using PercentageMath for uint256;
 
   IPool internal pool;
   IRevenueSplitter internal revenueSplitter;
@@ -31,6 +34,10 @@ abstract contract HorizonListingBaseTest is Test {
   address internal aTokenImpl;
   address internal rwaATokenImpl;
   address internal variableDebtTokenImpl;
+  address internal poolAdmin;
+
+  address internal alice = makeAddr('alice');
+  address internal bob = makeAddr('bob');
 
   struct TokenListingParams {
     bool isRwa;
@@ -70,7 +77,8 @@ abstract contract HorizonListingBaseTest is Test {
     address defaultInterestRateStrategy_,
     address aTokenImpl_,
     address rwaATokenImpl_,
-    address variableDebtTokenImpl_
+    address variableDebtTokenImpl_,
+    address poolAdmin_
   ) internal virtual {
     pool = IPool(pool_);
     revenueSplitter = IRevenueSplitter(revenueSplitter_);
@@ -78,6 +86,7 @@ abstract contract HorizonListingBaseTest is Test {
     aTokenImpl = aTokenImpl_;
     rwaATokenImpl = rwaATokenImpl_;
     variableDebtTokenImpl = variableDebtTokenImpl_;
+    poolAdmin = poolAdmin_;
   }
 
   function getListingExecutor() internal view virtual returns (address);
@@ -98,6 +107,19 @@ abstract contract HorizonListingBaseTest is Test {
       'listingExecutor should be asset listing admin'
     );
     assertTrue(aclManager.isRiskAdmin(listingExecutor), 'listingExecutor should be risk admin');
+  }
+
+  function test_listing(address token, TokenListingParams memory params) internal {
+    test_getConfiguration(token, params);
+    test_interestRateStrategy(token, params);
+    test_aToken(token, params);
+    test_variableDebtToken(token, params);
+    test_priceFeed(token, params);
+  }
+
+  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+    test_eMode_configuration(eModeCategory, params);
+    test_eMode_collateralization(eModeCategory, params);
   }
 
   function test_getConfiguration(address token, TokenListingParams memory params) private {
@@ -193,7 +215,10 @@ abstract contract HorizonListingBaseTest is Test {
     assertEq(address(priceFeed), params.underlyingPiceFeed, 'priceFeed');
   }
 
-  function test_eModeCategory(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+  function test_eMode_configuration(
+    uint8 eModeCategory,
+    EModeCategoryParams memory params
+  ) private {
     assertEq(pool.getEModeCategoryCollateralConfig(eModeCategory).ltv, params.ltv, 'emode.ltv');
     assertEq(
       pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationThreshold,
@@ -234,12 +259,62 @@ abstract contract HorizonListingBaseTest is Test {
     assertEq(borrowableBitmap, recoveredBorrowableBitmap, 'emode.borrowableBitmap');
   }
 
-  function test_listing(address token, TokenListingParams memory params) internal {
-    test_getConfiguration(token, params);
-    test_interestRateStrategy(token, params);
-    test_aToken(token, params);
-    test_variableDebtToken(token, params);
-    test_priceFeed(token, params);
+  function test_eMode_collateralization(
+    uint8 eModeCategory,
+    EModeCategoryParams memory params
+  ) private {
+    address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
+    vm.prank(poolAdmin);
+    IPoolConfigurator(poolConfigurator).setPoolPause(false);
+
+    vm.prank(alice);
+    pool.setUserEMode(eModeCategory);
+
+    IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
+    for (uint256 i = 0; i < params.collateralAssets.length; i++) {
+      uint256 amountInBaseCurrency = 1e6 * 1e8;
+
+      uint256 supplyAmount = (amountInBaseCurrency *
+        10 ** IERC20Detailed(params.collateralAssets[i]).decimals()) /
+        oracle.getAssetPrice(params.collateralAssets[i]) +
+        1;
+      address collateralAsset = params.collateralAssets[i];
+      deal(collateralAsset, alice, supplyAmount);
+
+      vm.startPrank(alice);
+      IERC20Detailed(collateralAsset).approve(address(pool), supplyAmount);
+      pool.supply(collateralAsset, supplyAmount, alice, 0);
+      vm.stopPrank();
+
+      for (uint256 j = 0; j < params.borrowableAssets.length; j++) {
+        address borrowAsset = params.borrowableAssets[j];
+        uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
+          10 ** IERC20Detailed(borrowAsset).decimals()) /
+          oracle.getAssetPrice(borrowAsset) -
+          1;
+
+        deal(borrowAsset, bob, borrowAmount);
+
+        vm.startPrank(bob);
+        IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+        pool.supply(borrowAsset, borrowAmount, bob, 0);
+        vm.stopPrank();
+
+        vm.prank(alice);
+        pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
+
+        vm.startPrank(alice);
+        IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+        pool.repay(borrowAsset, borrowAmount, 2, alice);
+        vm.stopPrank();
+
+        vm.prank(bob);
+        pool.withdraw(borrowAsset, borrowAmount, bob);
+      }
+
+      vm.prank(alice);
+      pool.withdraw(collateralAsset, supplyAmount, alice);
+    }
   }
 
   function assertEq(
@@ -638,7 +713,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       address _defaultInterestRateStrategy,
       address _aToken,
       address _rwaAToken,
-      address _variableDebtToken
+      address _variableDebtToken,
+      address _poolAdmin
     ) = loadDeployment();
     initEnvironment(
       _pool,
@@ -646,7 +722,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       _defaultInterestRateStrategy,
       _aToken,
       _rwaAToken,
-      _variableDebtToken
+      _variableDebtToken,
+      _poolAdmin
     );
   }
 
@@ -668,38 +745,68 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function test_listing_USTB() public {
     test_listing(USTB_ADDRESS, USTB_TOKEN_LISTING_PARAMS);
-    test_eModeCategory(1, USTB_STABLECOINS_EMODE_PARAMS);
-    test_eModeCategory(2, USTB_GHO_EMODE_PARAMS);
+  }
+
+  function test_eMode_USTB_Stablecoins() public {
+    test_eMode(1, USTB_STABLECOINS_EMODE_PARAMS);
+  }
+
+  function test_eMode_USTB_GHO() public {
+    test_eMode(2, USTB_GHO_EMODE_PARAMS);
   }
 
   function test_listing_USCC() public {
     test_listing(USCC_ADDRESS, USCC_TOKEN_LISTING_PARAMS);
-    test_eModeCategory(3, USCC_STABLECOINS_EMODE_PARAMS);
-    test_eModeCategory(4, USCC_GHO_EMODE_PARAMS);
+  }
+
+  function test_eMode_USCC_Stablecoins() public {
+    test_eMode(3, USCC_STABLECOINS_EMODE_PARAMS);
+  }
+
+  function test_eMode_USCC_GHO() public {
+    test_eMode(4, USCC_GHO_EMODE_PARAMS);
   }
 
   function test_listing_USYC() public {
     test_listing(USYC_ADDRESS, USYC_TOKEN_LISTING_PARAMS);
-    test_eModeCategory(5, USYC_STABLECOINS_EMODE_PARAMS);
-    test_eModeCategory(6, USYC_GHO_EMODE_PARAMS);
+  }
+
+  function test_eMode_USYC_Stablecoins() public {
+    test_eMode(5, USYC_STABLECOINS_EMODE_PARAMS);
+  }
+
+  function test_eMode_USYC_GHO() public {
+    test_eMode(6, USYC_GHO_EMODE_PARAMS);
   }
 
   function test_listing_JTRSY() public {
     test_listing(JTRSY_ADDRESS, JTRSY_TOKEN_LISTING_PARAMS);
-    test_eModeCategory(7, JTRSY_STABLECOINS_EMODE_PARAMS);
-    test_eModeCategory(8, JTRSY_GHO_EMODE_PARAMS);
+  }
+
+  function test_eMode_JTRSY_Stablecoins() public {
+    test_eMode(7, JTRSY_STABLECOINS_EMODE_PARAMS);
+  }
+
+  function test_eMode_JTRSY_GHO() public {
+    test_eMode(8, JTRSY_GHO_EMODE_PARAMS);
   }
 
   function test_listing_JAAA() public {
     test_listing(JAAA_ADDRESS, JAAA_TOKEN_LISTING_PARAMS);
-    test_eModeCategory(9, JAAA_STABLECOINS_EMODE_PARAMS);
-    test_eModeCategory(10, JAAA_GHO_EMODE_PARAMS);
+  }
+
+  function test_eMode_JAAA_Stablecoins() public {
+    test_eMode(9, JAAA_STABLECOINS_EMODE_PARAMS);
+  }
+
+  function test_eMode_JAAA_GHO() public {
+    test_eMode(10, JAAA_GHO_EMODE_PARAMS);
   }
 
   function loadDeployment()
     internal
     virtual
-    returns (address, address, address, address, address, address);
+    returns (address, address, address, address, address, address, address);
 
   function getListingExecutor() internal pure override returns (address) {
     return LISTING_EXECUTOR;
@@ -719,11 +826,20 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   }
 }
 
+/// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
+  address internal constant SUPERSTATE_ALLOWLIST_V2 = 0x02f1fA8B196d21c7b733EB2700B825611d8A38E5;
+  uint256 internal constant SUPERSTATE_ROOT_ENTITY_ID = 1;
+  address internal constant CENTRIFUGE_HOOK = 0x4737C3f62Cc265e786b280153fC666cEA2fBc0c0;
+  address internal constant CENTRIFUGE_WARD = 0x09ab10a9c3E6Eac1d18270a2322B6113F4C7f5E8;
+  uint8 internal constant CIRCLE_INVESTOR_SDYF_INTERNATIONAL_ROLE = 3;
+  address internal constant CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER =
+    0xDbE01f447040F78ccbC8Dfd101BEc1a2C21f800D;
+
   function loadDeployment()
     internal
     override
-    returns (address, address, address, address, address, address)
+    returns (address, address, address, address, address, address, address)
   {
     string memory reportFilePath = run();
 
@@ -753,8 +869,88 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
       marketReport.defaultInterestRateStrategy,
       marketReport.aToken,
       marketReport.rwaAToken,
-      marketReport.variableDebtToken
+      marketReport.variableDebtToken,
+      AAVE_DAO_EXECUTOR
     );
+  }
+
+  function initEnvironment(
+    address pool_,
+    address revenueSplitter_,
+    address defaultInterestRateStrategy_,
+    address aToken_,
+    address rwaAToken_,
+    address variableDebtToken_,
+    address poolAdmin_
+  ) internal override {
+    super.initEnvironment(
+      pool_,
+      revenueSplitter_,
+      defaultInterestRateStrategy_,
+      aToken_,
+      rwaAToken_,
+      variableDebtToken_,
+      poolAdmin_
+    );
+
+    whitelistSuperstateRwa(pool.getReserveAToken(USTB_ADDRESS));
+    whitelistSuperstateRwa(pool.getReserveAToken(USCC_ADDRESS));
+    whitelistSuperstateRwa(alice);
+
+    whitelistUsycRwa(pool.getReserveAToken(USYC_ADDRESS));
+    // if `msg.sender` is not `from` in `transferFrom` then the msg.sender must be whitelisted as well
+    whitelistUsycRwa(address(pool));
+    whitelistUsycRwa(alice);
+
+    whitelistCentrifugeRwa(pool.getReserveAToken(JTRSY_ADDRESS));
+    whitelistCentrifugeRwa(pool.getReserveAToken(JAAA_ADDRESS));
+    whitelistCentrifugeRwa(alice);
+  }
+
+  function whitelistSuperstateRwa(address addressToWhitelist) internal {
+    (bool success, bytes memory data) = SUPERSTATE_ALLOWLIST_V2.call(
+      abi.encodeWithSignature('owner()')
+    );
+    require(success, 'Failed to call owner()');
+    address owner = abi.decode(data, (address));
+
+    vm.prank(owner);
+    (success, ) = SUPERSTATE_ALLOWLIST_V2.call(
+      abi.encodeWithSignature(
+        'setEntityIdForAddress(uint256,address)',
+        SUPERSTATE_ROOT_ENTITY_ID,
+        addressToWhitelist
+      )
+    );
+  }
+
+  function whitelistCentrifugeRwa(address addressToWhitelist) internal {
+    address restrictionManager = CENTRIFUGE_HOOK;
+
+    (bool success, bytes memory data) = restrictionManager.call(abi.encodeWithSignature('root()'));
+    require(success, 'Failed to call root()');
+    address root = abi.decode(data, (address));
+
+    vm.prank(CENTRIFUGE_WARD);
+    (success, ) = root.call(abi.encodeWithSignature('endorse(address)', addressToWhitelist));
+    require(success, 'Failed to call endorse()');
+  }
+
+  function whitelistUsycRwa(address addressToWhitelist) internal {
+    (bool success, bytes memory data) = USYC_ADDRESS.call(abi.encodeWithSignature('authority()'));
+    require(success, 'Failed to call authority()');
+    address authority = abi.decode(data, (address));
+
+    vm.prank(CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER);
+    (success, ) = authority.call(
+      abi.encodeWithSignature(
+        'setUserRole(address,uint8,bool)',
+        addressToWhitelist,
+        CIRCLE_INVESTOR_SDYF_INTERNATIONAL_ROLE,
+        true
+      )
+    );
+    require(success, 'Failed to call setUserRole()');
   }
 }
 
@@ -766,7 +962,8 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 //     address _aToken = ; // todo
 //     address _rwaAToken = ; // todo
 //     address _variableDebtToken = ; // todo
+//     address _poolAdmin = ; // todo
 
-//     return (_pool, _revenueSplitter, _defaultInterestRateStrategy, _aToken, _rwaAToken, _variableDebtToken);
+//     return (_pool, _revenueSplitter, _defaultInterestRateStrategy, _aToken, _rwaAToken, _variableDebtToken, _poolAdmin);
 //   }
 // }
