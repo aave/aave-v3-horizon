@@ -413,7 +413,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       underlyingPiceFeed: USDC_PRICE_FEED,
       supplyCap: 35_000_000,
       borrowCap: 31_500_000,
-      reserveFactor: 15_00,
+      reserveFactor: 10_00,
       enabledToBorrow: true,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
@@ -427,7 +427,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         optimalUsageRatio: 0.9e27,
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0.05e27,
-        variableRateSlope2: 0.15e27
+        variableRateSlope2: 0.25e27
       })
     });
 
@@ -442,7 +442,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       underlyingPiceFeed: RLUSD_PRICE_FEED,
       supplyCap: 35_000_000,
       borrowCap: 31_500_000,
-      reserveFactor: 15_00,
+      reserveFactor: 10_00,
       enabledToBorrow: true,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
@@ -456,7 +456,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         optimalUsageRatio: 0.9e27,
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0.05e27,
-        variableRateSlope2: 0.15e27
+        variableRateSlope2: 0.25e27
       })
     });
 
@@ -476,8 +476,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 10,
-      liquidationThreshold: 50,
+      ltv: 5,
+      liquidationThreshold: 10,
       liquidationBonus: 100_00 + 3_00,
       debtCeiling: 0,
       liqProtocolFee: 0,
@@ -525,8 +525,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 10,
-      liquidationThreshold: 50,
+      ltv: 5,
+      liquidationThreshold: 10,
       liquidationBonus: 100_00 + 7_50,
       debtCeiling: 0,
       liqProtocolFee: 0,
@@ -574,8 +574,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 10,
-      liquidationThreshold: 50,
+      ltv: 5,
+      liquidationThreshold: 10,
       liquidationBonus: 100_00 + 3_10,
       debtCeiling: 0,
       liqProtocolFee: 0,
@@ -623,8 +623,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 10,
-      liquidationThreshold: 50,
+      ltv: 5,
+      liquidationThreshold: 10,
       liquidationBonus: 100_00 + 4_50,
       debtCeiling: 0,
       liqProtocolFee: 0,
@@ -665,15 +665,15 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       isRwa: true,
       hasPriceAdapter: true,
       underlyingPiceFeed: JAAA_PRICE_FEED,
-      supplyCap: 24_640_000,
+      supplyCap: 24_800_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 10,
-      liquidationThreshold: 50,
+      ltv: 5,
+      liquidationThreshold: 10,
       liquidationBonus: 100_00 + 9_00,
       debtCeiling: 0,
       liqProtocolFee: 0,
