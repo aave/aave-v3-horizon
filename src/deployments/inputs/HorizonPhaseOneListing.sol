@@ -40,7 +40,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   address public immutable JAAA_ADDRESS;
   address public immutable JAAA_PRICE_FEED_ADAPTER;
 
-  bytes32 public constant POOL_ADMIN_EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
+  bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
 
   constructor(MarketReport memory report) AaveV3Payload(IEngine(report.configEngine)) {
     ATOKEN_IMPLEMENTATION = report.aToken;
@@ -61,10 +61,10 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
     USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-    USTB_PRICE_FEED_ADAPTER = 0x63908721c77a27689fb0f5db78983135ddfBa56f;
+    USTB_PRICE_FEED_ADAPTER = 0x5Ae4D93B9b9626Dc3289e1Afb14b821FD3C95F44;
 
     USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-    USCC_PRICE_FEED_ADAPTER = 0x889f5Feb776Ed122e774D8859134b487c7A85B5d;
+    USCC_PRICE_FEED_ADAPTER = 0x14CB2E810Eb93b79363f489D45a972b609E47230;
 
     USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
     USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
@@ -97,7 +97,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     eModeCategories[1] = IEngine.EModeCategoryUpdate({
       eModeCategory: 2,
       ltv: 84_00,
-      liqThreshold: 88_00,
+      liqThreshold: 89_00,
       liqBonus: 3_00,
       label: 'USTB GHO'
     });
@@ -614,6 +614,6 @@ contract HorizonPhaseOneListing is AaveV3Payload {
 
   function _postExecute() internal override {
     CONFIGURATOR.setPoolPause(true);
-    ACLManager(ACL_MANAGER).renounceRole(POOL_ADMIN_EMERGENCY_ADMIN_ROLE, address(this));
+    ACLManager(ACL_MANAGER).renounceRole(EMERGENCY_ADMIN_ROLE, address(this));
   }
 }

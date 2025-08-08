@@ -271,8 +271,8 @@ abstract contract HorizonListingBaseTest is Test {
 }
 
 abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
-  address internal constant ADVANCED_MULTISIG = 0x4444dE8a4AA3401a3AEC584de87B0f21E3e601CA;
-  address internal constant LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
+  address internal constant EMERGENCY_MULTISIG = 0x13B57382c36BAB566E75C72303622AF29E27e1d3;
+  address internal constant LISTING_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   address internal constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
   address internal constant GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
@@ -284,10 +284,10 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   address internal constant RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
   address internal constant USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-  address internal constant USTB_PRICE_FEED = 0x289B5036cd942e619E1Ee48670F98d214E745AAC;
+  address internal constant USTB_PRICE_FEED = 0xde49c7B5C0E54b1624ED21C7D88bA6593d444Aa0;
 
   address internal constant USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-  address internal constant USCC_PRICE_FEED = 0xAfFd8F5578E8590665de561bdE9E7BAdb99300d9;
+  address internal constant USCC_PRICE_FEED = 0x19e2d716288751c5A59deaB61af012D5DF895962;
 
   address internal constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
   address internal constant USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
@@ -427,7 +427,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
   EModeCategoryParams internal USTB_GHO_EMODE_PARAMS =
     EModeCategoryParams({
       ltv: 84_00,
-      liquidationThreshold: 88_00,
+      liquidationThreshold: 89_00,
       liquidationBonus: 100_00 + 3_00,
       label: 'USTB GHO',
       collateralAssets: _toDynamicAddressArray(USTB_ADDRESS),
@@ -734,7 +734,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 
     address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
 
-    vm.prank(ADVANCED_MULTISIG);
+    vm.prank(EMERGENCY_MULTISIG);
     (bool success, ) = getListingExecutor().call(
       abi.encodeWithSignature(
         'executeTransaction(address,uint256,string,bytes,bool)',

@@ -36,24 +36,24 @@ abstract contract HorizonDeploymentBaseTest is Test {
   }
 
   function initEnvironment(
-    HorizonDeployment memory deployment,
+    HorizonDeployment memory deployment_,
     address poolAdmin_,
     MarketConfig memory config_
   ) internal {
-    poolAddressesProvider = IPoolAddressesProvider(deployment.poolAddressesProvider);
+    poolAddressesProvider = IPoolAddressesProvider(deployment_.poolAddressesProvider);
     poolAddressesProviderRegistry = IPoolAddressesProviderRegistry(
-      deployment.poolAddressesProviderRegistry
+      deployment_.poolAddressesProviderRegistry
     );
-    aaveOracle = IAaveOracle(deployment.aaveOracle);
-    wrappedTokenGateway = IWrappedTokenGatewayV3(deployment.wrappedTokenGateway);
-    poolProxy = IPool(deployment.poolProxy);
-    treasury = ICollector(deployment.treasury);
-    revenueSplitter = IRevenueSplitter(deployment.revenueSplitter);
+    aaveOracle = IAaveOracle(deployment_.aaveOracle);
+    wrappedTokenGateway = IWrappedTokenGatewayV3(deployment_.wrappedTokenGateway);
+    poolProxy = IPool(deployment_.poolProxy);
+    treasury = ICollector(deployment_.treasury);
+    revenueSplitter = IRevenueSplitter(deployment_.revenueSplitter);
     defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
-      deployment.defaultInterestRateStrategy
+      deployment_.defaultInterestRateStrategy
     );
-    emissionManager = IEmissionManager(deployment.emissionManager);
-    rewardsControllerProxy = IRewardsController(deployment.rewardsControllerProxy);
+    emissionManager = IEmissionManager(deployment_.emissionManager);
+    rewardsControllerProxy = IRewardsController(deployment_.rewardsControllerProxy);
     poolAdmin = poolAdmin_;
     config = config_;
   }

@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
 contract HorizonInput is MarketInput {
+  address public constant ETH_USD_PRICE_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // chainlink price feed
+  address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
   address public constant AAVE_DAO_EXECUTOR = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
   address public constant AAVE_DAO_COLLECTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
-  address public constant PHASE_ONE_LISTING_EXECUTOR = 0xf046907a4371F7F027113bf751F3347459a08b71;
+  address public constant PHASE_ONE_LISTING_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
   bytes32 public constant RISK_ADMIN_ROLE = keccak256('RISK_ADMIN');
@@ -37,8 +39,8 @@ contract HorizonInput is MarketInput {
     });
 
     config = MarketConfig({
-      networkBaseTokenPriceInUsdProxyAggregator: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, // eth-usd chainlink price feed
-      marketReferenceCurrencyPriceInUsdProxyAggregator: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419, // eth-usd chainlink price feed
+      networkBaseTokenPriceInUsdProxyAggregator: ETH_USD_PRICE_FEED,
+      marketReferenceCurrencyPriceInUsdProxyAggregator: ETH_USD_PRICE_FEED,
       marketId: 'Horizon RWA Market',
       oracleDecimals: 8,
       paraswapAugustusRegistry: address(0),
@@ -46,7 +48,7 @@ contract HorizonInput is MarketInput {
       l2PriceOracleSentinelGracePeriod: 0,
       providerId: 1,
       salt: bytes32(0),
-      wrappedNativeToken: 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2,
+      wrappedNativeToken: WETH_ADDRESS,
       flashLoanPremiumTotal: 5,
       flashLoanPremiumToProtocol: 100_00,
       incentivesProxy: address(0),
