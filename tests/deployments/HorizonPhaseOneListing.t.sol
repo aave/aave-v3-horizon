@@ -89,11 +89,33 @@ abstract contract HorizonListingBaseTest is Test {
     poolAdmin = poolAdmin_;
   }
 
-  function getListingExecutor() internal view virtual returns (address);
+  function OPERATIONAL_MULTISIG_ADDRESS() external view virtual returns (address);
+  function EMERGENCY_MULTISIG_ADDRESS() external view virtual returns (address);
+  function AAVE_DAO_EXECUTOR_ADDRESS() external view virtual returns (address);
+  function LISTING_EXECUTOR_ADDRESS() external view virtual returns (address);
 
-  function check_listingExecutor() internal {
+  function check_permissions() internal {
+    test_listingExecutor(this.LISTING_EXECUTOR_ADDRESS());
+    test_operationalMultisig(this.OPERATIONAL_MULTISIG_ADDRESS());
+    test_emergencyMultisig(this.EMERGENCY_MULTISIG_ADDRESS());
+    test_aaveDaoExecutor(this.AAVE_DAO_EXECUTOR_ADDRESS());
+  }
+
+  function test_listing(address token, TokenListingParams memory params) internal {
+    test_getConfiguration(token, params);
+    test_interestRateStrategy(token, params);
+    test_aToken(token, params);
+    test_variableDebtToken(token, params);
+    test_priceFeed(token, params);
+  }
+
+  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+    test_eMode_configuration(eModeCategory, params);
+    test_eMode_collateralization(eModeCategory, params);
+  }
+
+  function test_listingExecutor(address listingExecutor) private {
     IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
-    address listingExecutor = getListingExecutor();
     assertFalse(
       aclManager.isPoolAdmin(listingExecutor),
       'listingExecutor should not be pool admin'
@@ -109,17 +131,58 @@ abstract contract HorizonListingBaseTest is Test {
     assertTrue(aclManager.isRiskAdmin(listingExecutor), 'listingExecutor should be risk admin');
   }
 
-  function test_listing(address token, TokenListingParams memory params) internal {
-    test_getConfiguration(token, params);
-    test_interestRateStrategy(token, params);
-    test_aToken(token, params);
-    test_variableDebtToken(token, params);
-    test_priceFeed(token, params);
+  function test_operationalMultisig(address operationalMultisig) private {
+    IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
+    assertFalse(
+      aclManager.isPoolAdmin(operationalMultisig),
+      'operationalMultisig should not be pool admin'
+    );
+    assertFalse(
+      aclManager.isEmergencyAdmin(operationalMultisig),
+      'operationalMultisig should not be emergency admin'
+    );
+    assertFalse(
+      aclManager.isAssetListingAdmin(operationalMultisig),
+      'operationalMultisig should not be asset listing admin'
+    );
+    assertTrue(
+      aclManager.isRiskAdmin(operationalMultisig),
+      'operationalMultisig should be risk admin'
+    );
   }
 
-  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
-    test_eMode_configuration(eModeCategory, params);
-    test_eMode_collateralization(eModeCategory, params);
+  function test_emergencyMultisig(address emergencyMultisig) private {
+    IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
+    assertTrue(aclManager.isPoolAdmin(emergencyMultisig), 'emergencyMultisig should be pool admin');
+    assertTrue(
+      aclManager.isEmergencyAdmin(emergencyMultisig),
+      'emergencyMultisig should be emergency admin'
+    );
+    assertFalse(
+      aclManager.isAssetListingAdmin(emergencyMultisig),
+      'emergencyMultisig should not be asset listing admin'
+    );
+    assertFalse(
+      aclManager.isRiskAdmin(emergencyMultisig),
+      'emergencyMultisig should not be risk admin'
+    );
+  }
+
+  function test_aaveDaoExecutor(address aaveDaoExecutor) private {
+    IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
+    assertTrue(aclManager.isPoolAdmin(aaveDaoExecutor), 'aaveDaoExecutor should be pool admin');
+    assertTrue(
+      aclManager.isEmergencyAdmin(aaveDaoExecutor),
+      'aaveDaoExecutor should be emergency admin'
+    );
+    assertFalse(
+      aclManager.isAssetListingAdmin(aaveDaoExecutor),
+      'aaveDaoExecutor should not be asset listing admin'
+    );
+    assertFalse(
+      aclManager.isRiskAdmin(aaveDaoExecutor),
+      'aaveDaoExecutor should not be risk admin'
+    );
   }
 
   function test_getConfiguration(address token, TokenListingParams memory params) private {
@@ -346,9 +409,6 @@ abstract contract HorizonListingBaseTest is Test {
 }
 
 abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
-  address internal constant EMERGENCY_MULTISIG = 0x13B57382c36BAB566E75C72303622AF29E27e1d3;
-  address internal constant LISTING_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
-
   address internal constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
   address internal constant GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
 
@@ -727,8 +787,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     );
   }
 
-  function test_listingExecutor() public {
-    check_listingExecutor();
+  function test_permissions() public {
+    check_permissions();
   }
 
   function test_listing_GHO() public {
@@ -808,10 +868,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     virtual
     returns (address, address, address, address, address, address, address);
 
-  function getListingExecutor() internal pure override returns (address) {
-    return LISTING_EXECUTOR;
-  }
-
   function _toDynamicAddressArray(address a) private pure returns (address[] memory) {
     address[] memory array = new address[](1);
     array[0] = a;
@@ -828,6 +884,11 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
+  address public constant override OPERATIONAL_MULTISIG_ADDRESS = OPERATIONAL_MULTISIG;
+  address public constant override EMERGENCY_MULTISIG_ADDRESS = EMERGENCY_MULTISIG;
+  address public constant override AAVE_DAO_EXECUTOR_ADDRESS = AAVE_DAO_EXECUTOR;
+  address public constant override LISTING_EXECUTOR_ADDRESS = PHASE_ONE_LISTING_EXECUTOR;
+
   address internal constant SUPERSTATE_ALLOWLIST_V2 = 0x02f1fA8B196d21c7b733EB2700B825611d8A38E5;
   uint256 internal constant SUPERSTATE_ROOT_ENTITY_ID = 1;
   address internal constant CENTRIFUGE_HOOK = 0x4737C3f62Cc265e786b280153fC666cEA2fBc0c0;
@@ -851,7 +912,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
 
     vm.prank(EMERGENCY_MULTISIG);
-    (bool success, ) = getListingExecutor().call(
+    (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(
       abi.encodeWithSignature(
         'executeTransaction(address,uint256,string,bytes,bool)',
         address(horizonPhaseOneListing), // target
