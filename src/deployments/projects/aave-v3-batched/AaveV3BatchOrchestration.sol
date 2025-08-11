@@ -66,12 +66,15 @@ library AaveV3BatchOrchestration {
     SetupReport memory setupReport = setupBatch.setupAaveV3Market(
       roles,
       config,
-      poolReport.poolImplementation,
-      poolReport.poolConfiguratorImplementation,
-      gettersReport1.protocolDataProvider,
-      peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      SetupMarketParams({
+        poolImplementation: poolReport.poolImplementation,
+        poolConfiguratorImplementation: poolReport.poolConfiguratorImplementation,
+        protocolDataProvider: gettersReport1.protocolDataProvider,
+        aaveOracle: peripheryReport.aaveOracle,
+        rewardsControllerImplementation: peripheryReport.rewardsControllerImplementation,
+        priceOracleSentinel: miscReport.priceOracleSentinel,
+        rwaATokenManager: miscReport.rwaATokenManager
+      })
     );
 
     ParaswapReport memory paraswapReport = _deployParaswapAdapters(

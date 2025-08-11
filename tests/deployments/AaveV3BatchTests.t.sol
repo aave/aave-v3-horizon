@@ -172,12 +172,15 @@ contract AaveV3BatchTests is BatchTestProcedures {
     aaveV3SetupOne.setupAaveV3Market(
       roles,
       config,
-      poolReportOne.poolImplementation,
-      poolReportOne.poolConfiguratorImplementation,
-      gettersReportOne.protocolDataProvider,
-      peripheryReportOne.aaveOracle,
-      peripheryReportOne.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      SetupMarketParams({
+        poolImplementation: poolReportOne.poolImplementation,
+        poolConfiguratorImplementation: poolReportOne.poolConfiguratorImplementation,
+        protocolDataProvider: gettersReportOne.protocolDataProvider,
+        aaveOracle: peripheryReportOne.aaveOracle,
+        rewardsControllerImplementation: peripheryReportOne.rewardsControllerImplementation,
+        priceOracleSentinel: miscReport.priceOracleSentinel,
+        rwaATokenManager: miscReport.rwaATokenManager
+      })
     );
   }
 

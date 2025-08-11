@@ -195,3 +195,13 @@ struct ParaswapReport {
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
 }
+
+struct SetupMarketParams {
+  address poolImplementation;
+  address poolConfiguratorImplementation;
+  address protocolDataProvider;
+  address aaveOracle;
+  address rewardsControllerImplementation;
+  address priceOracleSentinel;
+  address rwaATokenManager;
+}

@@ -13,6 +13,7 @@ import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataRepor
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {IScaledPriceAdapter} from '../../src/contracts/interfaces/IScaledPriceAdapter.sol';
 import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
@@ -31,6 +32,7 @@ abstract contract HorizonListingBaseTest is Test {
   IPool internal pool;
   IRevenueSplitter internal revenueSplitter;
   IDefaultInterestRateStrategyV2 internal defaultInterestRateStrategy;
+  address internal rwaATokenManager;
   address internal aTokenImpl;
   address internal rwaATokenImpl;
   address internal variableDebtTokenImpl;
@@ -38,6 +40,19 @@ abstract contract HorizonListingBaseTest is Test {
 
   address internal alice = makeAddr('alice');
   address internal bob = makeAddr('bob');
+
+  bytes32 internal constant ATOKEN_ADMIN_ROLE = keccak256('ATOKEN_ADMIN');
+
+  struct DeploymentInfo {
+    address pool;
+    address revenueSplitter;
+    address defaultInterestRateStrategy;
+    address rwaATokenManager;
+    address aTokenImpl;
+    address rwaATokenImpl;
+    address variableDebtTokenImpl;
+    address poolAdmin;
+  }
 
   struct TokenListingParams {
     bool isRwa;
@@ -71,22 +86,20 @@ abstract contract HorizonListingBaseTest is Test {
     address[] borrowableAssets;
   }
 
-  function initEnvironment(
-    address pool_,
-    address revenueSplitter_,
-    address defaultInterestRateStrategy_,
-    address aTokenImpl_,
-    address rwaATokenImpl_,
-    address variableDebtTokenImpl_,
-    address poolAdmin_
-  ) internal virtual {
-    pool = IPool(pool_);
-    revenueSplitter = IRevenueSplitter(revenueSplitter_);
-    defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(defaultInterestRateStrategy_);
-    aTokenImpl = aTokenImpl_;
-    rwaATokenImpl = rwaATokenImpl_;
-    variableDebtTokenImpl = variableDebtTokenImpl_;
-    poolAdmin = poolAdmin_;
+  function loadDeployment() internal virtual returns (DeploymentInfo memory);
+
+  function initEnvironment() internal virtual {
+    DeploymentInfo memory deploymentInfo = loadDeployment();
+    pool = IPool(deploymentInfo.pool);
+    revenueSplitter = IRevenueSplitter(deploymentInfo.revenueSplitter);
+    defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
+      deploymentInfo.defaultInterestRateStrategy
+    );
+    rwaATokenManager = deploymentInfo.rwaATokenManager;
+    aTokenImpl = deploymentInfo.aTokenImpl;
+    rwaATokenImpl = deploymentInfo.rwaATokenImpl;
+    variableDebtTokenImpl = deploymentInfo.variableDebtTokenImpl;
+    poolAdmin = deploymentInfo.poolAdmin;
   }
 
   function OPERATIONAL_MULTISIG_ADDRESS() external view virtual returns (address);
@@ -95,6 +108,7 @@ abstract contract HorizonListingBaseTest is Test {
   function LISTING_EXECUTOR_ADDRESS() external view virtual returns (address);
 
   function check_permissions() internal {
+    test_rwaATokenManager();
     test_listingExecutor(this.LISTING_EXECUTOR_ADDRESS());
     test_operationalMultisig(this.OPERATIONAL_MULTISIG_ADDRESS());
     test_emergencyMultisig(this.EMERGENCY_MULTISIG_ADDRESS());
@@ -112,6 +126,14 @@ abstract contract HorizonListingBaseTest is Test {
   function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
     test_eMode_configuration(eModeCategory, params);
     test_eMode_collateralization(eModeCategory, params);
+  }
+
+  function test_rwaATokenManager() internal {
+    address aclManager = pool.ADDRESSES_PROVIDER().getACLManager();
+    assertTrue(
+      IAccessControl(aclManager).hasRole(ATOKEN_ADMIN_ROLE, rwaATokenManager),
+      'rwaATokenManager should be aToken admin'
+    );
   }
 
   function test_listingExecutor(address listingExecutor) private {
@@ -767,24 +789,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
-    (
-      address _pool,
-      address _revenueSplitter,
-      address _defaultInterestRateStrategy,
-      address _aToken,
-      address _rwaAToken,
-      address _variableDebtToken,
-      address _poolAdmin
-    ) = loadDeployment();
-    initEnvironment(
-      _pool,
-      _revenueSplitter,
-      _defaultInterestRateStrategy,
-      _aToken,
-      _rwaAToken,
-      _variableDebtToken,
-      _poolAdmin
-    );
+    initEnvironment();
   }
 
   function test_permissions() public {
@@ -863,11 +868,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_eMode(10, JAAA_GHO_EMODE_PARAMS);
   }
 
-  function loadDeployment()
-    internal
-    virtual
-    returns (address, address, address, address, address, address, address);
-
   function _toDynamicAddressArray(address a) private pure returns (address[] memory) {
     address[] memory array = new address[](1);
     array[0] = a;
@@ -897,11 +897,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   address internal constant CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER =
     0xDbE01f447040F78ccbC8Dfd101BEc1a2C21f800D;
 
-  function loadDeployment()
-    internal
-    override
-    returns (address, address, address, address, address, address, address)
-  {
+  function loadDeployment() internal override returns (DeploymentInfo memory) {
     string memory reportFilePath = run();
 
     IMetadataReporter metadataReporter = IMetadataReporter(
@@ -924,35 +920,21 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     );
     require(success, 'Failed to execute transaction');
 
-    return (
-      marketReport.poolProxy,
-      marketReport.revenueSplitter,
-      marketReport.defaultInterestRateStrategy,
-      marketReport.aToken,
-      marketReport.rwaAToken,
-      marketReport.variableDebtToken,
-      AAVE_DAO_EXECUTOR
-    );
+    return
+      DeploymentInfo({
+        pool: marketReport.poolProxy,
+        revenueSplitter: marketReport.revenueSplitter,
+        defaultInterestRateStrategy: marketReport.defaultInterestRateStrategy,
+        rwaATokenManager: marketReport.rwaATokenManager,
+        aTokenImpl: marketReport.aToken,
+        rwaATokenImpl: marketReport.rwaAToken,
+        variableDebtTokenImpl: marketReport.variableDebtToken,
+        poolAdmin: AAVE_DAO_EXECUTOR
+      });
   }
 
-  function initEnvironment(
-    address pool_,
-    address revenueSplitter_,
-    address defaultInterestRateStrategy_,
-    address aToken_,
-    address rwaAToken_,
-    address variableDebtToken_,
-    address poolAdmin_
-  ) internal override {
-    super.initEnvironment(
-      pool_,
-      revenueSplitter_,
-      defaultInterestRateStrategy_,
-      aToken_,
-      rwaAToken_,
-      variableDebtToken_,
-      poolAdmin_
-    );
+  function initEnvironment() internal override {
+    super.initEnvironment();
 
     whitelistSuperstateRwa(pool.getReserveAToken(USTB_ADDRESS));
     whitelistSuperstateRwa(pool.getReserveAToken(USCC_ADDRESS));
@@ -1016,15 +998,16 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 }
 
 // contract HorizonListingForkTest is HorizonListingMainnetTest {
-//   function loadDeployment() internal override returns (address, address, address, address, address, address) {
-//     address _pool = ; // todo
-//     address _revenueSplitter = ; // todo
-//     address _defaultInterestRateStrategy = ; // todo
-//     address _aToken = ; // todo
-//     address _rwaAToken = ; // todo
-//     address _variableDebtToken = ; // todo
-//     address _poolAdmin = ; // todo
-
-//     return (_pool, _revenueSplitter, _defaultInterestRateStrategy, _aToken, _rwaAToken, _variableDebtToken, _poolAdmin);
+//   function loadDeployment() internal override returns (DeploymentInfo memory) {
+//     return DeploymentInfo({
+//       pool: , // todo
+//       revenueSplitter: , // todo
+//       defaultInterestRateStrategy: , // todo
+//       rwaATokenManager: , // todo
+//       aTokenImpl: , // todo
+//       rwaATokenImpl: , // todo
+//       variableDebtTokenImpl: , // todo
+//       poolAdmin: , // todo
+//     });
 //   }
 // }
