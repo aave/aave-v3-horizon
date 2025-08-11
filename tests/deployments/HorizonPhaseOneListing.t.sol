@@ -75,6 +75,7 @@ abstract contract HorizonListingBaseTest is Test {
     uint256 debtCeiling;
     uint256 liqProtocolFee;
     IDefaultInterestRateStrategyV2.InterestRateDataRay interestRateData;
+    uint256 initialDeposit;
   }
 
   struct EModeCategoryParams {
@@ -106,6 +107,7 @@ abstract contract HorizonListingBaseTest is Test {
   function EMERGENCY_MULTISIG_ADDRESS() external view virtual returns (address);
   function AAVE_DAO_EXECUTOR_ADDRESS() external view virtual returns (address);
   function LISTING_EXECUTOR_ADDRESS() external view virtual returns (address);
+  function DUST_BIN() external view virtual returns (address);
 
   function check_permissions() internal {
     test_rwaATokenManager();
@@ -247,6 +249,15 @@ abstract contract HorizonListingBaseTest is Test {
       address(revenueSplitter),
       'reserveTreasuryAddress'
     );
+
+    if (params.initialDeposit > 0) {
+      assertEq(
+        IERC20Detailed(aToken).balanceOf(this.DUST_BIN()),
+        params.initialDeposit,
+        'initialDeposit'
+      );
+      assertEq(IERC20Detailed(aToken).totalSupply(), params.initialDeposit, 'aToken totalSupply');
+    }
 
     address currentATokenImpl = ProxyHelpers.getInitializableAdminUpgradeabilityProxyImplementation(
       vm,
@@ -481,7 +492,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0.0475e27,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 100e18
     });
 
   TokenListingParams internal USDC_TOKEN_LISTING_PARAMS =
@@ -510,7 +522,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0.05e27,
         variableRateSlope2: 0.25e27
-      })
+      }),
+      initialDeposit: 100e6
     });
 
   TokenListingParams internal RLUSD_TOKEN_LISTING_PARAMS =
@@ -539,7 +552,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0.05e27,
         variableRateSlope2: 0.25e27
-      })
+      }),
+      initialDeposit: 100e18
     });
 
   TokenListingParams internal USTB_TOKEN_LISTING_PARAMS =
@@ -568,7 +582,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 0
     });
 
   EModeCategoryParams internal USTB_STABLECOINS_EMODE_PARAMS =
@@ -617,7 +632,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 0
     });
 
   EModeCategoryParams internal USCC_STABLECOINS_EMODE_PARAMS =
@@ -666,7 +682,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 0
     });
 
   EModeCategoryParams internal USYC_STABLECOINS_EMODE_PARAMS =
@@ -715,7 +732,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 0
     });
 
   EModeCategoryParams internal JTRSY_STABLECOINS_EMODE_PARAMS =
@@ -764,7 +782,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
         baseVariableBorrowRate: 0,
         variableRateSlope1: 0,
         variableRateSlope2: 0
-      })
+      }),
+      initialDeposit: 0
     });
 
   EModeCategoryParams internal JAAA_STABLECOINS_EMODE_PARAMS =
@@ -888,6 +907,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   address public constant override EMERGENCY_MULTISIG_ADDRESS = EMERGENCY_MULTISIG;
   address public constant override AAVE_DAO_EXECUTOR_ADDRESS = AAVE_DAO_EXECUTOR;
   address public constant override LISTING_EXECUTOR_ADDRESS = PHASE_ONE_LISTING_EXECUTOR;
+  address public constant override DUST_BIN = 0x31a0Ba3C2242a095dBF58A7C53751eCBd27dBA9b;
 
   address internal constant SUPERSTATE_ALLOWLIST_V2 = 0x02f1fA8B196d21c7b733EB2700B825611d8A38E5;
   uint256 internal constant SUPERSTATE_ROOT_ENTITY_ID = 1;
@@ -906,6 +926,10 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
     MarketReport memory marketReport = metadataReporter.parseMarketReport(reportFilePath);
 
     address horizonPhaseOneListing = new DeployHorizonPhaseOnePayload().run(reportFilePath);
+
+    deal(GHO_ADDRESS, LISTING_EXECUTOR_ADDRESS, 100e18);
+    deal(USDC_ADDRESS, LISTING_EXECUTOR_ADDRESS, 100e6);
+    deal(RLUSD_ADDRESS, LISTING_EXECUTOR_ADDRESS, 100e18);
 
     vm.prank(EMERGENCY_MULTISIG);
     (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(

@@ -1,29 +1,40 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {SafeERC20} from '../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {IERC20} from '../../contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {ACLManager} from '../../contracts/protocol/configuration/ACLManager.sol';
 import {IPoolConfigurator} from '../../contracts/interfaces/IPoolConfigurator.sol';
+import {IPool} from '../../contracts/interfaces/IPool.sol';
 import {MarketReport} from '../interfaces/IMarketReportTypes.sol';
 import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
 contract HorizonPhaseOneListing is AaveV3Payload {
+  using SafeERC20 for IERC20;
+
   address public immutable ATOKEN_IMPLEMENTATION;
   address public immutable RWA_ATOKEN_IMPLEMENTATION;
   address public immutable VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
 
   ACLManager public immutable ACL_MANAGER;
   IPoolConfigurator public immutable CONFIGURATOR;
+  IPool public immutable POOL;
+
+  address public immutable DUST_BIN;
 
   address public immutable GHO_ADDRESS;
   address public immutable GHO_PRICE_FEED;
+  uint256 public immutable GHO_INITIAL_DEPOSIT;
 
   address public immutable USDC_ADDRESS;
   address public immutable USDC_PRICE_FEED;
+  uint256 public immutable USDC_INITIAL_DEPOSIT;
 
   address public immutable RLUSD_ADDRESS;
   address public immutable RLUSD_PRICE_FEED;
+  uint256 public immutable RLUSD_INITIAL_DEPOSIT;
 
   address public immutable USTB_ADDRESS;
   address public immutable USTB_PRICE_FEED_ADAPTER;
@@ -50,15 +61,21 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     ACL_MANAGER = ACLManager(report.aclManager);
     require(report.poolConfiguratorProxy == address(CONFIG_ENGINE.POOL_CONFIGURATOR()));
     CONFIGURATOR = IPoolConfigurator(report.poolConfiguratorProxy);
+    POOL = IPool(report.poolProxy);
+
+    DUST_BIN = 0x31a0Ba3C2242a095dBF58A7C53751eCBd27dBA9b;
 
     GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
     GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
+    GHO_INITIAL_DEPOSIT = 100e18;
 
     USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     USDC_PRICE_FEED = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
+    USDC_INITIAL_DEPOSIT = 100e6;
 
     RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
+    RLUSD_INITIAL_DEPOSIT = 100e18;
 
     USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
     USTB_PRICE_FEED_ADAPTER = 0x5Ae4D93B9b9626Dc3289e1Afb14b821FD3C95F44;
@@ -78,7 +95,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
 
   function eModeCategoriesUpdates()
     public
-    pure
+    view
     override
     returns (IEngine.EModeCategoryUpdate[] memory)
   {
@@ -613,7 +630,15 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function _postExecute() internal override {
+    deposit(GHO_ADDRESS, GHO_INITIAL_DEPOSIT);
+    deposit(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
+    deposit(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
     CONFIGURATOR.setPoolPause(true);
     ACLManager(ACL_MANAGER).renounceRole(EMERGENCY_ADMIN_ROLE, address(this));
+  }
+
+  function deposit(address asset, uint256 amount) internal {
+    IERC20(asset).safeApprove(address(POOL), amount);
+    POOL.supply(asset, amount, DUST_BIN, 0);
   }
 }
