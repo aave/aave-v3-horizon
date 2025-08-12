@@ -448,7 +448,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function assetsEModeUpdates() public view override returns (IEngine.AssetEModeUpdate[] memory) {
-    IEngine.AssetEModeUpdate[] memory assetsEMode = new IEngine.AssetEModeUpdate[](25);
+    IEngine.AssetEModeUpdate[] memory assetsEMode = new IEngine.AssetEModeUpdate[](30);
 
     uint256 index = 0;
 
@@ -467,6 +467,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
       asset: RLUSD_ADDRESS,
+      eModeCategory: 1,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
@@ -505,6 +511,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
     });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 3,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
 
     // USCC GHO
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
@@ -535,6 +547,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
       asset: RLUSD_ADDRESS,
+      eModeCategory: 5,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
       eModeCategory: 5,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
@@ -573,6 +591,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
     });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
+      eModeCategory: 7,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
 
     // JTRSY GHO
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
@@ -603,6 +627,12 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
       asset: RLUSD_ADDRESS,
+      eModeCategory: 9,
+      collateral: EngineFlags.DISABLED,
+      borrowable: EngineFlags.ENABLED
+    });
+    assetsEMode[index++] = IEngine.AssetEModeUpdate({
+      asset: GHO_ADDRESS,
       eModeCategory: 9,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED

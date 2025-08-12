@@ -604,7 +604,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       liquidationBonus: 100_00 + 3_00,
       label: 'USTB Stablecoins',
       collateralAssets: _toDynamicAddressArray(USTB_ADDRESS),
-      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
     });
 
   EModeCategoryParams internal USTB_GHO_EMODE_PARAMS =
@@ -655,7 +655,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       liquidationBonus: 100_00 + 7_50,
       label: 'USCC Stablecoins',
       collateralAssets: _toDynamicAddressArray(USCC_ADDRESS),
-      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
     });
 
   EModeCategoryParams internal USCC_GHO_EMODE_PARAMS =
@@ -706,7 +706,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       liquidationBonus: 100_00 + 3_10,
       label: 'USYC Stablecoins',
       collateralAssets: _toDynamicAddressArray(USYC_ADDRESS),
-      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
     });
 
   EModeCategoryParams internal USYC_GHO_EMODE_PARAMS =
@@ -757,7 +757,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       liquidationBonus: 100_00 + 4_50,
       label: 'JTRSY Stablecoins',
       collateralAssets: _toDynamicAddressArray(JTRSY_ADDRESS),
-      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
     });
 
   EModeCategoryParams internal JTRSY_GHO_EMODE_PARAMS =
@@ -808,7 +808,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       liquidationBonus: 100_00 + 9_00,
       label: 'JAAA Stablecoins',
       collateralAssets: _toDynamicAddressArray(JAAA_ADDRESS),
-      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS)
+      borrowableAssets: _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
     });
 
   EModeCategoryParams internal JAAA_GHO_EMODE_PARAMS =
@@ -908,10 +908,15 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     return array;
   }
 
-  function _toDynamicAddressArray(address a, address b) private pure returns (address[] memory) {
-    address[] memory array = new address[](2);
+  function _toDynamicAddressArray(
+    address a,
+    address b,
+    address c
+  ) private pure returns (address[] memory) {
+    address[] memory array = new address[](3);
     array[0] = a;
     array[1] = b;
+    array[2] = c;
     return array;
   }
 }
