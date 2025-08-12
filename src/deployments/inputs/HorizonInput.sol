@@ -5,7 +5,9 @@ import './MarketInput.sol';
 contract HorizonInput is MarketInput {
   address public constant ETH_USD_PRICE_FEED = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419; // chainlink price feed
   address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+  // https://github.com/bgd-labs/aave-address-book/blob/1a3c41b8b267fe9ef994df6427f767c8d4f08900/src/AaveV3Ethereum.sol#L22
   address public constant AAVE_DAO_EXECUTOR = 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A;
+  // https://github.com/bgd-labs/aave-address-book/blob/1a3c41b8b267fe9ef994df6427f767c8d4f08900/src/AaveV3Ethereum.sol#L46
   address public constant AAVE_DAO_COLLECTOR = 0x464C71f6c2F760DdA6093dCB91C24c39e5d6e18c;
   address public constant OPERATIONAL_MULTISIG = 0xE6ec1f0Ae6Cd023bd0a9B4d0253BDC755103253c;
   address public constant EMERGENCY_MULTISIG = 0x13B57382c36BAB566E75C72303622AF29E27e1d3;

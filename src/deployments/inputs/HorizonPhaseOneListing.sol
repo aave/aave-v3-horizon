@@ -636,6 +636,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     _supplyOnBehalfOfDustBin(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
     _supplyOnBehalfOfDustBin(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
     CONFIGURATOR.setPoolPause(true);
+    /// @dev address(this) is the executor in this case, as it delegatecalls into the payload contract
     ACLManager(ACL_MANAGER).renounceRole(EMERGENCY_ADMIN_ROLE, address(this));
   }
 
