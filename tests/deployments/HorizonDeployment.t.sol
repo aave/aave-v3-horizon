@@ -58,7 +58,7 @@ abstract contract HorizonDeploymentBaseTest is Test {
     config = config_;
   }
 
-  function test_HorizonInput() public {
+  function test_HorizonInput() public view {
     assertEq(poolAddressesProvider.getMarketId(), config.marketId);
     assertEq(
       poolAddressesProviderRegistry.getAddressesProviderAddressById(config.providerId),
@@ -74,7 +74,7 @@ abstract contract HorizonDeploymentBaseTest is Test {
     assertEq(revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A(), config.treasurySplitPercent);
   }
 
-  function test_RewardsController() public {
+  function test_RewardsController() public view {
     assertEq(rewardsControllerProxy.EMISSION_MANAGER(), address(emissionManager));
     assertEq(Ownable(address(emissionManager)).owner(), poolAdmin);
   }

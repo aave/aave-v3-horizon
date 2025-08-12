@@ -11,7 +11,6 @@ import {MarketReport} from '../interfaces/IMarketReportTypes.sol';
 import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
-import {AaveV3Ethereum, AaveV3EthereumAssets} from 'aave-address-book/AaveV3Ethereum.sol';
 
 contract HorizonPhaseOneListing is AaveV3Payload {
   using SafeERC20 for IERC20;
@@ -65,17 +64,18 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     CONFIGURATOR = IPoolConfigurator(report.poolConfiguratorProxy);
     POOL = IPool(report.poolProxy);
 
-    DUST_BIN = AaveV3Ethereum.DUST_BIN;
+    // https://github.com/bgd-labs/aave-address-book/blob/1a3c41b8b267fe9ef994df6427f767c8d4f08900/src/AaveV3Ethereum.sol#L108
+    DUST_BIN = 0x31a0Ba3C2242a095dBF58A7C53751eCBd27dBA9b;
 
-    GHO_ADDRESS = AaveV3EthereumAssets.GHO_UNDERLYING;
+    GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
     GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
     GHO_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(GHO_ADDRESS).decimals());
 
-    USDC_ADDRESS = AaveV3EthereumAssets.USDC_UNDERLYING;
+    USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     USDC_PRICE_FEED = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
     USDC_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(USDC_ADDRESS).decimals());
 
-    RLUSD_ADDRESS = AaveV3EthereumAssets.RLUSD_UNDERLYING;
+    RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
     RLUSD_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(RLUSD_ADDRESS).decimals());
 
@@ -97,7 +97,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
 
   function eModeCategoriesUpdates()
     public
-    view
+    pure
     override
     returns (IEngine.EModeCategoryUpdate[] memory)
   {

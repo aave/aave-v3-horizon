@@ -110,7 +110,7 @@ abstract contract HorizonListingBaseTest is Test {
   function LISTING_EXECUTOR_ADDRESS() external view virtual returns (address);
   function DUST_BIN() external view virtual returns (address);
 
-  function check_permissions() internal {
+  function check_permissions() internal view {
     test_rwaATokenManager();
     test_listingExecutor(this.LISTING_EXECUTOR_ADDRESS());
     test_operationalMultisig(this.OPERATIONAL_MULTISIG_ADDRESS());
@@ -131,7 +131,7 @@ abstract contract HorizonListingBaseTest is Test {
     test_eMode_collateralization(eModeCategory, params);
   }
 
-  function test_rwaATokenManager() internal {
+  function test_rwaATokenManager() internal view {
     address aclManager = pool.ADDRESSES_PROVIDER().getACLManager();
     assertTrue(
       IAccessControl(aclManager).hasRole(ATOKEN_ADMIN_ROLE, rwaATokenManager),
@@ -139,7 +139,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_listingExecutor(address listingExecutor) private {
+  function test_listingExecutor(address listingExecutor) private view {
     IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
     assertFalse(
       aclManager.isPoolAdmin(listingExecutor),
@@ -156,7 +156,7 @@ abstract contract HorizonListingBaseTest is Test {
     assertTrue(aclManager.isRiskAdmin(listingExecutor), 'listingExecutor should be risk admin');
   }
 
-  function test_operationalMultisig(address operationalMultisig) private {
+  function test_operationalMultisig(address operationalMultisig) private view {
     IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
     assertFalse(
       aclManager.isPoolAdmin(operationalMultisig),
@@ -176,7 +176,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_emergencyMultisig(address emergencyMultisig) private {
+  function test_emergencyMultisig(address emergencyMultisig) private view {
     IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
     assertTrue(aclManager.isPoolAdmin(emergencyMultisig), 'emergencyMultisig should be pool admin');
     assertTrue(
@@ -193,7 +193,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_aaveDaoExecutor(address aaveDaoExecutor) private {
+  function test_aaveDaoExecutor(address aaveDaoExecutor) private view {
     IACLManager aclManager = IACLManager(pool.ADDRESSES_PROVIDER().getACLManager());
     assertTrue(aclManager.isPoolAdmin(aaveDaoExecutor), 'aaveDaoExecutor should be pool admin');
     assertTrue(
@@ -210,7 +210,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_getConfiguration(address token, TokenListingParams memory params) private {
+  function test_getConfiguration(address token, TokenListingParams memory params) private view {
     DataTypes.ReserveConfigurationMap memory config = pool.getConfiguration(token);
     assertEq(config.getSupplyCap(), params.supplyCap, 'supplyCap');
     assertEq(config.getBorrowCap(), params.borrowCap, 'borrowCap');
@@ -232,7 +232,7 @@ abstract contract HorizonListingBaseTest is Test {
     assertEq(config.getPaused(), true, 'paused');
   }
 
-  function test_interestRateStrategy(address token, TokenListingParams memory params) private {
+  function test_interestRateStrategy(address token, TokenListingParams memory params) private view {
     assertEq(
       pool.getReserveData(token).interestRateStrategyAddress,
       address(defaultInterestRateStrategy),
@@ -274,7 +274,7 @@ abstract contract HorizonListingBaseTest is Test {
     }
   }
 
-  function test_variableDebtToken(address token, TokenListingParams memory params) private {
+  function test_variableDebtToken(address token, TokenListingParams memory params) private view {
     address variableDebtToken = pool.getReserveVariableDebtToken(token);
     assertEq(
       IERC20Detailed(variableDebtToken).name(),
@@ -293,7 +293,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_priceFeed(address token, TokenListingParams memory params) private {
+  function test_priceFeed(address token, TokenListingParams memory params) private view {
     IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
 
     AggregatorInterface oracleSource = AggregatorInterface(oracle.getSourceOfAsset(token));
@@ -317,7 +317,7 @@ abstract contract HorizonListingBaseTest is Test {
   function test_eMode_configuration(
     uint8 eModeCategory,
     EModeCategoryParams memory params
-  ) private {
+  ) private view {
     assertEq(pool.getEModeCategoryCollateralConfig(eModeCategory).ltv, params.ltv, 'emode.ltv');
     assertEq(
       pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationThreshold,
@@ -419,7 +419,7 @@ abstract contract HorizonListingBaseTest is Test {
   function assertEq(
     IDefaultInterestRateStrategyV2.InterestRateDataRay memory a,
     IDefaultInterestRateStrategyV2.InterestRateDataRay memory b
-  ) internal {
+  ) internal pure {
     assertEq(
       a.optimalUsageRatio,
       b.optimalUsageRatio,
@@ -826,7 +826,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     initEnvironment();
   }
 
-  function test_permissions() public {
+  function test_permissions() public view {
     check_permissions();
   }
 
