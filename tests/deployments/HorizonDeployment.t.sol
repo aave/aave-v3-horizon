@@ -5,6 +5,7 @@ import {Ownable} from '../../src/contracts/dependencies/openzeppelin/contracts/O
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
+import {HorizonInput} from '../../src/deployments/inputs/HorizonInput.sol';
 import {Test} from 'forge-std/Test.sol';
 
 abstract contract HorizonDeploymentBaseTest is Test {
@@ -115,20 +116,20 @@ contract HorizonDeploymentTest is HorizonDeploymentMainnetTest, Default {
 }
 
 // contract HorizonDeploymentForkTest is HorizonDeploymentMainnetTest, HorizonInput {
-//   function setUp() public {
+//   function setUp() public virtual override {
 //     super.setUp();
 
 //     HorizonDeployment memory deployment = HorizonDeployment({
-//       poolAddressesProvider: , // todo
-//       poolAddressesProviderRegistry: , // todo
-//       aaveOracle: , // todo
-//       wrappedTokenGateway: , // todo
-//       poolProxy: , // todo
-//       treasury: , // todo
-//       revenueSplitter: , // todo
-//       defaultInterestRateStrategy: , // todo
-//       emissionManager: , // todo
-//       rewardsController: , // todo
+//       poolAddressesProvider: 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0,
+//       poolAddressesProviderRegistry: 0xE35Ee1C82fdf6524834e1Ef6Af7820bf6B1fbf0D,
+//       aaveOracle: 0x985BcfAB7e0f4EF2606CC5b64FC1A16311880442,
+//       wrappedTokenGateway: 0x973195fB8F67F5B0afe7beDB2A02cec829d89991,
+//       poolProxy: 0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8,
+//       treasury: 0x0B4e1dE1300D6C0a6c7Fbec63823281aCafeE0Cf,
+//       revenueSplitter: 0xE5E6091073a9EcaCD8611d0D4A843464ebf3D2F8,
+//       defaultInterestRateStrategy: 0x87593272C06f4FC49EC2942eBda0972d2F1Ab521,
+//       emissionManager: 0xC2201708289b2C6A1d461A227A7E5ee3e7fE9A2F,
+//       rewardsControllerProxy: 0x1D5D386a90CEA8AcEa9fa75389e97CF5F1AE21D3
 //     });
 
 //     (Roles memory roles, MarketConfig memory config, ,) = _getMarketInput(address(0));

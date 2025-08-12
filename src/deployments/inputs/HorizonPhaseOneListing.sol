@@ -313,7 +313,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         liqThreshold: 10,
         liqBonus: 3_00,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 46_090_000,
+        supplyCap: 4_275_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -343,7 +343,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         liqThreshold: 10,
         liqBonus: 7_50,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 15_400_000,
+        supplyCap: 1_395_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -373,7 +373,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         liqThreshold: 10,
         liqBonus: 3_10,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 28_050_000,
+        supplyCap: 25_580_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -403,7 +403,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         liqThreshold: 10,
         liqBonus: 4_50,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 23_650_000,
+        supplyCap: 22_010_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
@@ -433,7 +433,7 @@ contract HorizonPhaseOneListing is AaveV3Payload {
         liqThreshold: 10,
         liqBonus: 9_00,
         reserveFactor: EngineFlags.KEEP_CURRENT,
-        supplyCap: 24_800_000,
+        supplyCap: 24_760_000,
         borrowCap: 0,
         debtCeiling: 0,
         liqProtocolFee: 0
