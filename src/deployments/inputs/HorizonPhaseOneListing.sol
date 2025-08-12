@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {SafeERC20} from '../../contracts/dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {IERC20Detailed} from '../../contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IERC20} from '../../contracts/dependencies/openzeppelin/contracts/IERC20.sol';
 import {ACLManager} from '../../contracts/protocol/configuration/ACLManager.sol';
 import {IPoolConfigurator} from '../../contracts/interfaces/IPoolConfigurator.sol';
@@ -10,6 +11,7 @@ import {MarketReport} from '../interfaces/IMarketReportTypes.sol';
 import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
+import {AaveV3Ethereum, AaveV3EthereumAssets} from 'aave-address-book/AaveV3Ethereum.sol';
 
 contract HorizonPhaseOneListing is AaveV3Payload {
   using SafeERC20 for IERC20;
@@ -63,19 +65,19 @@ contract HorizonPhaseOneListing is AaveV3Payload {
     CONFIGURATOR = IPoolConfigurator(report.poolConfiguratorProxy);
     POOL = IPool(report.poolProxy);
 
-    DUST_BIN = 0x31a0Ba3C2242a095dBF58A7C53751eCBd27dBA9b;
+    DUST_BIN = AaveV3Ethereum.DUST_BIN;
 
-    GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
+    GHO_ADDRESS = AaveV3EthereumAssets.GHO_UNDERLYING;
     GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
-    GHO_INITIAL_DEPOSIT = 100e18;
+    GHO_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(GHO_ADDRESS).decimals());
 
-    USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    USDC_ADDRESS = AaveV3EthereumAssets.USDC_UNDERLYING;
     USDC_PRICE_FEED = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
-    USDC_INITIAL_DEPOSIT = 100e6;
+    USDC_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(USDC_ADDRESS).decimals());
 
-    RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
+    RLUSD_ADDRESS = AaveV3EthereumAssets.RLUSD_UNDERLYING;
     RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
-    RLUSD_INITIAL_DEPOSIT = 100e18;
+    RLUSD_INITIAL_DEPOSIT = 100 * (10 ** IERC20Detailed(RLUSD_ADDRESS).decimals());
 
     USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
     USTB_PRICE_FEED_ADAPTER = 0x5Ae4D93B9b9626Dc3289e1Afb14b821FD3C95F44;
@@ -630,14 +632,14 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function _postExecute() internal override {
-    deposit(GHO_ADDRESS, GHO_INITIAL_DEPOSIT);
-    deposit(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
-    deposit(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
+    supplyOnBehalfOfDustBin(GHO_ADDRESS, GHO_INITIAL_DEPOSIT);
+    supplyOnBehalfOfDustBin(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
+    supplyOnBehalfOfDustBin(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
     CONFIGURATOR.setPoolPause(true);
     ACLManager(ACL_MANAGER).renounceRole(EMERGENCY_ADMIN_ROLE, address(this));
   }
 
-  function deposit(address asset, uint256 amount) internal {
+  function supplyOnBehalfOfDustBin(address asset, uint256 amount) internal {
     IERC20(asset).safeApprove(address(POOL), amount);
     POOL.supply(asset, amount, DUST_BIN, 0);
   }

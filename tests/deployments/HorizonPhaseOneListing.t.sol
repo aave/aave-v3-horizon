@@ -57,7 +57,8 @@ abstract contract HorizonListingBaseTest is Test {
   struct TokenListingParams {
     bool isRwa;
     bool hasPriceAdapter;
-    address underlyingPiceFeed; // not the scaled adapter (if any)
+    address oracle;
+    address underlyingPriceFeed; // if no price adapter, this is the same as oracle
     string aTokenName;
     string aTokenSymbol;
     string variableDebtTokenName;
@@ -298,6 +299,8 @@ abstract contract HorizonListingBaseTest is Test {
     AggregatorInterface oracleSource = AggregatorInterface(oracle.getSourceOfAsset(token));
     assertEq(oracleSource.decimals(), 8, 'oracleSource.decimals');
 
+    assertEq(address(oracleSource), params.oracle, 'oracleSource');
+
     AggregatorInterface priceFeed = oracleSource;
     if (params.hasPriceAdapter) {
       priceFeed = AggregatorInterface(IScaledPriceAdapter(address(oracleSource)).source());
@@ -308,7 +311,7 @@ abstract contract HorizonListingBaseTest is Test {
       );
     }
 
-    assertEq(address(priceFeed), params.underlyingPiceFeed, 'priceFeed');
+    assertEq(address(priceFeed), params.underlyingPriceFeed, 'priceFeed');
   }
 
   function test_eMode_configuration(
@@ -453,18 +456,22 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   address internal constant USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
   address internal constant USTB_PRICE_FEED = 0xde49c7B5C0E54b1624ED21C7D88bA6593d444Aa0;
+  address internal constant USTB_PRICE_FEED_ADAPTER = 0x5Ae4D93B9b9626Dc3289e1Afb14b821FD3C95F44;
 
   address internal constant USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
   address internal constant USCC_PRICE_FEED = 0x19e2d716288751c5A59deaB61af012D5DF895962;
+  address internal constant USCC_PRICE_FEED_ADAPTER = 0x14CB2E810Eb93b79363f489D45a972b609E47230;
 
   address internal constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
   address internal constant USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
 
   address internal constant JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
   address internal constant JTRSY_PRICE_FEED = 0x23adce82907D20c509101E2Af0723A9e16224EFb;
+  address internal constant JTRSY_PRICE_FEED_ADAPTER = 0xfAB6790E399f0481e1303167c655b3c39ee6e7A0;
 
   address internal constant JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
   address internal constant JAAA_PRICE_FEED = 0x1E41Ef40AC148706c114534E8192Ca608f80fC48;
+  address internal constant JAAA_PRICE_FEED_ADAPTER = 0xF77f2537dba4ffD60f77fACdfB2c1706364fA03d;
 
   TokenListingParams internal GHO_TOKEN_LISTING_PARAMS =
     TokenListingParams({
@@ -474,7 +481,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaGHO',
       isRwa: false,
       hasPriceAdapter: false,
-      underlyingPiceFeed: GHO_PRICE_FEED,
+      oracle: GHO_PRICE_FEED,
+      underlyingPriceFeed: GHO_PRICE_FEED,
       supplyCap: 25_000_000,
       borrowCap: 22_500_000,
       reserveFactor: 10_00,
@@ -504,7 +512,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaUSDC',
       isRwa: false,
       hasPriceAdapter: false,
-      underlyingPiceFeed: USDC_PRICE_FEED,
+      oracle: USDC_PRICE_FEED,
+      underlyingPriceFeed: USDC_PRICE_FEED,
       supplyCap: 35_000_000,
       borrowCap: 31_500_000,
       reserveFactor: 10_00,
@@ -534,7 +543,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaRLUSD',
       isRwa: false,
       hasPriceAdapter: false,
-      underlyingPiceFeed: RLUSD_PRICE_FEED,
+      oracle: RLUSD_PRICE_FEED,
+      underlyingPriceFeed: RLUSD_PRICE_FEED,
       supplyCap: 35_000_000,
       borrowCap: 31_500_000,
       reserveFactor: 10_00,
@@ -564,7 +574,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaUSTB',
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: USTB_PRICE_FEED,
+      oracle: USTB_PRICE_FEED_ADAPTER,
+      underlyingPriceFeed: USTB_PRICE_FEED,
       supplyCap: 46_090_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -614,7 +625,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaUSCC',
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: USCC_PRICE_FEED,
+      oracle: USCC_PRICE_FEED_ADAPTER,
+      underlyingPriceFeed: USCC_PRICE_FEED,
       supplyCap: 15_400_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -664,7 +676,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaUSYC',
       isRwa: true,
       hasPriceAdapter: false,
-      underlyingPiceFeed: USYC_PRICE_FEED,
+      oracle: USYC_PRICE_FEED,
+      underlyingPriceFeed: USYC_PRICE_FEED,
       supplyCap: 28_050_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -714,7 +727,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaJTRSY',
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: JTRSY_PRICE_FEED,
+      oracle: JTRSY_PRICE_FEED_ADAPTER,
+      underlyingPriceFeed: JTRSY_PRICE_FEED,
       supplyCap: 23_650_000,
       borrowCap: 0,
       reserveFactor: 0,
@@ -764,7 +778,8 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
       variableDebtTokenSymbol: 'variableDebtHorRwaJAAA',
       isRwa: true,
       hasPriceAdapter: true,
-      underlyingPiceFeed: JAAA_PRICE_FEED,
+      oracle: JAAA_PRICE_FEED_ADAPTER,
+      underlyingPriceFeed: JAAA_PRICE_FEED,
       supplyCap: 24_800_000,
       borrowCap: 0,
       reserveFactor: 0,
