@@ -632,14 +632,14 @@ contract HorizonPhaseOneListing is AaveV3Payload {
   }
 
   function _postExecute() internal override {
-    supplyOnBehalfOfDustBin(GHO_ADDRESS, GHO_INITIAL_DEPOSIT);
-    supplyOnBehalfOfDustBin(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
-    supplyOnBehalfOfDustBin(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
+    _supplyOnBehalfOfDustBin(GHO_ADDRESS, GHO_INITIAL_DEPOSIT);
+    _supplyOnBehalfOfDustBin(USDC_ADDRESS, USDC_INITIAL_DEPOSIT);
+    _supplyOnBehalfOfDustBin(RLUSD_ADDRESS, RLUSD_INITIAL_DEPOSIT);
     CONFIGURATOR.setPoolPause(true);
     ACLManager(ACL_MANAGER).renounceRole(EMERGENCY_ADMIN_ROLE, address(this));
   }
 
-  function supplyOnBehalfOfDustBin(address asset, uint256 amount) internal {
+  function _supplyOnBehalfOfDustBin(address asset, uint256 amount) internal {
     IERC20(asset).safeApprove(address(POOL), amount);
     POOL.supply(asset, amount, DUST_BIN, 0);
   }
