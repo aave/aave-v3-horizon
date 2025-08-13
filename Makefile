@@ -69,7 +69,7 @@ deploy-v3-batched-broadcast :;
 		--rpc-url ${CHAIN} --sender $$(cast wallet address --account ${ACCOUNT}) --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
 		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} -vvvv
 
-# STEP 4: Deploys payload to list phase one assets. `make list-phase-one-assets reportPath=<PATH_TO_REPORT>`
+# STEP 4: Deploys payload to list phase one assets. `make deploy-phase-one-payload reportPath=<PATH_TO_REPORT>`
 deploy-phase-one-payload :;
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseOnePayload.sol:DeployHorizonPhaseOnePayload \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --broadcast --gas-estimate-multiplier 150 \
