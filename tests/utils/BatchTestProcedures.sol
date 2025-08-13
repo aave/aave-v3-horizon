@@ -97,7 +97,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags.l2,
       initialReport.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod
+      config.l2PriceOracleSentinelGracePeriod,
+      roles.rwaATokenManagerAdmin
     );
 
     return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);
@@ -136,12 +137,15 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     setupReport = setupContract.setupAaveV3Market(
       roles,
       config,
-      poolReport.poolImplementation,
-      poolReport.poolConfiguratorImplementation,
-      gettersReport1.protocolDataProvider,
-      peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation,
-      miscReport.priceOracleSentinel
+      SetupMarketParams({
+        poolImplementation: poolReport.poolImplementation,
+        poolConfiguratorImplementation: poolReport.poolConfiguratorImplementation,
+        protocolDataProvider: gettersReport1.protocolDataProvider,
+        aaveOracle: peripheryReport.aaveOracle,
+        rewardsControllerImplementation: peripheryReport.rewardsControllerImplementation,
+        priceOracleSentinel: miscReport.priceOracleSentinel,
+        rwaATokenManager: miscReport.rwaATokenManager
+      })
     );
 
     paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(

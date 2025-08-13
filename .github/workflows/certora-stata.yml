@@ -64,7 +64,7 @@ jobs:
             certora/stata/conf/verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_sufficient
             certora/stata/conf/verifyDoubleClaim.conf --rule prevent_duplicate_reward_claiming_single_reward_insufficient
           solc-versions: 0.8.20
-          comment-fail-only: false
+          comment-fail-only: true
           solc-remove-version-prefix: "0."
           job-name: "Certora Prover Run"
           certora-key: ${{ secrets.CERTORAKEY }}

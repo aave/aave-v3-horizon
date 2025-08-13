@@ -49,26 +49,21 @@ contract AaveV3SetupProcedure {
     Roles memory roles,
     MarketConfig memory config,
     InitialReport memory initialReport,
-    address poolImplementation,
-    address poolConfiguratorImplementation,
-    address protocolDataProvider,
-    address aaveOracle,
-    address rewardsControllerImplementation,
-    address priceOracleSentinel
+    SetupMarketParams memory setupMarketParams
   ) internal returns (SetupReport memory) {
     _validateMarketSetup(roles);
 
     SetupReport memory report = _setupPoolAddressesProvider(
       AddressProviderInput(
         initialReport,
-        poolImplementation,
-        poolConfiguratorImplementation,
-        protocolDataProvider,
+        setupMarketParams.poolImplementation,
+        setupMarketParams.poolConfiguratorImplementation,
+        setupMarketParams.protocolDataProvider,
         roles.poolAdmin,
-        aaveOracle,
+        setupMarketParams.aaveOracle,
         config.incentivesProxy,
-        rewardsControllerImplementation,
-        priceOracleSentinel
+        setupMarketParams.rewardsControllerImplementation,
+        setupMarketParams.priceOracleSentinel
       )
     );
 
@@ -77,7 +72,8 @@ contract AaveV3SetupProcedure {
       initialReport.poolAddressesProvider,
       report.poolConfiguratorProxy,
       config.flashLoanPremiumTotal,
-      config.flashLoanPremiumToProtocol
+      config.flashLoanPremiumToProtocol,
+      setupMarketParams.rwaATokenManager
     );
 
     _transferMarketOwnership(roles, initialReport);
@@ -150,7 +146,8 @@ contract AaveV3SetupProcedure {
     address poolAddressesProvider,
     address poolConfiguratorProxy,
     uint128 flashLoanPremiumTotal,
-    uint128 flashLoanPremiumToProtocol
+    uint128 flashLoanPremiumToProtocol,
+    address rwaATokenManager
   ) internal returns (address) {
     IPoolAddressesProvider provider = IPoolAddressesProvider(poolAddressesProvider);
 
@@ -177,6 +174,13 @@ contract AaveV3SetupProcedure {
     manager.addEmergencyAdmin(roles.emergencyAdmin);
 
     manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), roles.poolAdmin);
+
+    manager.grantRole(keccak256('ATOKEN_ADMIN'), rwaATokenManager);
+
+    for (uint256 i = 0; i < roles.additionalRoles.length; ++i) {
+      (bytes32 role, address account) = abi.decode(roles.additionalRoles[i], (bytes32, address));
+      manager.grantRole(role, account);
+    }
 
     manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), address(this));
 

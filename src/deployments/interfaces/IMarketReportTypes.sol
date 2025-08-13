@@ -22,6 +22,8 @@ import '../../contracts/extensions/paraswap-adapters/ParaSwapWithdrawSwapAdapter
 import '../../contracts/helpers/interfaces/IWrappedTokenGatewayV3.sol';
 import '../../contracts/helpers/L2Encoder.sol';
 import {ICollector} from '../../contracts/treasury/ICollector.sol';
+import {IRevenueSplitter} from '../../contracts/treasury/IRevenueSplitter.sol';
+import {IRwaATokenManager} from '../../contracts/interfaces/IRwaATokenManager.sol';
 
 struct ContractsReport {
   IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
@@ -49,6 +51,8 @@ struct ContractsReport {
   IEmissionManager emissionManager;
   IRewardsController rewardsControllerImplementation;
   IRewardsController rewardsControllerProxy;
+  IRevenueSplitter revenueSplitter;
+  IRwaATokenManager rwaATokenManager;
 }
 
 struct MarketReport {
@@ -87,6 +91,7 @@ struct MarketReport {
   address revenueSplitter;
   address dustBin;
   address emptyImplementation;
+  address rwaATokenManager;
 }
 
 struct LibrariesReport {
@@ -104,6 +109,10 @@ struct Roles {
   address marketOwner;
   address poolAdmin;
   address emergencyAdmin;
+  address rwaATokenManagerAdmin;
+  // array of additional roles to be granted, where the i-th element represents the
+  // abi.encode result of the bytes32 role and the address of the account to be granted
+  bytes[] additionalRoles;
 }
 
 struct MarketConfig {
@@ -137,6 +146,7 @@ struct PoolReport {
 struct MiscReport {
   address priceOracleSentinel;
   address defaultInterestRateStrategy;
+  address rwaATokenManager;
 }
 
 struct ConfigEngineReport {
@@ -184,4 +194,14 @@ struct ParaswapReport {
   address paraSwapLiquiditySwapAdapter;
   address paraSwapRepayAdapter;
   address paraSwapWithdrawSwapAdapter;
+}
+
+struct SetupMarketParams {
+  address poolImplementation;
+  address poolConfiguratorImplementation;
+  address protocolDataProvider;
+  address aaveOracle;
+  address rewardsControllerImplementation;
+  address priceOracleSentinel;
+  address rwaATokenManager;
 }
