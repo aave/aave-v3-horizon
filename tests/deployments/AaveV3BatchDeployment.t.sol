@@ -23,7 +23,6 @@ import {EmissionManager} from '../../src/contracts/rewards/EmissionManager.sol';
 contract AaveV3BatchDeployment is BatchTestProcedures {
   address public marketOwner;
   address public emergencyAdmin;
-  address public rwaATokenManagerAdmin;
 
   Roles public roles;
   DeployFlags public flags;
@@ -38,9 +37,8 @@ contract AaveV3BatchDeployment is BatchTestProcedures {
     marketOwner = makeAddr('marketOwner');
     poolAdmin = makeAddr('poolAdmin');
     emergencyAdmin = makeAddr('emergencyAdmin');
-    rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
 
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin);
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
       makeAddr('ethUsdOracle'),

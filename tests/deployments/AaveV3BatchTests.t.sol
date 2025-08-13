@@ -23,7 +23,6 @@ contract AaveV3BatchTests is BatchTestProcedures {
   address deployer;
   address marketOwner;
   address emergencyAdmin;
-  address rwaATokenManagerAdmin;
 
   Roles roles;
   MarketConfig config;
@@ -52,9 +51,8 @@ contract AaveV3BatchTests is BatchTestProcedures {
     marketOwner = makeAddr('marketOwner');
     poolAdmin = makeAddr('poolAdmin');
     emergencyAdmin = makeAddr('emergencyAdmin');
-    rwaATokenManagerAdmin = makeAddr('rwaATokenManagerAdmin');
     bytes32 emptySalt;
-    roles = Roles(marketOwner, poolAdmin, emergencyAdmin, rwaATokenManagerAdmin, new bytes[](0));
+    roles = Roles(marketOwner, poolAdmin, emergencyAdmin);
     config = MarketConfig(
       makeAddr('ethUsdOracle'),
       makeAddr('ethUsdOracle'),
@@ -158,8 +156,7 @@ contract AaveV3BatchTests is BatchTestProcedures {
       flags.l2,
       marketReportOne.poolAddressesProvider,
       config.l2SequencerUptimeFeed,
-      config.l2PriceOracleSentinelGracePeriod,
-      roles.rwaATokenManagerAdmin
+      config.l2PriceOracleSentinelGracePeriod
     );
   }
 
@@ -172,15 +169,12 @@ contract AaveV3BatchTests is BatchTestProcedures {
     aaveV3SetupOne.setupAaveV3Market(
       roles,
       config,
-      SetupMarketParams({
-        poolImplementation: poolReportOne.poolImplementation,
-        poolConfiguratorImplementation: poolReportOne.poolConfiguratorImplementation,
-        protocolDataProvider: gettersReportOne.protocolDataProvider,
-        aaveOracle: peripheryReportOne.aaveOracle,
-        rewardsControllerImplementation: peripheryReportOne.rewardsControllerImplementation,
-        priceOracleSentinel: miscReport.priceOracleSentinel,
-        rwaATokenManager: miscReport.rwaATokenManager
-      })
+      poolReportOne.poolImplementation,
+      poolReportOne.poolConfiguratorImplementation,
+      gettersReportOne.protocolDataProvider,
+      peripheryReportOne.aaveOracle,
+      peripheryReportOne.rewardsControllerImplementation,
+      miscReport.priceOracleSentinel
     );
   }
 

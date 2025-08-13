@@ -11,19 +11,16 @@ contract AaveV3MiscBatch is AaveV3MiscProcedure {
     bool l2Flag,
     address poolAddressesProvider,
     address sequencerUptimeOracle,
-    uint256 gracePeriod,
-    address rwaATokenManagerAdmin
+    uint256 gracePeriod
   ) {
     MiscReport memory miscReport = _deploySentinelAndDefaultIR(
       l2Flag,
       poolAddressesProvider,
       sequencerUptimeOracle,
-      gracePeriod,
-      rwaATokenManagerAdmin
+      gracePeriod
     );
     _report.priceOracleSentinel = miscReport.priceOracleSentinel;
     _report.defaultInterestRateStrategy = miscReport.defaultInterestRateStrategy;
-    _report.rwaATokenManager = miscReport.rwaATokenManager;
   }
 
   function getMiscReport() external view returns (MiscReport memory) {

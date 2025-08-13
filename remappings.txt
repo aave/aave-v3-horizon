@@ -3,5 +3,3 @@ forge-std/=lib/forge-std/src/
 ds-test/=lib/forge-std/lib/ds-test/src/
 openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/
 openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/
-aave-address-book/=lib/aave-address-book/src/
-aave-v3-origin/=lib/aave-address-book/lib/aave-v3-origin/src/

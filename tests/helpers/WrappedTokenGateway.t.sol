@@ -248,6 +248,8 @@ contract WrappedTokenGatewayTests is TestnetProcedures {
 
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 
+    uint256 userEthBalanceBefore = alice.balance;
+
     vm.prank(alice);
     aWEth.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
 

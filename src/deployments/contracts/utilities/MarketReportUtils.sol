@@ -41,9 +41,7 @@ library MarketReportUtils {
         variableDebtToken: IVariableDebtToken(report.variableDebtToken),
         emissionManager: IEmissionManager(report.emissionManager),
         rewardsControllerImplementation: IRewardsController(report.rewardsControllerImplementation),
-        rewardsControllerProxy: IRewardsController(report.rewardsControllerProxy),
-        revenueSplitter: IRevenueSplitter(report.revenueSplitter),
-        rwaATokenManager: IRwaATokenManager(report.rwaATokenManager)
+        rewardsControllerProxy: IRewardsController(report.rewardsControllerProxy)
       });
   }
 }
