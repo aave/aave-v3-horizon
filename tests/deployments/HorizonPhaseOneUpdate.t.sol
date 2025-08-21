@@ -274,13 +274,38 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   }
 }
 
-contract HorizonPhaseOneUpdateForkTest is HorizonPhaseOneUpdateTest {
+contract HorizonPhaseOneUpdatePostDeploymentForkTest is HorizonPhaseOneUpdateTest {
+  function setUp() public override {
+    vm.skip(true, 'post-payload deployment');
+    super.setUp();
+  }
+
+  function loadDeployment() internal override returns (DeploymentInfo memory) {
+    address horizonPhaseOneUpdate; // TODO: deployed payload address
+    vm.prank(EMERGENCY_MULTISIG);
+    (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(
+      abi.encodeWithSignature(
+        'executeTransaction(address,uint256,string,bytes,bool)',
+        address(horizonPhaseOneUpdate), // target
+        0, // value
+        'execute()', // signature
+        '', // data
+        true // withDelegatecall
+      )
+    );
+    require(success, 'Failed to execute transaction');
+
+    return deploymentInfo;
+  }
+}
+
+contract HorizonPhaseOneUpdatePostExecutionForkTest is HorizonPhaseOneUpdateTest {
   function setUp() public override {
     vm.skip(true, 'post-payload execution');
     super.setUp();
   }
 
-  function loadDeployment() internal override returns (DeploymentInfo memory) {
+  function loadDeployment() internal view override returns (DeploymentInfo memory) {
     return deploymentInfo;
   }
 }

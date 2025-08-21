@@ -6,25 +6,16 @@ import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFla
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
 contract HorizonPhaseOneUpdate is AaveV3Payload {
-  address public immutable GHO_ADDRESS;
-  address public immutable USDC_ADDRESS;
-  address public immutable RLUSD_ADDRESS;
-  address public immutable USTB_ADDRESS;
-  address public immutable USCC_ADDRESS;
-  address public immutable USYC_ADDRESS;
-  address public immutable JTRSY_ADDRESS;
-  address public immutable JAAA_ADDRESS;
+  address public constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
+  address public constant USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address public constant RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
+  address public constant USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
+  address public constant USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
+  address public constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
+  address public constant JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
+  address public constant JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
 
-  constructor(address configEngine) AaveV3Payload(IEngine(configEngine)) {
-    GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
-    USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
-    USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
-    USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
-    USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
-    JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
-    JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
-  }
+  constructor(address configEngine) AaveV3Payload(IEngine(configEngine)) {}
 
   function capsUpdates() public view override returns (IEngine.CapsUpdate[] memory) {
     IEngine.CapsUpdate[] memory caps = new IEngine.CapsUpdate[](8);

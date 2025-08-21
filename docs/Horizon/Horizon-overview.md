@@ -87,7 +87,7 @@ All other existing functionality remains unchanged from v3.3. Stablecoins, or ot
 - borrowingEnabled: true
 - borrowableInIsolation: true
 - withSiloedBorrowing: false
-- flashloanable: true (authorized flashborrowers can be configured)
+- flashloanable: false 
 - LTV: 0
 - liquidationThreshold: 0 (to disable its use as collateral)
 - liquidationBonus: N/A (can be 0)
@@ -97,11 +97,11 @@ All other existing functionality remains unchanged from v3.3. Stablecoins, or ot
 - debtCeiling: 0 (only applies to isolated asset)
 - liquidationProtocolFee: 0 (as it won't apply for a non-collateral asset)
 
-Stablecoins, or other non-RWA permissionless assets, may also be configured as collateral in the future, by setting `liquidationThreshold` above `0`. In such case, natively permissionless borrowing would therefore be enabled within the instance.
+Stablecoins, or other non-RWA permissionless assets, may also be configured as collateral in the future, by setting `liquidationThreshold` above `0`. In such case, natively permissionless borrowing would therefore be enabled within the instance. Flashloans and authorized flashborrowers may be configured in the future. 
 
 ## Edge Cases of Note
 
-Consider the following scenarios involving the example permissioned `RWA_1` token.
+Consider the following scenarios involving the example permissioned `RWA_1` token. Flashloans may be utilized from other protocols if disabled in Horizon. 
 
 ### RWA Holder Loses Private Keys to Wallet
 
