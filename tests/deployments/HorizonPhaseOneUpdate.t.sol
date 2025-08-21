@@ -249,12 +249,8 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       'emode.liquidationBonus'
     );
     assertEq(pool.getEModeCategoryLabel(eModeCategory), params.label, 'emode.label');
-
-    uint128 collateralBitmap = pool.getEModeCategoryCollateralBitmap(eModeCategory);
-    assertEq(collateralBitmap, 0, 'emode.collateralBitmap');
-
-    uint128 borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(eModeCategory);
-    assertEq(borrowableBitmap, 0, 'emode.borrowableBitmap');
+    assertEq(pool.getEModeCategoryCollateralBitmap(eModeCategory), 0, 'emode.collateralBitmap');
+    assertEq(pool.getEModeCategoryBorrowableBitmap(eModeCategory), 0, 'emode.borrowableBitmap');
   }
 }
 
