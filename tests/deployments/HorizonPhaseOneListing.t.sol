@@ -846,7 +846,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_listing(USTB_ADDRESS, USTB_TOKEN_LISTING_PARAMS);
   }
 
-  function test_eMode_USTB_Stablecoins() public {
+  function test_eMode_USTB_Stablecoins() public virtual {
     test_eMode(1, USTB_STABLECOINS_EMODE_PARAMS);
   }
 
@@ -858,7 +858,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_listing(USCC_ADDRESS, USCC_TOKEN_LISTING_PARAMS);
   }
 
-  function test_eMode_USCC_Stablecoins() public {
+  function test_eMode_USCC_Stablecoins() public virtual {
     test_eMode(3, USCC_STABLECOINS_EMODE_PARAMS);
   }
 
@@ -870,7 +870,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_listing(USYC_ADDRESS, USYC_TOKEN_LISTING_PARAMS);
   }
 
-  function test_eMode_USYC_Stablecoins() public {
+  function test_eMode_USYC_Stablecoins() public virtual {
     test_eMode(5, USYC_STABLECOINS_EMODE_PARAMS);
   }
 
@@ -882,7 +882,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_listing(JTRSY_ADDRESS, JTRSY_TOKEN_LISTING_PARAMS);
   }
 
-  function test_eMode_JTRSY_Stablecoins() public {
+  function test_eMode_JTRSY_Stablecoins() public virtual {
     test_eMode(7, JTRSY_STABLECOINS_EMODE_PARAMS);
   }
 
@@ -894,7 +894,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     test_listing(JAAA_ADDRESS, JAAA_TOKEN_LISTING_PARAMS);
   }
 
-  function test_eMode_JAAA_Stablecoins() public {
+  function test_eMode_JAAA_Stablecoins() public virtual {
     test_eMode(9, JAAA_STABLECOINS_EMODE_PARAMS);
   }
 
@@ -937,7 +937,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   address internal constant CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER =
     0xDbE01f447040F78ccbC8Dfd101BEc1a2C21f800D;
 
-  function loadDeployment() internal override returns (DeploymentInfo memory) {
+  function loadDeployment() internal virtual override returns (DeploymentInfo memory) {
     string memory reportFilePath = run();
 
     IMetadataReporter metadataReporter = IMetadataReporter(
