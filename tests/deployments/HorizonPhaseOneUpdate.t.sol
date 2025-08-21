@@ -56,7 +56,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       hasPriceAdapter: true,
       oracle: USTB_PRICE_FEED_ADAPTER,
       underlyingPriceFeed: USTB_PRICE_FEED,
-      supplyCap: 1_430_000,
+      supplyCap: 1_800_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
@@ -86,15 +86,15 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       hasPriceAdapter: true,
       oracle: USCC_PRICE_FEED_ADAPTER,
       underlyingPriceFeed: USCC_PRICE_FEED,
-      supplyCap: 470_000,
+      supplyCap: 960_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
       borrowableInIsolation: false,
       withSiloedBorrowing: false,
       flashloanable: false,
-      ltv: 72_00,
-      liquidationThreshold: 79_00,
+      ltv: 73_00,
+      liquidationThreshold: 80_00,
       liquidationBonus: 100_00 + 7_50,
       debtCeiling: 0,
       liqProtocolFee: 0,
@@ -106,6 +106,8 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       }),
       initialDeposit: 0
     });
+    USCC_GHO_EMODE_PARAMS.ltv = 74_00;
+    USCC_GHO_EMODE_PARAMS.liquidationThreshold = 81_00;
     USCC_STABLECOINS_EMODE_PARAMS.label = '';
     USYC_TOKEN_LISTING_PARAMS = TokenListingParams({
       aTokenName: 'Aave Horizon RWA USYC',
@@ -116,7 +118,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       hasPriceAdapter: false,
       oracle: USYC_PRICE_FEED,
       underlyingPriceFeed: USYC_PRICE_FEED,
-      supplyCap: 8_520_000,
+      supplyCap: 10_300_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
@@ -146,7 +148,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       hasPriceAdapter: true,
       oracle: JTRSY_PRICE_FEED_ADAPTER,
       underlyingPriceFeed: JTRSY_PRICE_FEED,
-      supplyCap: 7_300_000,
+      supplyCap: 4_600_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
@@ -176,7 +178,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       hasPriceAdapter: true,
       oracle: JAAA_PRICE_FEED_ADAPTER,
       underlyingPriceFeed: JAAA_PRICE_FEED,
-      supplyCap: 8_230_000,
+      supplyCap: 9_900_000,
       borrowCap: 0,
       reserveFactor: 0,
       enabledToBorrow: false,
@@ -203,12 +205,12 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
     GHO_TOKEN_LISTING_PARAMS.borrowCap = 900_000;
 
     // rLUSD
-    RLUSD_TOKEN_LISTING_PARAMS.supplyCap = 15_000_000;
-    RLUSD_TOKEN_LISTING_PARAMS.borrowCap = 13_500_000;
+    RLUSD_TOKEN_LISTING_PARAMS.supplyCap = 30_000_000;
+    RLUSD_TOKEN_LISTING_PARAMS.borrowCap = 27_000_000;
 
     // USDC
-    USDC_TOKEN_LISTING_PARAMS.supplyCap = 15_000_000;
-    USDC_TOKEN_LISTING_PARAMS.borrowCap = 13_500_000;
+    USDC_TOKEN_LISTING_PARAMS.supplyCap = 16_000_000;
+    USDC_TOKEN_LISTING_PARAMS.borrowCap = 14_400_000;
   }
 
   function test_eMode_USTB_Stablecoins() public view override {
@@ -272,9 +274,13 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   }
 }
 
-// TODO: uncomment after payload execution
-// contract HorizonPhaseOneUpdateForkTest is HorizonPhaseOneUpdateTest {
-//   function loadDeployment() internal override returns (DeploymentInfo memory) {
-//     return deploymentInfo;
-//   }
-// }
+contract HorizonPhaseOneUpdateForkTest is HorizonPhaseOneUpdateTest {
+  function setUp() public override {
+    vm.skip(true, 'post-payload execution');
+    super.setUp();
+  }
+
+  function loadDeployment() internal override returns (DeploymentInfo memory) {
+    return deploymentInfo;
+  }
+}

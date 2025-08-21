@@ -31,31 +31,31 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
 
     caps[0] = IEngine.CapsUpdate({
       asset: USTB_ADDRESS,
-      supplyCap: 1_430_000,
+      supplyCap: 1_800_000,
       borrowCap: EngineFlags.KEEP_CURRENT
     });
 
     caps[1] = IEngine.CapsUpdate({
       asset: USCC_ADDRESS,
-      supplyCap: 470_000,
+      supplyCap: 960_000,
       borrowCap: EngineFlags.KEEP_CURRENT
     });
 
     caps[2] = IEngine.CapsUpdate({
       asset: USYC_ADDRESS,
-      supplyCap: 8_520_000,
+      supplyCap: 10_300_000,
       borrowCap: EngineFlags.KEEP_CURRENT
     });
 
     caps[3] = IEngine.CapsUpdate({
       asset: JTRSY_ADDRESS,
-      supplyCap: 7_300_000,
+      supplyCap: 4_600_000,
       borrowCap: EngineFlags.KEEP_CURRENT
     });
 
     caps[4] = IEngine.CapsUpdate({
       asset: JAAA_ADDRESS,
-      supplyCap: 8_230_000,
+      supplyCap: 9_900_000,
       borrowCap: EngineFlags.KEEP_CURRENT
     });
 
@@ -63,14 +63,14 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
 
     caps[6] = IEngine.CapsUpdate({
       asset: RLUSD_ADDRESS,
-      supplyCap: 15_000_000,
-      borrowCap: 13_500_000
+      supplyCap: 30_000_000,
+      borrowCap: 27_000_000
     });
 
     caps[7] = IEngine.CapsUpdate({
       asset: USDC_ADDRESS,
-      supplyCap: 15_000_000,
-      borrowCap: 13_500_000
+      supplyCap: 16_000_000,
+      borrowCap: 14_400_000
     });
 
     return caps;
@@ -90,8 +90,8 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
 
     collaterals[1] = IEngine.CollateralUpdate({
       asset: USCC_ADDRESS,
-      ltv: 72_00,
-      liqThreshold: 79_00,
+      ltv: 73_00,
+      liqThreshold: 80_00,
       liqBonus: 7_50,
       debtCeiling: EngineFlags.KEEP_CURRENT,
       liqProtocolFee: EngineFlags.KEEP_CURRENT
@@ -133,8 +133,9 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
     override
     returns (IEngine.EModeCategoryUpdate[] memory)
   {
-    IEngine.EModeCategoryUpdate[] memory eModeCategories = new IEngine.EModeCategoryUpdate[](5);
+    IEngine.EModeCategoryUpdate[] memory eModeCategories = new IEngine.EModeCategoryUpdate[](6);
 
+    // USTB Stablecoins
     eModeCategories[0] = IEngine.EModeCategoryUpdate({
       eModeCategory: 1,
       ltv: EngineFlags.KEEP_CURRENT,
@@ -143,6 +144,7 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
       label: ''
     });
 
+    // USCC Stablecoins
     eModeCategories[1] = IEngine.EModeCategoryUpdate({
       eModeCategory: 3,
       ltv: EngineFlags.KEEP_CURRENT,
@@ -151,7 +153,17 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
       label: ''
     });
 
+    // USCC GHO
     eModeCategories[2] = IEngine.EModeCategoryUpdate({
+      eModeCategory: 4,
+      ltv: 74_00,
+      liqThreshold: 81_00,
+      liqBonus: EngineFlags.KEEP_CURRENT,
+      label: EngineFlags.KEEP_CURRENT_STRING
+    });
+
+    // USYC Stablecoins
+    eModeCategories[3] = IEngine.EModeCategoryUpdate({
       eModeCategory: 5,
       ltv: EngineFlags.KEEP_CURRENT,
       liqThreshold: EngineFlags.KEEP_CURRENT,
@@ -159,7 +171,8 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
       label: ''
     });
 
-    eModeCategories[3] = IEngine.EModeCategoryUpdate({
+    // JTRSY Stablecoins
+    eModeCategories[4] = IEngine.EModeCategoryUpdate({
       eModeCategory: 7,
       ltv: EngineFlags.KEEP_CURRENT,
       liqThreshold: EngineFlags.KEEP_CURRENT,
@@ -167,7 +180,8 @@ contract HorizonPhaseOneUpdate is AaveV3Payload {
       label: ''
     });
 
-    eModeCategories[4] = IEngine.EModeCategoryUpdate({
+    // JAAA Stablecoins
+    eModeCategories[5] = IEngine.EModeCategoryUpdate({
       eModeCategory: 9,
       ltv: EngineFlags.KEEP_CURRENT,
       liqThreshold: EngineFlags.KEEP_CURRENT,
