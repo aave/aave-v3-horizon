@@ -251,25 +251,9 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
     assertEq(pool.getEModeCategoryLabel(eModeCategory), params.label, 'emode.label');
 
     uint128 collateralBitmap = pool.getEModeCategoryCollateralBitmap(eModeCategory);
-    for (uint256 i = 0; i < params.collateralAssets.length; i++) {
-      uint256 reserveId = pool.getReserveData(params.collateralAssets[i]).id;
-      assertEq(
-        collateralBitmap.isReserveEnabledOnBitmap(reserveId),
-        false,
-        string.concat('emode.collateralAsset ', vm.toString(params.collateralAssets[i]))
-      );
-    }
     assertEq(collateralBitmap, 0, 'emode.collateralBitmap');
 
     uint128 borrowableBitmap = pool.getEModeCategoryBorrowableBitmap(eModeCategory);
-    for (uint256 i = 0; i < params.borrowableAssets.length; i++) {
-      uint256 reserveId = pool.getReserveData(params.borrowableAssets[i]).id;
-      assertEq(
-        borrowableBitmap.isReserveEnabledOnBitmap(reserveId),
-        false,
-        string.concat('emode.borrowableAsset ', vm.toString(params.borrowableAssets[i]))
-      );
-    }
     assertEq(borrowableBitmap, 0, 'emode.borrowableBitmap');
   }
 }
