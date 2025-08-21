@@ -11,7 +11,9 @@ contract MetadataReporter is IMetadataReporter {
 
   Vm private constant vm = Vm(address(bytes20(uint160(uint256(keccak256('hevm cheat code'))))));
 
-  function writeJsonReportMarket(MarketReport memory report) external {
+  function writeJsonReportMarket(
+    MarketReport memory report
+  ) external returns (string memory filePath) {
     string memory factoryV3Commit;
     string memory factoryV3Branch;
 
@@ -38,6 +40,7 @@ contract MetadataReporter is IMetadataReporter {
     );
     vm.serializeAddress(jsonReport, 'aaveOracle', report.aaveOracle);
     vm.serializeAddress(jsonReport, 'treasury', report.treasury);
+    vm.serializeAddress(jsonReport, 'revenueSplitter', report.revenueSplitter);
     vm.serializeAddress(jsonReport, 'dustBin', report.dustBin);
     vm.serializeAddress(jsonReport, 'wrappedTokenGateway', report.wrappedTokenGateway);
     vm.serializeAddress(jsonReport, 'walletBalanceProvider', report.walletBalanceProvider);
@@ -47,7 +50,9 @@ contract MetadataReporter is IMetadataReporter {
     vm.serializeAddress(jsonReport, 'emptyImplementation', report.emptyImplementation);
     vm.serializeAddress(jsonReport, 'l2Encoder', report.l2Encoder);
     vm.serializeAddress(jsonReport, 'aToken', report.aToken);
+    vm.serializeAddress(jsonReport, 'rwaAToken', report.rwaAToken);
     vm.serializeAddress(jsonReport, 'variableDebtToken', report.variableDebtToken);
+    vm.serializeAddress(jsonReport, 'rwaATokenManager', report.rwaATokenManager);
     vm.serializeAddress(jsonReport, 'emissionManager', report.emissionManager);
     vm.serializeAddress(
       jsonReport,
@@ -94,7 +99,52 @@ contract MetadataReporter is IMetadataReporter {
       report.paraSwapRepayAdapter
     );
 
-    vm.writeJson(output, string.concat('./reports/', timestamp, '-market-deployment.json'));
+    filePath = string.concat('./reports/', timestamp, '-market-deployment.json');
+    vm.writeJson(output, filePath);
+  }
+
+  function parseMarketReport(
+    string memory reportFilePath
+  ) external view returns (MarketReport memory report) {
+    string memory json = vm.readFile(reportFilePath);
+    report.poolAddressesProviderRegistry = json.readAddress('.poolAddressesProviderRegistry');
+    report.poolAddressesProvider = json.readAddress('.poolAddressesProvider');
+    report.poolProxy = json.readAddress('.poolProxy');
+    report.poolImplementation = json.readAddress('.poolImplementation');
+    report.poolConfiguratorProxy = json.readAddress('.poolConfiguratorProxy');
+    report.poolConfiguratorImplementation = json.readAddress('.poolConfiguratorImplementation');
+    report.protocolDataProvider = json.readAddress('.protocolDataProvider');
+    report.aaveOracle = json.readAddress('.aaveOracle');
+    report.defaultInterestRateStrategy = json.readAddress('.defaultInterestRateStrategy');
+    report.priceOracleSentinel = json.readAddress('.priceOracleSentinel');
+    report.aclManager = json.readAddress('.aclManager');
+    report.treasury = json.readAddress('.treasury');
+    report.treasuryImplementation = json.readAddress('.treasuryImplementation');
+    report.wrappedTokenGateway = json.readAddress('.wrappedTokenGateway');
+    report.walletBalanceProvider = json.readAddress('.walletBalanceProvider');
+    report.uiIncentiveDataProvider = json.readAddress('.uiIncentiveDataProvider');
+    report.uiPoolDataProvider = json.readAddress('.uiPoolDataProvider');
+    report.paraSwapLiquiditySwapAdapter = json.readAddress('.paraSwapLiquiditySwapAdapter');
+    report.paraSwapRepayAdapter = json.readAddress('.paraSwapRepayAdapter');
+    report.paraSwapWithdrawSwapAdapter = json.readAddress('.paraSwapWithdrawSwapAdapter');
+    report.l2Encoder = json.readAddress('.l2Encoder');
+    report.aToken = json.readAddress('.aToken');
+    report.rwaAToken = json.readAddress('.rwaAToken');
+    report.variableDebtToken = json.readAddress('.variableDebtToken');
+    report.emissionManager = json.readAddress('.emissionManager');
+    report.rewardsControllerImplementation = json.readAddress('.rewardsControllerImplementation');
+    report.rewardsControllerProxy = json.readAddress('.rewardsControllerProxy');
+    report.configEngine = json.readAddress('.configEngine');
+    report.transparentProxyFactory = json.readAddress('.transparentProxyFactory');
+    report.staticATokenFactoryImplementation = json.readAddress(
+      '.staticATokenFactoryImplementation'
+    );
+    report.staticATokenFactoryProxy = json.readAddress('.staticATokenFactoryProxy');
+    report.staticATokenImplementation = json.readAddress('.staticATokenImplementation');
+    report.revenueSplitter = json.readAddress('.revenueSplitter');
+    report.dustBin = json.readAddress('.dustBin');
+    report.emptyImplementation = json.readAddress('.emptyImplementation');
+    report.rwaATokenManager = json.readAddress('.rwaATokenManager');
   }
 
   function writeJsonReportLibraryBatch1(LibrariesReport memory libraries) external {

@@ -58,7 +58,7 @@ jobs:
             certora/basic/conf/NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowOnReserveDisabledForBorrowing
             certora/basic/conf/NEW-pool-simple-properties.conf --rule_sanity none --rule cannotBorrowOnFrozenReserve
           solc-versions: 0.8.19
-          comment-fail-only: false
+          comment-fail-only: true
           solc-remove-version-prefix: "0."
           job-name: "Certora Prover Run"
           certora-key: ${{ secrets.CERTORAKEY }}
