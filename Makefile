@@ -76,6 +76,14 @@ deploy-phase-one-payload :;
 		--verify --chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
 		--sig "run(string)" ${reportPath}
 
+# STEP 5: Deploys payload to update phase one assets. `make deploy-phase-one-update-payload`
+deploy-phase-one-update-payload :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol:DeployHorizonPhaseOneUpdatePayload \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
+		--chain ${CHAIN} --verifier etherscan \
+		--sig "run()" \
+		--verify --broadcast
+
 # Invariants
 echidna:
 	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
