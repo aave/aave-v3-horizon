@@ -118,7 +118,7 @@ abstract contract HorizonListingBaseTest is Test {
     test_aaveDaoExecutor(this.AAVE_DAO_EXECUTOR_ADDRESS());
   }
 
-  function test_listing(address token, TokenListingParams memory params) internal {
+  function test_listing(address token, TokenListingParams memory params) internal virtual {
     test_getConfiguration(token, params);
     test_interestRateStrategy(token, params);
     test_aToken(token, params);
@@ -912,7 +912,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     address a,
     address b,
     address c
-  ) private pure returns (address[] memory) {
+  ) internal pure returns (address[] memory) {
     address[] memory array = new address[](3);
     array[0] = a;
     array[1] = b;
@@ -931,7 +931,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 
   address internal constant SUPERSTATE_ALLOWLIST_V2 = 0x02f1fA8B196d21c7b733EB2700B825611d8A38E5;
   uint256 internal constant SUPERSTATE_ROOT_ENTITY_ID = 1;
-  address internal constant CENTRIFUGE_HOOK = 0x4737C3f62Cc265e786b280153fC666cEA2fBc0c0;
+  address internal constant CENTRIFUGE_HOOK = 0xa2C98F0F76Da0C97039688CA6280d082942d0b48;
   address internal constant CENTRIFUGE_WARD = 0xFEE13c017693a4706391D516ACAbF6789D5c3157;
   uint8 internal constant CIRCLE_INVESTOR_SDYF_INTERNATIONAL_ROLE = 3;
   address internal constant CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER =
@@ -1016,8 +1016,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 
     (bool success, bytes memory data) = restrictionManager.call(abi.encodeWithSignature('root()'));
     require(success, 'Failed to call root()');
-    // address root = abi.decode(data, (address));
-    address root = 0x7Ed48C31f2fdC40d37407cBaBf0870B2b688368f; // from Centrifuge
+    address root = abi.decode(data, (address));
 
     vm.prank(CENTRIFUGE_WARD);
     (success, ) = root.call(abi.encodeWithSignature('endorse(address)', addressToWhitelist));

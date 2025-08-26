@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {HorizonPhaseOneListingTest, IDefaultInterestRateStrategyV2, ReserveConfiguration, DataTypes, EModeConfiguration} from './HorizonPhaseOneListing.t.sol';
+import './HorizonPhaseOneListing.t.sol';
 import {DeployHorizonPhaseOneUpdatePayload} from '../../scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol';
 
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using EModeConfiguration for uint128;
+  using PercentageMath for uint256;
 
   // horizon addresses
   DeploymentInfo internal deploymentInfo =
@@ -38,6 +39,17 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
     require(success, 'Failed to execute transaction');
 
     return deploymentInfo;
+  }
+
+  function test_listing(address token, TokenListingParams memory params) internal virtual override {
+    super.test_listing(token, params);
+    if (params.isRwa) {
+      test_nonEMode_collateralization(
+        token,
+        params,
+        _toDynamicAddressArray(USDC_ADDRESS, RLUSD_ADDRESS, GHO_ADDRESS)
+      );
+    }
   }
 
   function setUp() public virtual override {
@@ -251,6 +263,58 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
     assertEq(pool.getEModeCategoryLabel(eModeCategory), params.label, 'emode.label');
     assertEq(pool.getEModeCategoryCollateralBitmap(eModeCategory), 0, 'emode.collateralBitmap');
     assertEq(pool.getEModeCategoryBorrowableBitmap(eModeCategory), 0, 'emode.borrowableBitmap');
+  }
+
+  function test_nonEMode_collateralization(
+    address token,
+    TokenListingParams memory params,
+    address[] memory borrowableAssets
+  ) private {
+    address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
+    vm.prank(poolAdmin);
+    IPoolConfigurator(poolConfigurator).setPoolPause(false);
+
+    IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
+    uint256 amountInBaseCurrency = 1e5 * 1e8;
+
+    uint256 supplyAmount = (amountInBaseCurrency * 10 ** IERC20Detailed(token).decimals()) /
+      oracle.getAssetPrice(token) +
+      1;
+    deal(token, alice, supplyAmount);
+
+    vm.startPrank(alice);
+    IERC20Detailed(token).approve(address(pool), supplyAmount);
+    pool.supply(token, supplyAmount, alice, 0);
+    vm.stopPrank();
+
+    for (uint256 j = 0; j < borrowableAssets.length; j++) {
+      address borrowAsset = borrowableAssets[j];
+      uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
+        10 ** IERC20Detailed(borrowAsset).decimals()) /
+        oracle.getAssetPrice(borrowAsset) -
+        1;
+
+      deal(borrowAsset, bob, borrowAmount);
+
+      vm.startPrank(bob);
+      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+      pool.supply(borrowAsset, borrowAmount, bob, 0);
+      vm.stopPrank();
+
+      vm.prank(alice);
+      pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
+
+      vm.startPrank(alice);
+      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+      pool.repay(borrowAsset, borrowAmount, 2, alice);
+      vm.stopPrank();
+
+      vm.prank(bob);
+      pool.withdraw(borrowAsset, borrowAmount, bob);
+    }
+
+    vm.prank(alice);
+    pool.withdraw(token, supplyAmount, alice);
   }
 }
 
