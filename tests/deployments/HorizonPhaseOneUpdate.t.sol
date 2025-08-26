@@ -254,14 +254,15 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   }
 }
 
+/// forge-config: default.evm_version = "cancun"
+// can be run after payload has been deployed but before execution via multisig
 contract HorizonPhaseOneUpdatePostDeploymentForkTest is HorizonPhaseOneUpdateTest {
   function setUp() public override {
-    vm.skip(true, 'post-payload deployment');
     super.setUp();
   }
 
   function loadDeployment() internal override returns (DeploymentInfo memory) {
-    address horizonPhaseOneUpdate; // TODO: deployed payload address
+    address horizonPhaseOneUpdate = 0xb14fbFcFDC5d725B6624Cb076dF617eE90aD7A6b; // deployed payload address
     vm.prank(EMERGENCY_MULTISIG);
     (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(
       abi.encodeWithSignature(
@@ -279,9 +280,10 @@ contract HorizonPhaseOneUpdatePostDeploymentForkTest is HorizonPhaseOneUpdateTes
   }
 }
 
+/// forge-config: default.evm_version = "cancun"
+// can be run after payload has been executed
 contract HorizonPhaseOneUpdatePostExecutionForkTest is HorizonPhaseOneUpdateTest {
   function setUp() public override {
-    vm.skip(true, 'post-payload execution');
     super.setUp();
   }
 

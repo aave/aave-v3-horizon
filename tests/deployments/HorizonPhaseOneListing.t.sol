@@ -932,7 +932,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   address internal constant SUPERSTATE_ALLOWLIST_V2 = 0x02f1fA8B196d21c7b733EB2700B825611d8A38E5;
   uint256 internal constant SUPERSTATE_ROOT_ENTITY_ID = 1;
   address internal constant CENTRIFUGE_HOOK = 0x4737C3f62Cc265e786b280153fC666cEA2fBc0c0;
-  address internal constant CENTRIFUGE_WARD = 0x09ab10a9c3E6Eac1d18270a2322B6113F4C7f5E8;
+  address internal constant CENTRIFUGE_WARD = 0xFEE13c017693a4706391D516ACAbF6789D5c3157;
   uint8 internal constant CIRCLE_INVESTOR_SDYF_INTERNATIONAL_ROLE = 3;
   address internal constant CIRCLE_SET_USER_ROLE_AUTHORIZED_CALLER =
     0xDbE01f447040F78ccbC8Dfd101BEc1a2C21f800D;
@@ -1016,7 +1016,8 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
 
     (bool success, bytes memory data) = restrictionManager.call(abi.encodeWithSignature('root()'));
     require(success, 'Failed to call root()');
-    address root = abi.decode(data, (address));
+    // address root = abi.decode(data, (address));
+    address root = 0x7Ed48C31f2fdC40d37407cBaBf0870B2b688368f; // from Centrifuge
 
     vm.prank(CENTRIFUGE_WARD);
     (success, ) = root.call(abi.encodeWithSignature('endorse(address)', addressToWhitelist));
