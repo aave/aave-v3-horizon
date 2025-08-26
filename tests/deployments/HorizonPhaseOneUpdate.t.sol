@@ -284,7 +284,6 @@ contract HorizonPhaseOneUpdatePostDeploymentForkTest is HorizonPhaseOneUpdateTes
 // can be run after payload has been executed
 contract HorizonPhaseOneUpdatePostExecutionForkTest is HorizonPhaseOneUpdateTest {
   function setUp() public override {
-    vm.skip(true, 'post-payload execution');
     super.setUp();
   }
 
