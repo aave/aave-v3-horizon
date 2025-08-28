@@ -118,7 +118,7 @@ abstract contract HorizonListingBaseTest is Test {
     test_aaveDaoExecutor(this.AAVE_DAO_EXECUTOR_ADDRESS());
   }
 
-  function test_listing(address token, TokenListingParams memory params) internal {
+  function test_listing(address token, TokenListingParams memory params) internal virtual {
     test_getConfiguration(token, params);
     test_interestRateStrategy(token, params);
     test_aToken(token, params);
@@ -126,7 +126,7 @@ abstract contract HorizonListingBaseTest is Test {
     test_priceFeed(token, params);
   }
 
-  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal virtual {
     test_eMode_configuration(eModeCategory, params);
     test_eMode_collateralization(eModeCategory, params);
   }
@@ -210,7 +210,10 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_getConfiguration(address token, TokenListingParams memory params) private view {
+  function test_getConfiguration(
+    address token,
+    TokenListingParams memory params
+  ) internal view virtual {
     DataTypes.ReserveConfigurationMap memory config = pool.getConfiguration(token);
     assertEq(config.getSupplyCap(), params.supplyCap, 'supplyCap');
     assertEq(config.getBorrowCap(), params.borrowCap, 'borrowCap');
@@ -232,7 +235,10 @@ abstract contract HorizonListingBaseTest is Test {
     assertEq(config.getPaused(), true, 'paused');
   }
 
-  function test_interestRateStrategy(address token, TokenListingParams memory params) private view {
+  function test_interestRateStrategy(
+    address token,
+    TokenListingParams memory params
+  ) internal view {
     assertEq(
       pool.getReserveData(token).interestRateStrategyAddress,
       address(defaultInterestRateStrategy),
@@ -274,7 +280,7 @@ abstract contract HorizonListingBaseTest is Test {
     }
   }
 
-  function test_variableDebtToken(address token, TokenListingParams memory params) private view {
+  function test_variableDebtToken(address token, TokenListingParams memory params) internal view {
     address variableDebtToken = pool.getReserveVariableDebtToken(token);
     assertEq(
       IERC20Detailed(variableDebtToken).name(),
@@ -293,7 +299,7 @@ abstract contract HorizonListingBaseTest is Test {
     );
   }
 
-  function test_priceFeed(address token, TokenListingParams memory params) private view {
+  function test_priceFeed(address token, TokenListingParams memory params) internal view {
     IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
 
     AggregatorInterface oracleSource = AggregatorInterface(oracle.getSourceOfAsset(token));
@@ -317,7 +323,7 @@ abstract contract HorizonListingBaseTest is Test {
   function test_eMode_configuration(
     uint8 eModeCategory,
     EModeCategoryParams memory params
-  ) private view {
+  ) internal view {
     assertEq(pool.getEModeCategoryCollateralConfig(eModeCategory).ltv, params.ltv, 'emode.ltv');
     assertEq(
       pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationThreshold,

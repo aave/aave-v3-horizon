@@ -84,6 +84,14 @@ deploy-phase-one-update-payload :;
 		--sig "run()" \
 		--verify --broadcast
 
+# Deploys payload to update USCC caps. `make deploy-uscc-caps-payload` ACCOUNT=""
+deploy-uscc-caps-update-payload :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/horizon/DeployUSCCCapsUpdatePayload.sol:DeployUSCCCapsUpdatePayload \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
+		--chain ${CHAIN} --verifier etherscan \
+		--sig "run()" \
+		--verify --broadcast
+
 # Invariants
 echidna:
 	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus

@@ -45,7 +45,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
     loadUpdatedParams();
   }
 
-  function loadUpdatedParams() internal {
+  function loadUpdatedParams() internal virtual {
     // rwa
     USTB_TOKEN_LISTING_PARAMS = TokenListingParams({
       aTokenName: 'Aave Horizon RWA USTB',
