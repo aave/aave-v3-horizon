@@ -2,11 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {console2 as console} from 'forge-std/console2.sol';
-import {HorizonPhaseOneUpdateTest, IDefaultInterestRateStrategyV2, ReserveConfiguration, DataTypes} from '../HorizonPhaseOneUpdate.t.sol';
-import {DeployUSCCCapsUpdatePayload} from '../../../scripts/horizon/DeployUSCCCapsUpdatePayload.sol';
+import {HorizonPhaseOneUpdateTest, IDefaultInterestRateStrategyV2, ReserveConfiguration, DataTypes} from '../../deployments/HorizonPhaseOneUpdate.t.sol';
 
 /// forge-config: default.evm_version = "cancun"
-contract USCCCapsUpdateTest is HorizonPhaseOneUpdateTest {
+contract USCCCapsUpdateForkTest is HorizonPhaseOneUpdateTest {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   function test_listing(address token, TokenListingParams memory params) internal virtual override {
@@ -48,21 +47,7 @@ contract USCCCapsUpdateTest is HorizonPhaseOneUpdateTest {
     assertEq(config.getPaused(), false, 'unpaused');
   }
 
-  function loadDeployment() internal virtual override returns (DeploymentInfo memory) {
-    address usccCapsUpdate = new DeployUSCCCapsUpdatePayload().run();
-    vm.prank(EMERGENCY_MULTISIG);
-    (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(
-      abi.encodeWithSignature(
-        'executeTransaction(address,uint256,string,bytes,bool)',
-        address(usccCapsUpdate), // target
-        0, // value
-        'execute()', // signature
-        '', // data
-        true // withDelegatecall
-      )
-    );
-    require(success, 'Failed to execute transaction');
-
+  function loadDeployment() internal view override returns (DeploymentInfo memory) {
     return deploymentInfo;
   }
 
@@ -70,37 +55,10 @@ contract USCCCapsUpdateTest is HorizonPhaseOneUpdateTest {
     super.loadUpdatedParams();
     USCC_TOKEN_LISTING_PARAMS.supplyCap = 1_920_000;
   }
-}
 
-/// forge-config: default.evm_version = "cancun"
-contract USCCCapsUpdatePostDeploymentForkTest is USCCCapsUpdateTest {
-  function loadDeployment() internal override returns (DeploymentInfo memory) {
-    address usccCapsUpdate = 0x008C5bA747286d6f7801A80EE2394AD2d5F9CfD3;
-    vm.prank(EMERGENCY_MULTISIG);
-    (bool success, ) = LISTING_EXECUTOR_ADDRESS.call(
-      abi.encodeWithSignature(
-        'executeTransaction(address,uint256,string,bytes,bool)',
-        address(usccCapsUpdate), // target
-        0, // value
-        'execute()', // signature
-        '', // data
-        true // withDelegatecall
-      )
-    );
-    require(success, 'Failed to execute transaction');
-
-    return deploymentInfo;
-  }
-}
-
-/// forge-config: default.evm_version = "cancun"
-contract USCCCapsUpdatePostExecutionForkTest is USCCCapsUpdateTest {
-  function setUp() public override {
-    vm.skip(true, 'post-payload execution');
-    super.setUp();
-  }
-
-  function loadDeployment() internal view override returns (DeploymentInfo memory) {
-    return deploymentInfo;
+  function setUp() public virtual override {
+    vm.createSelectFork('vtestnet');
+    initEnvironment();
+    loadUpdatedParams();
   }
 }
