@@ -8,11 +8,11 @@ import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
 contract ATokenRevision_Base is Test {
   uint256 internal _preExecSnapshot;
   uint256 internal _postExecSnapshot;
-  IPool internal constant POOL = IPool(0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8);
 
-  address internal NEW_A_TOKEN_INSTANCE = 0xB2668573828029917ffbD1e76270373511818498;
-  address internal NEW_RWA_A_TOKEN_INSTANCE = 0x8CA2a49c7Df42E67F9A532F0d383D648fB7Fe4C9;
-  address internal NEW_REVENUE_SPLITTER = 0x70CC725B8f05e0f230B05C4e91ABc651E121354f;
+  IPool internal constant POOL = IPool(0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8);
+  address internal constant NEW_A_TOKEN_INSTANCE = 0xB2668573828029917ffbD1e76270373511818498;
+  address internal constant NEW_RWA_A_TOKEN_INSTANCE = 0x8CA2a49c7Df42E67F9A532F0d383D648fB7Fe4C9;
+  address internal constant NEW_REVENUE_SPLITTER = 0x70CC725B8f05e0f230B05C4e91ABc651E121354f;
 
   function setUp() public {
     vm.createSelectFork('mainnet', 23320695);
