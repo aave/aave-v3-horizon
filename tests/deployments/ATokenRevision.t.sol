@@ -38,16 +38,67 @@ contract ATokenRevision_Base is Test {
     }
   }
 
-  function test_reserveData() public {
-    for (uint16 i = 0; i < POOL.getReservesCount(); ++i) {
-      address reserve = POOL.getReserveAddressById(i);
-      vm.revertToState(_preExecSnapshot);
-      DataTypes.ReserveDataLegacy memory rData = POOL.getReserveData(reserve);
-      vm.revertToState(_postExecSnapshot);
-      assertEq(abi.encode(POOL.getReserveData(reserve)), abi.encode(rData));
-    }
+  struct ATokenData {
+    string name;
+    string symbol;
+    uint8 decimals;
+    uint256 totalSupply;
+    address incentivesController;
+    uint256 scaledTotalSupply;
+    bytes32 domainSeparator;
+    address underlyingAssetAddress;
+    address pool;
   }
 
+  function test_aTokenData() public {
+    uint256 poolReservesCount = POOL.getReservesCount();
+
+    ATokenData[] memory aTokenDataPrev = new ATokenData[](poolReservesCount);
+    ATokenData[] memory aTokenDataNew = new ATokenData[](poolReservesCount);
+
+    vm.revertToState(_postExecSnapshot);
+    for (uint16 i = 0; i < poolReservesCount; ++i) {
+      address reserve = POOL.getReserveAddressById(i);
+      ATokenInstance aTokenInstanceNew = ATokenInstance(POOL.getReserveAToken(reserve));
+      aTokenDataNew[i] = _loadATokenData(aTokenInstanceNew);
+      assertEq(aTokenInstanceNew.RESERVE_TREASURY_ADDRESS(), NEW_REVENUE_SPLITTER, 'treasury addr');
+      assertEq(aTokenInstanceNew.ATOKEN_REVISION(), 2, 'revision');
+    }
+
+    vm.revertToState(_preExecSnapshot);
+    for (uint16 i = 0; i < poolReservesCount; ++i) {
+      address reserve = POOL.getReserveAddressById(i);
+      ATokenInstance aTokenInstancePrev = ATokenInstance(POOL.getReserveAToken(reserve));
+      aTokenDataPrev[i] = _loadATokenData(aTokenInstancePrev);
+      assertEq(aTokenInstancePrev.ATOKEN_REVISION(), 1);
+    }
+
+    assertEq(abi.encode(aTokenDataPrev), abi.encode(aTokenDataNew), 'aTokenData');
+  }
+
+  function test_reserveData() public {
+    uint256 poolReservesCount = POOL.getReservesCount();
+    DataTypes.ReserveDataLegacy[] memory rDataNew = new DataTypes.ReserveDataLegacy[](
+      poolReservesCount
+    );
+    DataTypes.ReserveDataLegacy[] memory rData = new DataTypes.ReserveDataLegacy[](
+      poolReservesCount
+    );
+
+    vm.revertToState(_postExecSnapshot);
+    for (uint16 i = 0; i < poolReservesCount; ++i) {
+      address reserve = POOL.getReserveAddressById(i);
+      rDataNew[i] = POOL.getReserveData(reserve);
+    }
+
+    vm.revertToState(_preExecSnapshot);
+    for (uint16 i = 0; i < poolReservesCount; ++i) {
+      address reserve = POOL.getReserveAddressById(i);
+      rData[i] = POOL.getReserveData(reserve);
+    }
+
+    assertEq(abi.encode(rData), abi.encode(rDataNew), 'reserveData');
+  }
   function _getImplementation(address proxy) internal view virtual returns (address) {
     bytes32 slot = bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1);
     return address(uint160(uint256(vm.load(proxy, slot))));
@@ -73,6 +124,21 @@ contract ATokenRevision_Base is Test {
       refundReceiver: payable(0x0000000000000000000000000000000000000000),
       signatures: abi.encodePacked(uint256(uint160(SIGNER)), uint256(0), uint8(1)) // r, s, v
     });
+  }
+
+  function _loadATokenData(ATokenInstance aToken) internal view returns (ATokenData memory) {
+    return
+      ATokenData({
+        name: aToken.name(),
+        symbol: aToken.symbol(),
+        decimals: aToken.decimals(),
+        totalSupply: aToken.totalSupply(),
+        incentivesController: address(aToken.getIncentivesController()),
+        scaledTotalSupply: aToken.scaledTotalSupply(),
+        domainSeparator: aToken.DOMAIN_SEPARATOR(),
+        underlyingAssetAddress: aToken.UNDERLYING_ASSET_ADDRESS(),
+        pool: address(aToken.POOL())
+      });
   }
 }
 
