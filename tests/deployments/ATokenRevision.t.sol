@@ -61,28 +61,18 @@ contract ATokenRevision_Base is Test {
     vm.store(EMERGENCY_MULTISIG, bytes32(uint256(4)), bytes32(uint256(1))); // reset signer threshold to one
     address SIGNER = 0xCe5004e7202b5194c53C0Eed784cEf2B96461e0b;
     vm.prank(SIGNER);
-    (bool ok, bytes memory ret) = EMERGENCY_MULTISIG.call(
-      abi.encodeCall(
-        ISafeAccount.execTransaction,
-        (
-          TARGET,
-          0, // value
-          TARGET_CALLDATA,
-          1, // operation, 1 => delegatecall
-          0, // safeTxGas
-          0, // baseGas
-          0, // gasPrice
-          0x0000000000000000000000000000000000000000, // gasToken
-          payable(0x0000000000000000000000000000000000000000), // refundReceiver
-          abi.encodePacked(bytes32(uint256(uint160(SIGNER))), bytes32(0), uint8(1)) // r, s, v
-        )
-      )
-    );
-    if (!ok) {
-      assembly {
-        revert(add(ret, 32), mload(ret))
-      }
-    }
+    ISafeAccount(EMERGENCY_MULTISIG).execTransaction({
+      to: TARGET,
+      value: 0,
+      data: TARGET_CALLDATA,
+      operation: 1, // 1 => delegatecall
+      safeTxGas: 0,
+      baseGas: 0,
+      gasPrice: 0,
+      gasToken: 0x0000000000000000000000000000000000000000,
+      refundReceiver: payable(0x0000000000000000000000000000000000000000),
+      signatures: abi.encodePacked(uint256(uint160(SIGNER)), uint256(0), uint8(1)) // r, s, v
+    });
   }
 }
 
