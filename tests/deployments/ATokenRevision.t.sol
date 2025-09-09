@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {console2 as console} from 'forge-std/console2.sol';
+
 import {Test} from 'forge-std/Test.sol';
 import {ATokenInstance, IPool} from 'src/contracts/instances/ATokenInstance.sol';
 import {DataTypes} from 'src/contracts/protocol/libraries/types/DataTypes.sol';
@@ -43,8 +45,10 @@ contract ATokenRevision_Base is Test {
       address reserve = POOL.getReserveAddressById(i);
       vm.revertToState(_preExecSnapshot);
       DataTypes.ReserveDataLegacy memory rData = POOL.getReserveData(reserve);
+      console.log('version pre', ATokenInstance(POOL.getReserveAToken(reserve)).ATOKEN_REVISION());
       vm.revertToState(_postExecSnapshot);
       assertEq(abi.encode(POOL.getReserveData(reserve)), abi.encode(rData));
+      console.log('version post', ATokenInstance(POOL.getReserveAToken(reserve)).ATOKEN_REVISION());
     }
   }
 
