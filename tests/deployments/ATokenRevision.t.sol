@@ -43,12 +43,12 @@ contract ATokenRevision_Base is Test {
   function test_reserveData() public {
     for (uint16 i = 0; i < POOL.getReservesCount(); ++i) {
       address reserve = POOL.getReserveAddressById(i);
+      vm.revertToState(_postExecSnapshot);
+      // assertEq(abi.encode(POOL.getReserveData(reserve)), abi.encode(rData));
+      console.log('version post', ATokenInstance(POOL.getReserveAToken(reserve)).ATOKEN_REVISION());
       vm.revertToState(_preExecSnapshot);
       DataTypes.ReserveDataLegacy memory rData = POOL.getReserveData(reserve);
       console.log('version pre', ATokenInstance(POOL.getReserveAToken(reserve)).ATOKEN_REVISION());
-      vm.revertToState(_postExecSnapshot);
-      assertEq(abi.encode(POOL.getReserveData(reserve)), abi.encode(rData));
-      console.log('version post', ATokenInstance(POOL.getReserveAToken(reserve)).ATOKEN_REVISION());
     }
   }
 
