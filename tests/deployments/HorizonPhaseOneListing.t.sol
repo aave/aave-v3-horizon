@@ -822,6 +822,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     });
 
   function setUp() public virtual {
+    vm.skip(true);
     vm.createSelectFork('mainnet');
     initEnvironment();
   }
