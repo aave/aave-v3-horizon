@@ -84,12 +84,12 @@ deploy-phase-one-update-payload :;
 		--sig "run()" \
 		--verify --broadcast
 
-# Deploy liquidation data provider. `make deploy-liquidation-data-provider` CHAIN=mainnet ACCOUNT=account
+# Deploy liquidation data provider. `make deploy-liquidation-data-provider CHAIN=mainnet ACCOUNT=<account>`
 deploy-liquidation-data-provider :;
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployLiquidationDataProvider.sol:DeployLiquidationDataProvider \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
-		--chain ${CHAIN} --verifier etherscan \
-		--sig "run()" \
+		--chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
+		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
 # Invariants
