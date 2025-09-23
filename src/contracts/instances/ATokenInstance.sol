@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {AToken, IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
 
 contract ATokenInstance is AToken {
-  uint256 public constant ATOKEN_REVISION = 1;
+  uint256 public constant ATOKEN_REVISION = 2;
 
   constructor(IPool pool) AToken(pool) {}
 

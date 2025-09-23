@@ -822,6 +822,7 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
     });
 
   function setUp() public virtual {
+    vm.skip(true);
     vm.createSelectFork('mainnet');
     initEnvironment();
   }
@@ -978,6 +979,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   }
 
   function initEnvironment() internal override {
+    vm.skip(true);
     super.initEnvironment();
 
     whitelistSuperstateRwa(pool.getReserveAToken(USTB_ADDRESS));

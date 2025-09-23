@@ -5,7 +5,7 @@ import {RwaAToken} from '../protocol/tokenization/RwaAToken.sol';
 import {IPool, IAaveIncentivesController, IInitializableAToken, Errors, VersionedInitializable} from '../protocol/tokenization/AToken.sol';
 
 contract RwaATokenInstance is RwaAToken {
-  uint256 public constant ATOKEN_REVISION = 1;
+  uint256 public constant ATOKEN_REVISION = 2;
 
   constructor(IPool pool) RwaAToken(pool) {}
 
