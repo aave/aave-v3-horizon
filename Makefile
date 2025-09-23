@@ -84,6 +84,14 @@ deploy-phase-one-update-payload :;
 		--sig "run()" \
 		--verify --broadcast
 
+# Deploy liquidation data provider. `make deploy-liquidation-data-provider CHAIN=mainnet ACCOUNT=<account>`
+deploy-liquidation-data-provider :;
+	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployLiquidationDataProvider.sol:DeployLiquidationDataProvider \
+		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \
+		--chain ${CHAIN} --verifier-url ${VERIFIER_URL} \
+		--sig "run(address,address)" ${pool} ${addressesProvider} \
+		--verify --broadcast
+
 # Invariants
 echidna:
 	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus

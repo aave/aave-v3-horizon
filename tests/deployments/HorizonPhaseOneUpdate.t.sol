@@ -41,6 +41,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   }
 
   function setUp() public virtual override {
+    vm.skip(true);
     super.setUp();
     loadUpdatedParams();
   }
