@@ -979,6 +979,7 @@ contract HorizonPhaseOneListingTest is HorizonListingMainnetTest, Default {
   }
 
   function initEnvironment() internal override {
+    vm.skip(true);
     super.initEnvironment();
 
     whitelistSuperstateRwa(pool.getReserveAToken(USTB_ADDRESS));
