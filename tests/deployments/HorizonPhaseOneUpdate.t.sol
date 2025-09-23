@@ -53,7 +53,6 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
   }
 
   function setUp() public virtual override {
-    vm.skip(true, 'HorizonPhaseOneUpdateTest');
     vm.createSelectFork('mainnet', 23220361);
     initEnvironment();
     loadUpdatedParams();
@@ -350,7 +349,6 @@ contract HorizonPhaseOneUpdatePostDeploymentForkTest is HorizonPhaseOneUpdateTes
 // can be run after payload has been executed
 contract HorizonPhaseOneUpdatePostExecutionForkTest is HorizonPhaseOneUpdateTest {
   function setUp() public override {
-    vm.skip(true, 'HorizonPhaseOneUpdatePostExecutionForkTest');
     vm.createSelectFork('mainnet', 23229020);
     initEnvironment();
     loadUpdatedParams();
