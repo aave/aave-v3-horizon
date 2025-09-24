@@ -94,15 +94,15 @@ abstract contract HorizonBaseTest is Test {
 
   function initEnvironment() internal virtual {
     pool = IPool(AaveV3HorizonEthereum.POOL);
-    // revenueSplitter = IRevenueSplitter(deploymentInfo.revenueSplitter);
-    // defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
-    //   AaveV3HorizonEthereum.DEFAULT_INTEREST_RATE_STRATEGY()
-    // );
+    revenueSplitter = IRevenueSplitter(AaveV3HorizonEthereum.REVENUE_SPLITTER);
+    defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
+      AaveV3HorizonEthereum.DEFAULT_INTEREST_RATE_STRATEGY
+    );
     // rwaATokenManager = deploymentInfo.rwaATokenManager;
-    // aTokenImpl = AaveV3HorizonEthereum.ATOKEN_IMPLEMENTATION();
-    // rwaATokenImpl = AaveV3HorizonEthereum.RWA_ATOKEN_IMPLEMENTATION();
-    // variableDebtTokenImpl = AaveV3HorizonEthereum.VARIABLE_DEBT_TOKEN_IMPLEMENTATION();
-    // poolAdmin = AaveV3HorizonEthereum.POOL_ADMIN();
+    aTokenImpl = AaveV3HorizonEthereum.ATOKEN_IMPLEMENTATION;
+    rwaATokenImpl = AaveV3HorizonEthereum.RWA_ATOKEN_IMPLEMENTATION;
+    variableDebtTokenImpl = AaveV3HorizonEthereum.VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
+    // poolAdmin = AaveV3HorizonEthereum.POOL_ADMIN;
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual {
@@ -137,7 +137,7 @@ abstract contract HorizonBaseTest is Test {
     assertEq(config.getLiquidationBonus(), params.liquidationBonus, 'liquidationBonus');
     assertEq(config.getDebtCeiling(), params.debtCeiling, 'debtCeiling');
     assertEq(config.getLiquidationProtocolFee(), params.liqProtocolFee, 'liqProtocolFee');
-    assertEq(config.getPaused(), true, 'paused');
+    assertEq(config.getPaused(), false, 'paused');
   }
 
   function test_interestRateStrategy(address token, TokenListingParams memory params) private view {
@@ -262,8 +262,6 @@ abstract contract HorizonBaseTest is Test {
     EModeCategoryParams memory params
   ) internal {
     address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
-    vm.prank(poolAdmin);
-    IPoolConfigurator(poolConfigurator).setPoolPause(false);
 
     vm.prank(alice);
     pool.setUserEMode(eModeCategory);
@@ -321,8 +319,6 @@ abstract contract HorizonBaseTest is Test {
     address[] memory borrowableAssets
   ) internal {
     address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
-    vm.prank(poolAdmin);
-    IPoolConfigurator(poolConfigurator).setPoolPause(false);
 
     IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
     uint256 amountInBaseCurrency = 1e5 * 1e8;

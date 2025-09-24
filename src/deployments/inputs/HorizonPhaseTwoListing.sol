@@ -13,7 +13,7 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
   address public constant VBILL_ADDRESS = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
-  constructor() AaveV3Payload(IEngine(AaveV3HorizonEthereum.CONFIG_ENGINE)) {}
+  constructor(address configEngine) AaveV3Payload(IEngine(configEngine)) {}
 
   function eModeCategoriesUpdates()
     public

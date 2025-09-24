@@ -23,7 +23,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
       aTokenSymbol: 'aHorRwaVBILL',
       variableDebtTokenName: 'Aave Horizon RWA Variable Debt VBILL',
       variableDebtTokenSymbol: 'variableDebtHorRwaVBILL',
-      isRwa: false,
+      isRwa: true,
       hasPriceAdapter: false,
       oracle: VBILL_PRICE_FEED,
       underlyingPriceFeed: VBILL_PRICE_FEED,
@@ -90,6 +90,9 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
 
   function test_listing_VBILL() public {
     test_listing(VBILL_ADDRESS, VBILL_TOKEN_LISTING_PARAMS);
-    assertTrue(true);
+    // assertTrue(true);
+    // address token = VBILL_ADDRESS;
+    // address aToken = pool.getReserveAToken(token);
+    // console.log('atoken, treasury', aToken, IAToken(aToken).RESERVE_TREASURY_ADDRESS());
   }
 }
