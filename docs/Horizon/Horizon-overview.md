@@ -318,6 +318,12 @@ The Issuer's Transfer Agent must properly record this officially as a transfer o
 
 Exact configuration details for eMode, isolated mode, flashloan fees, and liquidity mining rewards are to be determined.
 
+## RWA Price Oracle Safeguards
+
+Unlike crypto-native assets priced by decentralized exchange markets, RWAs rely on a Net Asset Value (NAV) reported directly by the asset issuer. This introduces a critical risk vector: the potential for delayed, inaccurate, or malicious price reporting. A simple operational error or a malicious act could lead to an incorrect NAV being published on-chain, which could trigger faulty liquidations across the market. While an emergency steward can reactively freeze the reserve, this process introduces operational delays, creating a window where whitelisted liquidators could exploit a faulty price and cause irreparable harm to borrowers.
+
+Horizon implements a robust, automated safeguard directly at the Oracle level to mitigate this risk. In partnership with Chainlink and LlamaRisk, pre-defined upper and lower price bounds are configured for each RWA price feed at the Decentralized Oracle Network (DON) level. When an issuer reports a new NAV, the Chainlink DON validates it against these bounds before publishing it on-chain. If the reported NAV is within the bounds, the update is accepted. If it is outside the bounds, the DON rejects the update, and the oracle continues to report the last known valid price. This proactive mechanism prevents a faulty price from ever reaching the Horizon protocol, eliminating the risk of erroneous liquidations. Furthermore, any breach of these price bounds is paired with a time-sensitive reaction from Horizon's emergency steward to prevent new debt originations and additional exposure until the root cause analysis is performed.
+
 ## References
 
 - https://governance.aave.com/t/arfc-horizon-s-rwa-instance/21898
