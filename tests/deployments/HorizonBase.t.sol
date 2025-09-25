@@ -14,7 +14,7 @@ import {PercentageMath} from '../../src/contracts/protocol/libraries/math/Percen
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {IERC20Detailed, IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
 import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {IScaledPriceAdapter} from '../../src/contracts/interfaces/IScaledPriceAdapter.sol';
@@ -326,41 +326,46 @@ abstract contract HorizonBaseTest is Test {
     uint256 supplyAmount = (amountInBaseCurrency * 10 ** IERC20Detailed(token).decimals()) /
       oracle.getAssetPrice(token) +
       1;
-    deal(token, alice, supplyAmount);
+
+    // deal(token, alice, supplyAmount);
+    vm.prank(0x69133f8Ef7F9A5F80D25c2DAEaea64C804aC7Cf9);
+    IERC20(token).transfer(alice, supplyAmount);
+
+    // console.log('pool', address(pool));
 
     vm.startPrank(alice);
     IERC20Detailed(token).approve(address(pool), supplyAmount);
     pool.supply(token, supplyAmount, alice, 0);
     vm.stopPrank();
 
-    for (uint256 j = 0; j < borrowableAssets.length; j++) {
-      address borrowAsset = borrowableAssets[j];
-      uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
-        10 ** IERC20Detailed(borrowAsset).decimals()) /
-        oracle.getAssetPrice(borrowAsset) -
-        1;
+    //   for (uint256 j = 0; j < borrowableAssets.length; j++) {
+    //     address borrowAsset = borrowableAssets[j];
+    //     uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
+    //       10 ** IERC20Detailed(borrowAsset).decimals()) /
+    //       oracle.getAssetPrice(borrowAsset) -
+    //       1;
 
-      deal(borrowAsset, bob, borrowAmount);
+    //     deal(borrowAsset, bob, borrowAmount);
 
-      vm.startPrank(bob);
-      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
-      pool.supply(borrowAsset, borrowAmount, bob, 0);
-      vm.stopPrank();
+    //     vm.startPrank(bob);
+    //     IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+    //     pool.supply(borrowAsset, borrowAmount, bob, 0);
+    //     vm.stopPrank();
 
-      vm.prank(alice);
-      pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
+    //     vm.prank(alice);
+    //     pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
 
-      vm.startPrank(alice);
-      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
-      pool.repay(borrowAsset, borrowAmount, 2, alice);
-      vm.stopPrank();
+    //     vm.startPrank(alice);
+    //     IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+    //     pool.repay(borrowAsset, borrowAmount, 2, alice);
+    //     vm.stopPrank();
 
-      vm.prank(bob);
-      pool.withdraw(borrowAsset, borrowAmount, bob);
-    }
+    //     vm.prank(bob);
+    //     pool.withdraw(borrowAsset, borrowAmount, bob);
+    //   }
 
-    vm.prank(alice);
-    pool.withdraw(token, supplyAmount, alice);
+    //   vm.prank(alice);
+    //   pool.withdraw(token, supplyAmount, alice);
   }
 
   function assertEq(

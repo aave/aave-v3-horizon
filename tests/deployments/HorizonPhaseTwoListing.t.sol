@@ -89,6 +89,22 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   }
 
   function test_listing_VBILL() public {
+    whitelistVbillRwa(alice);
+    whitelistVbillRwa(pool.getReserveAToken(VBILL_ADDRESS));
+
+    // deal(VBILL_ADDRESS, alice, 1e10);
+
+    // vm.prank(alice);
+    // IERC20(VBILL_ADDRESS).approve(address(pool), 1e10);
+
+    // vm.prank(address(pool));
+    // IERC20(VBILL_ADDRESS).transferFrom(alice, 0x69133f8Ef7F9A5F80D25c2DAEaea64C804aC7Cf9, 1000);
+
+    // vm.prank(alice);
+    // pool.supply(VBILL_ADDRESS, 1e10, alice, 0);
+
+    // console.log('balance of alice', IERC20(VBILL_ADDRESS).balanceOf(alice));
+
     test_listing(VBILL_ADDRESS, VBILL_TOKEN_LISTING_PARAMS);
     // assertTrue(true);
     // address token = VBILL_ADDRESS;
@@ -96,5 +112,38 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     // console.log('atoken, treasury', aToken, IAToken(aToken).RESERVE_TREASURY_ADDRESS());
   }
 
-  function whitelistVbillRwa(address addressToWhitelist) internal {}
+  function whitelistVbillRwa(address addressToWhitelist) internal {
+    (bool success, bytes memory data) = VBILL_ADDRESS.call(
+      abi.encodeWithSignature('REGISTRY_SERVICE()')
+    );
+    require(success, 'Failed to call REGISTRY_SERVICE()');
+    (success, data) = VBILL_ADDRESS.call(
+      abi.encodeWithSignature('getDSService(uint256)', abi.decode(data, (uint256)))
+    );
+    require(success, 'Failed to call getDSService()');
+    address registryService = abi.decode(data, (address));
+
+    address admin = 0xDA8e2d926D28a86aeE933d928357583aae5D3b85;
+    (success, data) = VBILL_ADDRESS.call(abi.encodeWithSignature('TRUST_SERVICE()'));
+    require(success, 'Failed to call TRUST_SERVICE()');
+    (success, data) = VBILL_ADDRESS.call(
+      abi.encodeWithSignature('getDSService(uint256)', abi.decode(data, (uint256)))
+    );
+    address trustService = abi.decode(data, (address));
+    (success, data) = trustService.call(abi.encodeWithSignature('getRole(address)', admin));
+    // console.log('data', abi.decode(data, (uint8)));
+    // console.log('trustService', trustService);
+    require(success, 'Failed to call getRole()');
+    require(abi.decode(data, (uint8)) != 0, 'Admin does not have role');
+
+    vm.prank(admin);
+    (success, ) = registryService.call(
+      abi.encodeWithSignature(
+        'addWallet(address,string)',
+        addressToWhitelist,
+        'f27e20ca73314651b387da0aa9116f30' // retrieved from on-chain tx
+      )
+    );
+    require(success, 'Failed to call addWallet()');
+  }
 }
