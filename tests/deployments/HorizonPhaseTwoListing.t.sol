@@ -48,6 +48,12 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
       initialDeposit: 0
     });
 
+  function setUp() public virtual {
+    vm.createSelectFork('mainnet');
+    initEnvironment();
+    loadDeployment();
+  }
+
   function loadDeployment() internal virtual {
     HorizonInput horizonInput = new HorizonInput();
     address horizonPhaseTwoListing = new DeployHorizonPhaseTwoPayload().run();
@@ -82,12 +88,6 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     }
   }
 
-  function setUp() public virtual {
-    vm.createSelectFork('mainnet');
-    initEnvironment();
-    loadDeployment();
-  }
-
   function test_listing_VBILL() public {
     test_listing(VBILL_ADDRESS, VBILL_TOKEN_LISTING_PARAMS);
     // assertTrue(true);
@@ -95,4 +95,6 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     // address aToken = pool.getReserveAToken(token);
     // console.log('atoken, treasury', aToken, IAToken(aToken).RESERVE_TREASURY_ADDRESS());
   }
+
+  function whitelistVbillRwa(address addressToWhitelist) internal {}
 }
