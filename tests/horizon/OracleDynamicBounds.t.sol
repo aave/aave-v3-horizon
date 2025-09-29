@@ -44,7 +44,7 @@ contract OracleDynamicBoundsTest is Test {
   }
 
   mapping(address => ExpectedParams) internal expectedParams; // asset => expected params
-  mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator address
+  mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator
 
   IAaveOracle internal oracle;
   function setUp() public {
@@ -155,6 +155,7 @@ contract OracleDynamicBoundsTest is Test {
       isActionTakingEnabled: false
     });
 
+  // check that param registry admin are set properly
   function test_registry_admin() external {
     (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
       abi.encodeWithSignature('owner()')
@@ -208,6 +209,7 @@ contract OracleDynamicBoundsTest is Test {
     test_new_aggregator(asset);
   }
 
+  // test param registry params are configured properly
   function test_registry_params(address asset) internal {
     bool success;
     bytes memory data;
@@ -247,12 +249,12 @@ contract OracleDynamicBoundsTest is Test {
     assertEq(isActionTakingEnabled, expectedParam.isActionTakingEnabled, 'isActionTakingEnabled');
   }
 
-  /// test that the oracle source from horizon adapter/oracle source is the same as the oracle address from the param registry
+  /// test that the oracle source from horizon protocol adapter is the same as the oracle address from the param registry
   function test_horizon_adapter(address asset, address oracleSource, bool isAdapter) internal {
     bool success;
     bytes memory data;
     if (isAdapter) {
-      // if adapter, get oracle source from horizon adapter source
+      // if adapter, get oracle source from horizon adapter
       (success, data) = oracleSource.call(abi.encodeWithSignature('source()'));
       require(success, 'Failed to call source()');
       oracleSource = abi.decode(data, (address));
@@ -261,7 +263,7 @@ contract OracleDynamicBoundsTest is Test {
     assertEq(oracleSource, oracle, 'source');
   }
 
-  // read look back data from param registry
+  // test look back data from param registry is valid
   function test_lookback_data(address asset) internal {
     bool success;
     bytes memory data;
@@ -297,9 +299,8 @@ contract OracleDynamicBoundsTest is Test {
     assertGt(answeredInRound, 0, 'lookback answeredInRound');
   }
 
+  // test new aggregator data is valid; enough rounds for lookback window and valid answers
   function test_new_aggregator(address asset) internal {
-    // new aggregator data
-
     vm.prank(newAggregators[asset].readAdmin); // has access to price feed
     (
       uint80 roundId,
