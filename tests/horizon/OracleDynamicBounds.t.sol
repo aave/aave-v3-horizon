@@ -280,21 +280,21 @@ contract OracleDynamicBoundsTest is Test {
       uint80 answeredInRound
     ) = abi.decode(data, (uint80, int256, uint256, uint256, uint80));
 
-    assertGt(roundId, 0, 'roundId');
-    assertGt(answer, 0, 'answer');
-    assertApproxEqRel(
+    assertGt(roundId, 0, 'lookback roundId');
+    assertGt(answer, 0, 'lookback answer');
+    assertApproxEqAbs(
       startedAt,
       vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1e15,
-      'startedAt'
+      1 days * 1.5, // account for differences in update times throughout the day
+      'lookback startedAt'
     );
-    assertApproxEqRel(
+    assertApproxEqAbs(
       updatedAt,
       vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1e15,
-      'updatedAt'
+      1 days * 1.5, // account for differences in update times throughout the day
+      'lookback updatedAt'
     );
-    assertGt(answeredInRound, 0, 'answeredInRound');
+    assertGt(answeredInRound, 0, 'lookback answeredInRound');
   }
 
   function test_new_aggregator(address asset) internal {
@@ -311,18 +311,8 @@ contract OracleDynamicBoundsTest is Test {
 
     assertGt(roundId, expectedParams[asset].lookbackWindowSize, 'roundId');
     assertGt(answer, 0, 'answer');
-    assertApproxEqRel(
-      startedAt,
-      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1e15,
-      'startedAt'
-    );
-    assertApproxEqRel(
-      updatedAt,
-      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1e15,
-      'updatedAt'
-    );
+    assertApproxEqAbs(startedAt, vm.getBlockTimestamp(), 1 days, 'startedAt');
+    assertApproxEqAbs(updatedAt, vm.getBlockTimestamp(), 1 days, 'updatedAt');
     assertGt(answeredInRound, expectedParams[asset].lookbackWindowSize, 'answeredInRound');
   }
 
