@@ -10,8 +10,7 @@ import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/Ag
 
 import {AaveV3HorizonEthereum} from './utils/AaveV3HorizonEthereum.sol';
 
-/// forge-config: default.evm_version = "cancun"
-contract OracleDynamicBoundsTest is Test {
+abstract contract OracleDynamicBoundsTestBase is Test {
   address constant USTB_NEW_AGGREGATOR = 0x267D0DD05fbc989565C521e0B8882f61027FF32A;
   address constant USCC_NEW_AGGREGATOR = 0x2d7Cd12f24bD28684847bF3e4317899a4Db53c58;
   address constant USYC_NEW_AGGREGATOR = 0x3C405e1FE8a6BE5d9b714B8C88Ad913F236B1639;
@@ -46,46 +45,159 @@ contract OracleDynamicBoundsTest is Test {
   mapping(address => ExpectedParams) internal expectedParams; // asset => expected params
   mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator
 
-  IAaveOracle internal oracle;
-  function setUp() public {
-    vm.createSelectFork('mainnet', 23469081);
-    _initEnvironment();
+  IAaveOracle internal aaveOracle;
+
+  function test_asset(address asset, address oracleSource, bool isAdapter) internal {
+    oracleSource = test_horizon_adapter(asset, oracleSource, isAdapter);
+    test_registry_params(asset);
+    test_lookback_data(asset);
+    int256 newAggregatorPrice = test_new_aggregator(asset);
+    test_matching_price_data(oracleSource, newAggregatorPrice);
   }
 
-  function _initEnvironment() internal {
-    expectedParams[AaveV3HorizonEthereum.USTB_ADDRESS] = USTB_EXPECTED_PARAMS;
-    expectedParams[AaveV3HorizonEthereum.USCC_ADDRESS] = USCC_EXPECTED_PARAMS;
-    expectedParams[AaveV3HorizonEthereum.USYC_ADDRESS] = USYC_EXPECTED_PARAMS;
-    expectedParams[AaveV3HorizonEthereum.JTRSY_ADDRESS] = JTRSY_EXPECTED_PARAMS;
-    expectedParams[AaveV3HorizonEthereum.JAAA_ADDRESS] = JAAA_EXPECTED_PARAMS;
-    expectedParams[AaveV3HorizonEthereum.VBILL_ADDRESS] = VBILL_EXPECTED_PARAMS;
+  // check that the price from the oracle source is the same as the price from the new aggregator
+  function test_matching_price_data(address oracleSource, int256 newAggregatorPrice) internal {
+    // current horizon feed price
+    (bool success, bytes memory data) = oracleSource.call(
+      abi.encodeWithSignature('latestAnswer()')
+    );
+    require(success, 'Failed to call latestAnswer()');
+    int256 price = abi.decode(data, (int256));
 
-    newAggregators[AaveV3HorizonEthereum.USTB_ADDRESS] = NewAggregator({
-      aggregator: USTB_NEW_AGGREGATOR,
-      readAdmin: USTB_READ_ADMIN
-    });
-    newAggregators[AaveV3HorizonEthereum.USCC_ADDRESS] = NewAggregator({
-      aggregator: USCC_NEW_AGGREGATOR,
-      readAdmin: USCC_READ_ADMIN
-    });
-    newAggregators[AaveV3HorizonEthereum.USYC_ADDRESS] = NewAggregator({
-      aggregator: USYC_NEW_AGGREGATOR,
-      readAdmin: USYC_READ_ADMIN
-    });
-    newAggregators[AaveV3HorizonEthereum.JTRSY_ADDRESS] = NewAggregator({
-      aggregator: JTRSY_NEW_AGGREGATOR,
-      readAdmin: JTRSY_READ_ADMIN
-    });
-    newAggregators[AaveV3HorizonEthereum.JAAA_ADDRESS] = NewAggregator({
-      aggregator: JAAA_NEW_AGGREGATOR,
-      readAdmin: JAAA_READ_ADMIN
-    });
-    newAggregators[AaveV3HorizonEthereum.VBILL_ADDRESS] = NewAggregator({
-      aggregator: VBILL_NEW_AGGREGATOR,
-      readAdmin: VBILL_READ_ADMIN
-    });
+    assertApproxEqRel(price, newAggregatorPrice, 1e12, 'price');
+  }
 
-    oracle = IAaveOracle(IPool(AaveV3HorizonEthereum.POOL).ADDRESSES_PROVIDER().getPriceOracle());
+  // test param registry params are configured properly
+  function test_registry_params(address asset) internal {
+    bool success;
+    bytes memory data;
+
+    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+      abi.encodeWithSignature('assetExists(address)', asset)
+    );
+    require(success, 'Failed to call assetExists()');
+    bool exists = abi.decode(data, (bool));
+    assertEq(exists, true, 'assetExists');
+
+    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+      abi.encodeWithSignature('getParametersForAsset(address)', asset)
+    );
+    require(success, 'Failed to call getParametersForAsset()');
+
+    (
+      uint64 maxExpectedApy,
+      uint32 upperBoundTolerance,
+      uint32 lowerBoundTolerance,
+      uint32 maxDiscount,
+      uint80 lookbackWindowSize,
+      bool isUpperBoundEnabled,
+      bool isLowerBoundEnabled,
+      bool isActionTakingEnabled
+    ) = abi.decode(data, (uint64, uint32, uint32, uint32, uint80, bool, bool, bool));
+
+    ExpectedParams memory expectedParam = expectedParams[asset];
+
+    assertEq(maxExpectedApy, expectedParam.maxExpectedApy, 'maxExpectedApy');
+    assertEq(upperBoundTolerance, expectedParam.upperBoundTolerance, 'upperBoundTolerance');
+    assertEq(lowerBoundTolerance, expectedParam.lowerBoundTolerance, 'lowerBoundTolerance');
+    assertEq(maxDiscount, expectedParam.maxDiscount, 'maxDiscount');
+    assertEq(lookbackWindowSize, expectedParam.lookbackWindowSize, 'lookbackWindowSize');
+    assertEq(isUpperBoundEnabled, expectedParam.isUpperBoundEnabled, 'isUpperBoundEnabled');
+    assertEq(isLowerBoundEnabled, expectedParam.isLowerBoundEnabled, 'isLowerBoundEnabled');
+    assertEq(isActionTakingEnabled, expectedParam.isActionTakingEnabled, 'isActionTakingEnabled');
+  }
+
+  /// test that the oracle source from horizon protocol adapter is the same as the oracle address from the param registry
+  function test_horizon_adapter(
+    address asset,
+    address oracleSource,
+    bool isAdapter
+  ) internal returns (address) {
+    bool success;
+    bytes memory data;
+    if (isAdapter) {
+      // if adapter, get oracle source from horizon adapter
+      (success, data) = oracleSource.call(abi.encodeWithSignature('source()'));
+      require(success, 'Failed to call source()');
+      oracleSource = abi.decode(data, (address));
+    }
+    address paramRegistryOracle = _getParamRegistryOracle(asset);
+    assertEq(paramRegistryOracle, oracleSource, 'paramRegistryOracle');
+
+    return oracleSource;
+  }
+
+  // test look back data from param registry is valid
+  function test_lookback_data(address asset) internal {
+    bool success;
+    bytes memory data;
+
+    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+      abi.encodeWithSignature('getLookbackData(address)', asset)
+    );
+    require(success, 'Failed to call getLookbackData()');
+
+    // reads from old aggregator data
+    (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    ) = abi.decode(data, (uint80, int256, uint256, uint256, uint80));
+
+    assertGt(roundId, 0, 'lookback roundId');
+    assertGt(answer, 0, 'lookback answer');
+    assertApproxEqAbs(
+      startedAt,
+      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
+      1 days * 1.5, // account for differences in update times throughout the day
+      'lookback startedAt'
+    );
+    assertApproxEqAbs(
+      updatedAt,
+      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
+      1 days * 1.5, // account for differences in update times throughout the day
+      'lookback updatedAt'
+    );
+    assertGt(answeredInRound, 0, 'lookback answeredInRound');
+  }
+
+  // test new aggregator data is valid; enough rounds for lookback window and valid answers
+  function test_new_aggregator(address asset) internal returns (int256) {
+    vm.prank(newAggregators[asset].readAdmin); // has access to price feed
+    (
+      uint80 roundId,
+      int256 answer,
+      uint256 startedAt,
+      uint256 updatedAt,
+      uint80 answeredInRound
+    ) = AggregatorInterface(newAggregators[asset].aggregator).latestRoundData();
+
+    assertGt(roundId, expectedParams[asset].lookbackWindowSize, 'roundId');
+    assertGt(answer, 0, 'answer');
+    assertApproxEqAbs(startedAt, vm.getBlockTimestamp(), 1 days, 'startedAt');
+    assertApproxEqAbs(updatedAt, vm.getBlockTimestamp(), 1 days, 'updatedAt');
+    assertGt(answeredInRound, expectedParams[asset].lookbackWindowSize, 'answeredInRound');
+
+    return answer;
+  }
+
+  // read oracle address from param registry
+  function _getParamRegistryOracle(address asset) internal returns (address) {
+    (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+      abi.encodeWithSignature('getOracle(address)', asset)
+    );
+    require(success, 'Failed to call getOracle()');
+    return abi.decode(data, (address));
+  }
+}
+
+/// forge-config: default.evm_version = "cancun"
+contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
+  function setUp() public virtual {
+    vm.createSelectFork('mainnet', 23469081);
+    _initEnvironment();
   }
 
   ExpectedParams internal USTB_EXPECTED_PARAMS =
@@ -155,6 +267,44 @@ contract OracleDynamicBoundsTest is Test {
       isActionTakingEnabled: false
     });
 
+  function _initEnvironment() internal virtual {
+    expectedParams[AaveV3HorizonEthereum.USTB_ADDRESS] = USTB_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.USCC_ADDRESS] = USCC_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.USYC_ADDRESS] = USYC_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.JTRSY_ADDRESS] = JTRSY_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.JAAA_ADDRESS] = JAAA_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.VBILL_ADDRESS] = VBILL_EXPECTED_PARAMS;
+
+    newAggregators[AaveV3HorizonEthereum.USTB_ADDRESS] = NewAggregator({
+      aggregator: USTB_NEW_AGGREGATOR,
+      readAdmin: USTB_READ_ADMIN
+    });
+    newAggregators[AaveV3HorizonEthereum.USCC_ADDRESS] = NewAggregator({
+      aggregator: USCC_NEW_AGGREGATOR,
+      readAdmin: USCC_READ_ADMIN
+    });
+    newAggregators[AaveV3HorizonEthereum.USYC_ADDRESS] = NewAggregator({
+      aggregator: USYC_NEW_AGGREGATOR,
+      readAdmin: USYC_READ_ADMIN
+    });
+    newAggregators[AaveV3HorizonEthereum.JTRSY_ADDRESS] = NewAggregator({
+      aggregator: JTRSY_NEW_AGGREGATOR,
+      readAdmin: JTRSY_READ_ADMIN
+    });
+    newAggregators[AaveV3HorizonEthereum.JAAA_ADDRESS] = NewAggregator({
+      aggregator: JAAA_NEW_AGGREGATOR,
+      readAdmin: JAAA_READ_ADMIN
+    });
+    newAggregators[AaveV3HorizonEthereum.VBILL_ADDRESS] = NewAggregator({
+      aggregator: VBILL_NEW_AGGREGATOR,
+      readAdmin: VBILL_READ_ADMIN
+    });
+
+    aaveOracle = IAaveOracle(
+      IPool(AaveV3HorizonEthereum.POOL).ADDRESSES_PROVIDER().getPriceOracle()
+    );
+  }
+
   // check that param registry admin are set properly
   function test_registry_admin() external {
     (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
@@ -172,157 +322,33 @@ contract OracleDynamicBoundsTest is Test {
     assertEq(updater, AaveV3HorizonEthereum.HORIZON_OPS, 'updater');
   }
 
-  function test_ustb() external {
-    address oracleSource = oracle.getSourceOfAsset(AaveV3HorizonEthereum.USTB_ADDRESS);
+  function test_ustb() external virtual {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USTB_ADDRESS);
     test_asset(AaveV3HorizonEthereum.USTB_ADDRESS, oracleSource, true);
   }
 
-  function test_uscc() external {
-    address oracleSource = oracle.getSourceOfAsset(AaveV3HorizonEthereum.USCC_ADDRESS);
+  function test_uscc() external virtual {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USCC_ADDRESS);
     test_asset(AaveV3HorizonEthereum.USCC_ADDRESS, oracleSource, true);
   }
 
-  function test_usyc() external {
-    address oracleSource = oracle.getSourceOfAsset(AaveV3HorizonEthereum.USYC_ADDRESS);
+  function test_usyc() external virtual {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USYC_ADDRESS);
     test_asset(AaveV3HorizonEthereum.USYC_ADDRESS, oracleSource, false);
   }
 
-  function test_jtrsy() external {
-    address oracleSource = oracle.getSourceOfAsset(AaveV3HorizonEthereum.JTRSY_ADDRESS);
+  function test_jtrsy() external virtual {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JTRSY_ADDRESS);
     test_asset(AaveV3HorizonEthereum.JTRSY_ADDRESS, oracleSource, true);
   }
 
-  function test_jaaa() external {
-    address oracleSource = oracle.getSourceOfAsset(AaveV3HorizonEthereum.JAAA_ADDRESS);
+  function test_jaaa() external virtual {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JAAA_ADDRESS);
     test_asset(AaveV3HorizonEthereum.JAAA_ADDRESS, oracleSource, true);
   }
 
-  function test_vbill() external {
+  function test_vbill() external virtual {
     // VBILL not deployed yet, get price feed directly from lib
     test_asset(AaveV3HorizonEthereum.VBILL_ADDRESS, AaveV3HorizonEthereum.VBILL_PRICE_FEED, false);
-  }
-
-  function test_asset(address asset, address oracleSource, bool isAdapter) internal {
-    test_horizon_adapter(asset, oracleSource, isAdapter);
-    test_registry_params(asset);
-    test_lookback_data(asset);
-    test_new_aggregator(asset);
-  }
-
-  // test param registry params are configured properly
-  function test_registry_params(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('assetExists(address)', asset)
-    );
-    require(success, 'Failed to call assetExists()');
-    bool exists = abi.decode(data, (bool));
-    assertEq(exists, true, 'assetExists');
-
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getParametersForAsset(address)', asset)
-    );
-    require(success, 'Failed to call getParametersForAsset()');
-
-    ExpectedParams memory expectedParam = expectedParams[asset];
-
-    (
-      uint64 maxExpectedApy,
-      uint32 upperBoundTolerance,
-      uint32 lowerBoundTolerance,
-      uint32 maxDiscount,
-      uint80 lookbackWindowSize,
-      bool isUpperBoundEnabled,
-      bool isLowerBoundEnabled,
-      bool isActionTakingEnabled
-    ) = abi.decode(data, (uint64, uint32, uint32, uint32, uint80, bool, bool, bool));
-
-    assertEq(maxExpectedApy, expectedParam.maxExpectedApy, 'maxExpectedApy');
-    assertEq(upperBoundTolerance, expectedParam.upperBoundTolerance, 'upperBoundTolerance');
-    assertEq(lowerBoundTolerance, expectedParam.lowerBoundTolerance, 'lowerBoundTolerance');
-    assertEq(maxDiscount, expectedParam.maxDiscount, 'maxDiscount');
-    assertEq(lookbackWindowSize, expectedParam.lookbackWindowSize, 'lookbackWindowSize');
-    assertEq(isUpperBoundEnabled, expectedParam.isUpperBoundEnabled, 'isUpperBoundEnabled');
-    assertEq(isLowerBoundEnabled, expectedParam.isLowerBoundEnabled, 'isLowerBoundEnabled');
-    assertEq(isActionTakingEnabled, expectedParam.isActionTakingEnabled, 'isActionTakingEnabled');
-  }
-
-  /// test that the oracle source from horizon protocol adapter is the same as the oracle address from the param registry
-  function test_horizon_adapter(address asset, address oracleSource, bool isAdapter) internal {
-    bool success;
-    bytes memory data;
-    if (isAdapter) {
-      // if adapter, get oracle source from horizon adapter
-      (success, data) = oracleSource.call(abi.encodeWithSignature('source()'));
-      require(success, 'Failed to call source()');
-      oracleSource = abi.decode(data, (address));
-    }
-    address oracle = _getParamRegistryOracle(asset);
-    assertEq(oracleSource, oracle, 'source');
-  }
-
-  // test look back data from param registry is valid
-  function test_lookback_data(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getLookbackData(address)', asset)
-    );
-    require(success, 'Failed to call getLookbackData()');
-
-    // reads from old aggregator data
-    (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    ) = abi.decode(data, (uint80, int256, uint256, uint256, uint80));
-
-    assertGt(roundId, 0, 'lookback roundId');
-    assertGt(answer, 0, 'lookback answer');
-    assertApproxEqAbs(
-      startedAt,
-      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1 days * 1.5, // account for differences in update times throughout the day
-      'lookback startedAt'
-    );
-    assertApproxEqAbs(
-      updatedAt,
-      vm.getBlockTimestamp() - expectedParams[asset].lookbackWindowSize * 1 days, // within expected lookback window
-      1 days * 1.5, // account for differences in update times throughout the day
-      'lookback updatedAt'
-    );
-    assertGt(answeredInRound, 0, 'lookback answeredInRound');
-  }
-
-  // test new aggregator data is valid; enough rounds for lookback window and valid answers
-  function test_new_aggregator(address asset) internal {
-    vm.prank(newAggregators[asset].readAdmin); // has access to price feed
-    (
-      uint80 roundId,
-      int256 answer,
-      uint256 startedAt,
-      uint256 updatedAt,
-      uint80 answeredInRound
-    ) = AggregatorInterface(newAggregators[asset].aggregator).latestRoundData();
-
-    assertGt(roundId, expectedParams[asset].lookbackWindowSize, 'roundId');
-    assertGt(answer, 0, 'answer');
-    assertApproxEqAbs(startedAt, vm.getBlockTimestamp(), 1 days, 'startedAt');
-    assertApproxEqAbs(updatedAt, vm.getBlockTimestamp(), 1 days, 'updatedAt');
-    assertGt(answeredInRound, expectedParams[asset].lookbackWindowSize, 'answeredInRound');
-  }
-
-  // read oracle address from param registry
-  function _getParamRegistryOracle(address asset) internal returns (address) {
-    (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getOracle(address)', asset)
-    );
-    require(success, 'Failed to call getOracle()');
-    return abi.decode(data, (address));
   }
 }
