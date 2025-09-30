@@ -352,3 +352,45 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
     test_asset(AaveV3HorizonEthereum.VBILL_ADDRESS, AaveV3HorizonEthereum.VBILL_PRICE_FEED, false);
   }
 }
+
+// /// forge-config: default.evm_version = "cancun"
+// contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
+//   function setUp() public virtual override {
+//     vm.createSelectFork('mainnet');
+//   }
+
+//   function test_ustb() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.USTB_ADDRESS, USTB_NEW_AGGREGATOR);
+//   }
+
+//   function test_uscc() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.USCC_ADDRESS, USCC_NEW_AGGREGATOR);
+//   }
+
+//   function test_usyc() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.USYC_ADDRESS, USYC_NEW_AGGREGATOR);
+//   }
+
+//   function test_jtrsy() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.JTRSY_ADDRESS, JTRSY_NEW_AGGREGATOR);
+//   }
+
+//   function test_jaaa() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.JAAA_ADDRESS, JAAA_NEW_AGGREGATOR);
+//   }
+
+//   function test_vbill() public virtual override {
+//     test_aggregator_from_registry(AaveV3HorizonEthereum.VBILL_ADDRESS, VBILL_NEW_AGGREGATOR);
+//   }
+
+//   // check that oracle from param registry points to new aggregator
+//   function test_aggregator_from_registry(address asset, address newAggregator) public {
+//     address paramRegistryOracle = _getParamRegistryOracle(asset);
+//     (bool success, bytes memory data) = paramRegistryOracle.call(
+//       abi.encodeWithSignature('aggregator()')
+//     );
+//     require(success, 'Failed to call aggregator()');
+//     address aggregator = abi.decode(data, (address));
+//     assertEq(aggregator, newAggregator, 'aggregator');
+//   }
+// }
