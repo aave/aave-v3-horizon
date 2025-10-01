@@ -344,30 +344,51 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
 contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
   function setUp() public virtual override {
     vm.createSelectFork('mainnet', 23483206);
+    _initEnvironment();
   }
 
   function test_ustb() public virtual override {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USTB_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USTB_ADDRESS, oracleSource);
     test_aggregator_from_registry(AaveV3HorizonEthereum.USTB_ADDRESS, USTB_NEW_AGGREGATOR);
   }
 
   function test_uscc() public virtual override {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USCC_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USCC_ADDRESS, oracleSource);
     test_aggregator_from_registry(AaveV3HorizonEthereum.USCC_ADDRESS, USCC_NEW_AGGREGATOR);
   }
 
   function test_usyc() public virtual override {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USYC_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USYC_ADDRESS, oracleSource);
     test_aggregator_from_registry(AaveV3HorizonEthereum.USYC_ADDRESS, USYC_NEW_AGGREGATOR);
   }
 
   function test_jtrsy() public virtual override {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JTRSY_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.JTRSY_ADDRESS, oracleSource);
     test_aggregator_from_registry(AaveV3HorizonEthereum.JTRSY_ADDRESS, JTRSY_NEW_AGGREGATOR);
   }
 
   function test_jaaa() public virtual override {
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JAAA_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.JAAA_ADDRESS, oracleSource);
     test_aggregator_from_registry(AaveV3HorizonEthereum.JAAA_ADDRESS, JAAA_NEW_AGGREGATOR);
   }
 
   function test_vbill() public virtual override {
+    _printAssetPrice(AaveV3HorizonEthereum.VBILL_ADDRESS, AaveV3HorizonEthereum.VBILL_PRICE_FEED);
     test_aggregator_from_registry(AaveV3HorizonEthereum.VBILL_ADDRESS, VBILL_NEW_AGGREGATOR);
+  }
+
+  function _printAssetPrice(address asset, address oracleSource) internal {
+    (bool success, bytes memory data) = oracleSource.call(
+      abi.encodeWithSignature('latestAnswer()')
+    );
+    require(success, 'Failed to call latestAnswer()');
+    int256 price = abi.decode(data, (int256));
+    console.log('asset %s price %8e', asset, uint256(price));
   }
 
   // check that oracle from param registry points to new aggregator
