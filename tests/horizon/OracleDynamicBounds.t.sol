@@ -18,14 +18,6 @@ abstract contract OracleDynamicBoundsTestBase is Test {
   address constant JAAA_NEW_AGGREGATOR = 0x3a8E8491236368a582b651786bEdA49BD5c3BA7B;
   address constant VBILL_NEW_AGGREGATOR = 0x04d81C346252E31Ee888393AF6E2037a9a4d70Af;
 
-  // read admin addresses found on-chain
-  address constant USTB_READ_ADMIN = 0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf;
-  address constant USCC_READ_ADMIN = 0x69D55D504BC9556E377b340D19818E736bbB318b;
-  address constant USYC_READ_ADMIN = 0x69D55D504BC9556E377b340D19818E736bbB318b;
-  address constant JTRSY_READ_ADMIN = 0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf;
-  address constant JAAA_READ_ADMIN = 0x69D55D504BC9556E377b340D19818E736bbB318b;
-  address constant VBILL_READ_ADMIN = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
-
   struct ExpectedParams {
     uint64 maxExpectedApy;
     uint32 upperBoundTolerance;
@@ -39,7 +31,6 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   struct NewAggregator {
     address aggregator;
-    address readAdmin;
   }
 
   mapping(address => ExpectedParams) internal expectedParams; // asset => expected params
@@ -165,7 +156,8 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // test new aggregator data is valid; enough rounds for lookback window and valid answers
   function test_new_aggregator(address asset) internal returns (int256) {
-    vm.prank(newAggregators[asset].readAdmin); // has access to price feed
+    address paramRegistryOracle = _getParamRegistryOracle(asset);
+    vm.startPrank(paramRegistryOracle); // has access to price feed
     (
       uint80 roundId,
       int256 answer,
@@ -173,6 +165,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
       uint256 updatedAt,
       uint80 answeredInRound
     ) = AggregatorInterface(newAggregators[asset].aggregator).latestRoundData();
+    vm.stopPrank();
 
     assertGt(roundId, expectedParams[asset].lookbackWindowSize, 'roundId');
     assertGt(answer, 0, 'answer');
@@ -196,7 +189,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 /// forge-config: default.evm_version = "cancun"
 contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
   function setUp() public virtual {
-    vm.createSelectFork('mainnet', 23469081);
+    vm.createSelectFork('mainnet', 23478406);
     _initEnvironment();
   }
 
@@ -276,28 +269,22 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
     expectedParams[AaveV3HorizonEthereum.VBILL_ADDRESS] = VBILL_EXPECTED_PARAMS;
 
     newAggregators[AaveV3HorizonEthereum.USTB_ADDRESS] = NewAggregator({
-      aggregator: USTB_NEW_AGGREGATOR,
-      readAdmin: USTB_READ_ADMIN
+      aggregator: USTB_NEW_AGGREGATOR
     });
     newAggregators[AaveV3HorizonEthereum.USCC_ADDRESS] = NewAggregator({
-      aggregator: USCC_NEW_AGGREGATOR,
-      readAdmin: USCC_READ_ADMIN
+      aggregator: USCC_NEW_AGGREGATOR
     });
     newAggregators[AaveV3HorizonEthereum.USYC_ADDRESS] = NewAggregator({
-      aggregator: USYC_NEW_AGGREGATOR,
-      readAdmin: USYC_READ_ADMIN
+      aggregator: USYC_NEW_AGGREGATOR
     });
     newAggregators[AaveV3HorizonEthereum.JTRSY_ADDRESS] = NewAggregator({
-      aggregator: JTRSY_NEW_AGGREGATOR,
-      readAdmin: JTRSY_READ_ADMIN
+      aggregator: JTRSY_NEW_AGGREGATOR
     });
     newAggregators[AaveV3HorizonEthereum.JAAA_ADDRESS] = NewAggregator({
-      aggregator: JAAA_NEW_AGGREGATOR,
-      readAdmin: JAAA_READ_ADMIN
+      aggregator: JAAA_NEW_AGGREGATOR
     });
     newAggregators[AaveV3HorizonEthereum.VBILL_ADDRESS] = NewAggregator({
-      aggregator: VBILL_NEW_AGGREGATOR,
-      readAdmin: VBILL_READ_ADMIN
+      aggregator: VBILL_NEW_AGGREGATOR
     });
 
     aaveOracle = IAaveOracle(
@@ -353,44 +340,44 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
   }
 }
 
-// /// forge-config: default.evm_version = "cancun"
-// contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
-//   function setUp() public virtual override {
-//     vm.createSelectFork('mainnet');
-//   }
+/// forge-config: default.evm_version = "cancun"
+contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
+  function setUp() public virtual override {
+    vm.createSelectFork('mainnet', 23483206);
+  }
 
-//   function test_ustb() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.USTB_ADDRESS, USTB_NEW_AGGREGATOR);
-//   }
+  function test_ustb() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USTB_ADDRESS, USTB_NEW_AGGREGATOR);
+  }
 
-//   function test_uscc() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.USCC_ADDRESS, USCC_NEW_AGGREGATOR);
-//   }
+  function test_uscc() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USCC_ADDRESS, USCC_NEW_AGGREGATOR);
+  }
 
-//   function test_usyc() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.USYC_ADDRESS, USYC_NEW_AGGREGATOR);
-//   }
+  function test_usyc() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USYC_ADDRESS, USYC_NEW_AGGREGATOR);
+  }
 
-//   function test_jtrsy() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.JTRSY_ADDRESS, JTRSY_NEW_AGGREGATOR);
-//   }
+  function test_jtrsy() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.JTRSY_ADDRESS, JTRSY_NEW_AGGREGATOR);
+  }
 
-//   function test_jaaa() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.JAAA_ADDRESS, JAAA_NEW_AGGREGATOR);
-//   }
+  function test_jaaa() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.JAAA_ADDRESS, JAAA_NEW_AGGREGATOR);
+  }
 
-//   function test_vbill() public virtual override {
-//     test_aggregator_from_registry(AaveV3HorizonEthereum.VBILL_ADDRESS, VBILL_NEW_AGGREGATOR);
-//   }
+  function test_vbill() public virtual override {
+    test_aggregator_from_registry(AaveV3HorizonEthereum.VBILL_ADDRESS, VBILL_NEW_AGGREGATOR);
+  }
 
-//   // check that oracle from param registry points to new aggregator
-//   function test_aggregator_from_registry(address asset, address newAggregator) public {
-//     address paramRegistryOracle = _getParamRegistryOracle(asset);
-//     (bool success, bytes memory data) = paramRegistryOracle.call(
-//       abi.encodeWithSignature('aggregator()')
-//     );
-//     require(success, 'Failed to call aggregator()');
-//     address aggregator = abi.decode(data, (address));
-//     assertEq(aggregator, newAggregator, 'aggregator');
-//   }
-// }
+  // check that oracle from param registry points to new aggregator
+  function test_aggregator_from_registry(address asset, address newAggregator) internal {
+    address paramRegistryOracle = _getParamRegistryOracle(asset);
+    (bool success, bytes memory data) = paramRegistryOracle.call(
+      abi.encodeWithSignature('aggregator()')
+    );
+    require(success, 'Failed to call aggregator()');
+    address aggregator = abi.decode(data, (address));
+    assertEq(aggregator, newAggregator, 'aggregator');
+  }
+}
