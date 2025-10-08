@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {AaveV3HorizonEthereum} from '../../src/deployments/contracts/utilities/AaveV3HorizonEthereum.sol';
-import {HorizonPhaseTwoListing} from '../../src/deployments/inputs/HorizonPhaseTwoListing.sol';
-import {AaveV3HelpersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
-import {AaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
+import {AaveV3HorizonEthereum} from 'tests/horizon/utils/AaveV3HorizonEthereum.sol';
+import {HorizonPhaseTwoListing} from 'src/deployments/inputs/HorizonPhaseTwoListing.sol';
+import {AaveV3HelpersBatchOne} from 'src/deployments/projects/aave-v3-batched/batches/AaveV3HelpersBatchOne.sol';
+import {AaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 import {Script} from 'forge-std/Script.sol';
 
 contract DeployHorizonPhaseTwoPayload is Script {

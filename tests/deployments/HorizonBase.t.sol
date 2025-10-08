@@ -26,7 +26,7 @@ import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurato
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 
-import {AaveV3HorizonEthereum} from 'src/deployments/contracts/utilities/AaveV3HorizonEthereum.sol';
+import {AaveV3HorizonEthereum} from '../horizon/utils/AaveV3HorizonEthereum.sol';
 
 abstract contract HorizonBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;

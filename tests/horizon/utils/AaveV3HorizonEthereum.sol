@@ -41,6 +41,11 @@ library AaveV3HorizonEthereum {
   address public constant VBILL_ADDRESS = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
+  address public constant WTGXX_ADDRESS = 0x1feCF3d9d4Fee7f2c02917A66028a48C6706c179;
+  address public constant WTGXX_PRICE_FEED = 0x1DE472E766E87eB993d0C7904367014a913E55ee;
+
+  address public constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
+
   // oracle param registry
   address public constant PARAM_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
 }
