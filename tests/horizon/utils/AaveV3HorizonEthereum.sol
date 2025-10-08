@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 library AaveV3HorizonEthereum {
   address public constant HORIZON_OPS = 0xE6ec1f0Ae6Cd023bd0a9B4d0253BDC755103253c;
   address public constant HORIZON_EMERGENCY = 0x13B57382c36BAB566E75C72303622AF29E27e1d3;
+  address public constant HORIZON_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   // horizon deployments
   // address internal constant CONFIG_ENGINE = 0x366D1e3F41Ad5CC699bb8FC0B41323C68d895E2c;

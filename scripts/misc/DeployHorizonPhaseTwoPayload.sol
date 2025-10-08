@@ -8,7 +8,7 @@ import {AaveV3ConfigEngine} from 'src/contracts/extensions/v3-config-engine/Aave
 import {Script} from 'forge-std/Script.sol';
 
 contract DeployHorizonPhaseTwoPayload is Script {
-  function run() public returns (address) {
+  function run() public returns (address, address) {
     vm.startBroadcast();
     AaveV3HelpersBatchOne helpersBatchOne = new AaveV3HelpersBatchOne(
       AaveV3HorizonEthereum.POOL,
@@ -26,6 +26,6 @@ contract DeployHorizonPhaseTwoPayload is Script {
     );
     vm.stopBroadcast();
 
-    return address(horizonPhaseTwoListing);
+    return (address(helpersBatchOne), address(horizonPhaseTwoListing));
   }
 }
