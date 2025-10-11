@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import './HorizonBase.t.sol';
-import {HorizonInput} from 'src/deployments/inputs/HorizonInput.sol';
 import {DeployHorizonPhaseTwoPayload} from '../../scripts/misc/DeployHorizonPhaseTwoPayload.sol';
 
 /// forge-config: default.evm_version = "cancun"
@@ -71,11 +70,10 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   }
 
   function _loadDeployment() internal virtual {
-    HorizonInput horizonInput = new HorizonInput();
     (, address horizonPhaseTwoListing) = new DeployHorizonPhaseTwoPayload().run();
 
-    vm.startPrank(horizonInput.EMERGENCY_MULTISIG());
-    (bool success, bytes memory returnData) = horizonInput.PHASE_ONE_LISTING_EXECUTOR().call(
+    vm.startPrank(AaveV3HorizonEthereum.HORIZON_EMERGENCY);
+    (bool success, bytes memory returnData) = AaveV3HorizonEthereum.HORIZON_EXECUTOR.call(
       abi.encodeWithSignature(
         'executeTransaction(address,uint256,string,bytes,bool)',
         address(horizonPhaseTwoListing), // target
@@ -89,7 +87,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     require(success, 'Failed to execute transaction');
   }
 
-  function _whitelistVbillRwa(address addressToWhitelist) internal {
+  function _whitelistVbillRwa(address addressToWhitelist) internal virtual {
     (bool success, bytes memory data) = AaveV3HorizonEthereum.VBILL_ADDRESS.call(
       abi.encodeWithSignature('REGISTRY_SERVICE()')
     );
@@ -123,4 +121,52 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     );
     require(success, 'Failed to call addWallet()');
   }
+}
+
+/// forge-config: default.evm_version = "cancun"
+contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingTest {
+  function setUp() public virtual override {
+    vm.skip(true, 'post payload deployment');
+    vm.createSelectFork('mainnet');
+
+    initEnvironment();
+    _loadDeployment();
+
+    _whitelistVbillRwa(alice);
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3HorizonEthereum.VBILL_ADDRESS));
+  }
+
+  function _loadDeployment() internal virtual override {
+    address horizonPhaseTwoListing = address(0); // fill in with deployed payload address
+
+    vm.startPrank(AaveV3HorizonEthereum.HORIZON_EMERGENCY);
+    (bool success, bytes memory returnData) = AaveV3HorizonEthereum.HORIZON_EXECUTOR.call(
+      abi.encodeWithSignature(
+        'executeTransaction(address,uint256,string,bytes,bool)',
+        address(horizonPhaseTwoListing), // target
+        0, // value
+        'execute()', // signature
+        '', // data
+        true // withDelegatecall
+      )
+    );
+    vm.stopPrank();
+    require(success, 'Failed to execute transaction');
+  }
+}
+
+/// forge-config: default.evm_version = "cancun"
+contract HorizonPhaseTwoListingPostExecutionForkTest is HorizonPhaseTwoListingTest {
+  function setUp() public virtual override {
+    vm.skip(true, 'post payload execution');
+    vm.createSelectFork('mainnet');
+
+    initEnvironment();
+    _loadDeployment();
+
+    _whitelistVbillRwa(alice);
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3HorizonEthereum.VBILL_ADDRESS));
+  }
+
+  function _loadDeployment() internal virtual override {}
 }
