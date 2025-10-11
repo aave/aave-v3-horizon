@@ -98,11 +98,9 @@ abstract contract HorizonBaseTest is Test {
     defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
       AaveV3HorizonEthereum.DEFAULT_INTEREST_RATE_STRATEGY
     );
-    // rwaATokenManager = deploymentInfo.rwaATokenManager;
     aTokenImpl = AaveV3HorizonEthereum.ATOKEN_IMPLEMENTATION;
     rwaATokenImpl = AaveV3HorizonEthereum.RWA_ATOKEN_IMPLEMENTATION;
     variableDebtTokenImpl = AaveV3HorizonEthereum.VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
-    // poolAdmin = AaveV3HorizonEthereum.POOL_ADMIN;
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual {

@@ -47,6 +47,10 @@ library AaveV3HorizonEthereum {
 
   address public constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
 
+  address public constant USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+  address public constant RLUSD_ADDRESS = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
+
   // oracle param registry
   address public constant PARAM_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
 }

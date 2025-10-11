@@ -5,14 +5,9 @@ import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-conf
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
-import {AaveV3HorizonEthereum} from '../contracts/utilities/AaveV3HorizonEthereum.sol';
+import {AaveV3HorizonEthereum} from 'tests/horizon/utils/AaveV3HorizonEthereum.sol';
 
 contract HorizonPhaseTwoListing is AaveV3Payload {
-  address public constant GHO_ADDRESS = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
-
-  address public constant VBILL_ADDRESS = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
-  address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
-
   constructor(address configEngine) AaveV3Payload(IEngine(configEngine)) {}
 
   function eModeCategoriesUpdates()
@@ -45,9 +40,9 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
 
     listingsCustom[0] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
-        asset: VBILL_ADDRESS,
+        asset: AaveV3HorizonEthereum.VBILL_ADDRESS,
         assetSymbol: 'VBILL',
-        priceFeed: VBILL_PRICE_FEED,
+        priceFeed: AaveV3HorizonEthereum.VBILL_PRICE_FEED,
         rateStrategyParams: IEngine.InterestRateInputData({
           optimalUsageRatio: 99_00,
           baseVariableBorrowRate: 0,
@@ -83,13 +78,13 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
 
     // USTB GHO
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
-      asset: VBILL_ADDRESS,
+      asset: AaveV3HorizonEthereum.VBILL_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.ENABLED,
       borrowable: EngineFlags.DISABLED
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
-      asset: GHO_ADDRESS,
+      asset: AaveV3HorizonEthereum.GHO_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
