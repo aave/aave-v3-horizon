@@ -112,12 +112,16 @@ abstract contract HorizonBaseTest is Test {
     test_priceFeed(token, params);
   }
 
-  function test_eMode(uint8 eModeCategory, EModeCategoryParams memory params) internal {
+  function test_eMode(
+    uint8 eModeCategory,
+    EModeCategoryParams memory params,
+    bool dealCollateral
+  ) internal {
     test_eMode_configuration(eModeCategory, params);
-    test_eMode_collateralization(eModeCategory, params);
+    test_eMode_collateralization(eModeCategory, params, true);
   }
 
-  function test_getConfiguration(address token, TokenListingParams memory params) private view {
+  function test_getConfiguration(address token, TokenListingParams memory params) internal view {
     DataTypes.ReserveConfigurationMap memory config = pool.getConfiguration(token);
     assertEq(config.getSupplyCap(), params.supplyCap, 'supplyCap');
     assertEq(config.getBorrowCap(), params.borrowCap, 'borrowCap');
@@ -139,7 +143,10 @@ abstract contract HorizonBaseTest is Test {
     assertEq(config.getPaused(), false, 'paused');
   }
 
-  function test_interestRateStrategy(address token, TokenListingParams memory params) private view {
+  function test_interestRateStrategy(
+    address token,
+    TokenListingParams memory params
+  ) internal view {
     assertEq(
       pool.getReserveData(token).interestRateStrategyAddress,
       address(defaultInterestRateStrategy),
@@ -148,7 +155,7 @@ abstract contract HorizonBaseTest is Test {
     assertEq(defaultInterestRateStrategy.getInterestRateData(token), params.interestRateData);
   }
 
-  function test_aToken(address token, TokenListingParams memory params) private {
+  function test_aToken(address token, TokenListingParams memory params) internal {
     address aToken = pool.getReserveAToken(token);
     assertEq(IERC20Detailed(aToken).name(), params.aTokenName, 'aTokenName');
     assertEq(IERC20Detailed(aToken).symbol(), params.aTokenSymbol, 'aTokenSymbol');
@@ -258,7 +265,8 @@ abstract contract HorizonBaseTest is Test {
 
   function test_eMode_collateralization(
     uint8 eModeCategory,
-    EModeCategoryParams memory params
+    EModeCategoryParams memory params,
+    bool dealCollateral
   ) internal {
     address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
 
@@ -267,14 +275,16 @@ abstract contract HorizonBaseTest is Test {
 
     IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
     for (uint256 i = 0; i < params.collateralAssets.length; i++) {
-      uint256 amountInBaseCurrency = 1e6 * 1e8;
+      uint256 amountInBaseCurrency = 1e5 * 1e8;
 
       uint256 supplyAmount = (amountInBaseCurrency *
         10 ** IERC20Detailed(params.collateralAssets[i]).decimals()) /
         oracle.getAssetPrice(params.collateralAssets[i]) +
         1;
       address collateralAsset = params.collateralAssets[i];
-      deal(collateralAsset, alice, supplyAmount);
+      if (dealCollateral) {
+        deal(collateralAsset, alice, supplyAmount);
+      }
 
       vm.startPrank(alice);
       IERC20Detailed(collateralAsset).approve(address(pool), supplyAmount);
@@ -315,7 +325,8 @@ abstract contract HorizonBaseTest is Test {
   function test_nonEMode_collateralization(
     address token,
     TokenListingParams memory params,
-    address[] memory borrowableAssets
+    address[] memory borrowableAssets,
+    bool dealCollateral
   ) internal {
     address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
 
@@ -326,45 +337,43 @@ abstract contract HorizonBaseTest is Test {
       oracle.getAssetPrice(token) +
       1;
 
-    // deal(token, alice, supplyAmount);
-    vm.prank(0x69133f8Ef7F9A5F80D25c2DAEaea64C804aC7Cf9);
-    IERC20(token).transfer(alice, supplyAmount);
-
-    // console.log('pool', address(pool));
+    if (dealCollateral) {
+      deal(token, alice, supplyAmount);
+    }
 
     vm.startPrank(alice);
     IERC20Detailed(token).approve(address(pool), supplyAmount);
     pool.supply(token, supplyAmount, alice, 0);
     vm.stopPrank();
 
-    //   for (uint256 j = 0; j < borrowableAssets.length; j++) {
-    //     address borrowAsset = borrowableAssets[j];
-    //     uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
-    //       10 ** IERC20Detailed(borrowAsset).decimals()) /
-    //       oracle.getAssetPrice(borrowAsset) -
-    //       1;
+    for (uint256 j = 0; j < borrowableAssets.length; j++) {
+      address borrowAsset = borrowableAssets[j];
+      uint256 borrowAmount = (amountInBaseCurrency.percentMul(params.ltv) *
+        10 ** IERC20Detailed(borrowAsset).decimals()) /
+        oracle.getAssetPrice(borrowAsset) -
+        1;
 
-    //     deal(borrowAsset, bob, borrowAmount);
+      deal(borrowAsset, bob, borrowAmount);
 
-    //     vm.startPrank(bob);
-    //     IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
-    //     pool.supply(borrowAsset, borrowAmount, bob, 0);
-    //     vm.stopPrank();
+      vm.startPrank(bob);
+      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+      pool.supply(borrowAsset, borrowAmount, bob, 0);
+      vm.stopPrank();
 
-    //     vm.prank(alice);
-    //     pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
+      vm.prank(alice);
+      pool.borrow(borrowAsset, borrowAmount, 2, 0, alice);
 
-    //     vm.startPrank(alice);
-    //     IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
-    //     pool.repay(borrowAsset, borrowAmount, 2, alice);
-    //     vm.stopPrank();
+      vm.startPrank(alice);
+      IERC20Detailed(borrowAsset).approve(address(pool), borrowAmount);
+      pool.repay(borrowAsset, borrowAmount, 2, alice);
+      vm.stopPrank();
 
-    //     vm.prank(bob);
-    //     pool.withdraw(borrowAsset, borrowAmount, bob);
-    //   }
+      vm.prank(bob);
+      pool.withdraw(borrowAsset, borrowAmount, bob);
+    }
 
-    //   vm.prank(alice);
-    //   pool.withdraw(token, supplyAmount, alice);
+    vm.prank(alice);
+    pool.withdraw(token, supplyAmount, alice);
   }
 
   function assertEq(
@@ -394,9 +403,16 @@ abstract contract HorizonBaseTest is Test {
     assertEq(abi.encode(a), abi.encode(b), 'assertEq(interestRateData): all fields');
   }
 
-  function _toDynamicAddressArray(address a) private pure returns (address[] memory) {
+  function _toDynamicAddressArray(address a) internal pure returns (address[] memory) {
     address[] memory array = new address[](1);
     array[0] = a;
+    return array;
+  }
+
+  function _toDynamicAddressArray(address a, address b) internal pure returns (address[] memory) {
+    address[] memory array = new address[](2);
+    array[0] = a;
+    array[1] = b;
     return array;
   }
 

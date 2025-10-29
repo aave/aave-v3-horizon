@@ -41,6 +41,16 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
       initialDeposit: 0
     });
 
+  EModeCategoryParams internal VBILL_GHO_EMODE_PARAMS =
+    EModeCategoryParams({
+      ltv: 84_00,
+      liquidationThreshold: 89_00,
+      liquidationBonus: 100_00 + 3_00,
+      label: 'VBILL GHO',
+      collateralAssets: _toDynamicAddressArray(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING),
+      borrowableAssets: _toDynamicAddressArray(AaveV3EthereumHorizonAssets.GHO_UNDERLYING)
+    });
+
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
     initEnvironment();
@@ -48,24 +58,36 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
 
     _whitelistVbillRwa(alice);
     _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
+
+    _transferVBILLTo(alice, 1_000_000e6);
   }
 
   function test_listing_VBILL() public {
     test_listing(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, VBILL_TOKEN_LISTING_PARAMS);
   }
 
+  function test_eMode_VBILL_GHO() public {
+    test_eMode({eModeCategory: 1, params: VBILL_GHO_EMODE_PARAMS, dealCollateral: false});
+  }
+
+  // fund accounts by transferring existing VBILL, as `deal` causes issues on token contract accounting
+  function _transferVBILLTo(address user, uint256 amount) internal virtual {
+    vm.prank(0x5E6c2AD8376A9E5E857B1d91643399E9aB65ff8c); // on-chain holder, ~25M VBILL balance
+    IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).transfer(user, amount);
+  }
+
   function test_listing(address token, TokenListingParams memory params) internal virtual override {
     super.test_listing(token, params);
     if (params.isRwa) {
-      test_nonEMode_collateralization(
-        token,
-        params,
-        _toDynamicAddressArray(
+      test_nonEMode_collateralization({
+        token: token,
+        params: params,
+        borrowableAssets: _toDynamicAddressArray(
           AaveV3EthereumHorizonAssets.USDC_UNDERLYING,
-          AaveV3EthereumHorizonAssets.RLUSD_UNDERLYING,
           AaveV3EthereumHorizonAssets.GHO_UNDERLYING
-        )
-      );
+        ),
+        dealCollateral: false
+      });
     }
   }
 
@@ -124,6 +146,38 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
 }
 
 /// forge-config: default.evm_version = "cancun"
+contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
+  function setUp() public virtual override {
+    vm.createSelectFork('vtestnet');
+
+    initEnvironment();
+
+    _whitelistVbillRwa(alice);
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
+
+    _transferVBILLTo(alice, 1_000_000e6);
+  }
+
+  function test_actions() public {
+    address testUser1 = 0xabCa9b6E08dC6C031880f515Ec0cf9e395D0d6B8;
+    address testUser2 = 0x66C1d4c6195D587C99aCc4256EbaC0a8D0AB9f64;
+    address testUser3 = 0xd22eefD49B81e078f576Dbb4A804aa250cB3A291;
+
+    _supplyAndBorrow(testUser1);
+    _supplyAndBorrow(testUser2);
+    _supplyAndBorrow(testUser3);
+  }
+
+  function _supplyAndBorrow(address user) internal virtual {
+    vm.startPrank(user);
+    IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).approve(address(pool), 100e6);
+    pool.supply(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, 100e6, user, 0);
+    pool.borrow(AaveV3EthereumHorizonAssets.USDC_UNDERLYING, 50e6, 2, 0, user);
+    vm.stopPrank();
+  }
+}
+
+/// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingTest {
   function setUp() public virtual override {
     vm.skip(true, 'post payload deployment');
@@ -134,6 +188,8 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
 
     _whitelistVbillRwa(alice);
     _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
+
+    _transferVBILLTo(alice, 1_000_000e6);
   }
 
   function _loadDeployment() internal virtual override {
@@ -162,11 +218,10 @@ contract HorizonPhaseTwoListingPostExecutionForkTest is HorizonPhaseTwoListingTe
     vm.createSelectFork('mainnet');
 
     initEnvironment();
-    _loadDeployment();
 
     _whitelistVbillRwa(alice);
     _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
-  }
 
-  function _loadDeployment() internal virtual override {}
+    _transferVBILLTo(alice, 1_000_000e6);
+  }
 }
