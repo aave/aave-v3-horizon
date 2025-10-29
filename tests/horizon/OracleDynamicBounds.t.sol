@@ -289,7 +289,7 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
     });
 
     aaveOracle = IAaveOracle(
-      IPool(AaveV3EthereumHorizonCustom.POOL).ADDRESSES_PROVIDER().getPriceOracle()
+      IPool(address(AaveV3EthereumHorizon.POOL)).ADDRESSES_PROVIDER().getPriceOracle()
     );
   }
 
