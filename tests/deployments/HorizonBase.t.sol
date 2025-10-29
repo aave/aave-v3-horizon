@@ -26,7 +26,8 @@ import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurato
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 
-import {AaveV3HorizonEthereum} from '../horizon/utils/AaveV3HorizonEthereum.sol';
+import {AaveV3EthereumHorizonCustom} from '../horizon/utils/AaveV3EthereumHorizonCustom.sol';
+import {AaveV3EthereumHorizon} from 'aave-address-book/AaveV3EthereumHorizon.sol';
 
 abstract contract HorizonBaseTest is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
@@ -93,14 +94,14 @@ abstract contract HorizonBaseTest is Test {
   }
 
   function initEnvironment() internal virtual {
-    pool = IPool(AaveV3HorizonEthereum.POOL);
-    revenueSplitter = IRevenueSplitter(AaveV3HorizonEthereum.REVENUE_SPLITTER);
+    pool = IPool(AaveV3EthereumHorizonCustom.POOL);
+    revenueSplitter = IRevenueSplitter(AaveV3EthereumHorizonCustom.REVENUE_SPLITTER);
     defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
-      AaveV3HorizonEthereum.DEFAULT_INTEREST_RATE_STRATEGY
+      AaveV3EthereumHorizonCustom.DEFAULT_INTEREST_RATE_STRATEGY
     );
-    aTokenImpl = AaveV3HorizonEthereum.ATOKEN_IMPLEMENTATION;
-    rwaATokenImpl = AaveV3HorizonEthereum.RWA_ATOKEN_IMPLEMENTATION;
-    variableDebtTokenImpl = AaveV3HorizonEthereum.VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
+    aTokenImpl = AaveV3EthereumHorizonCustom.ATOKEN_IMPLEMENTATION;
+    rwaATokenImpl = AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPLEMENTATION;
+    variableDebtTokenImpl = AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual {

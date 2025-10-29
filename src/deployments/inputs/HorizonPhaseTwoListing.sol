@@ -5,7 +5,8 @@ import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-conf
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
-import {AaveV3HorizonEthereum} from 'tests/horizon/utils/AaveV3HorizonEthereum.sol';
+import {AaveV3EthereumHorizon} from 'aave-address-book/AaveV3EthereumHorizon.sol';
+import {AaveV3EthereumHorizonCustom} from 'tests/horizon/utils/AaveV3EthereumHorizonCustom.sol';
 
 contract HorizonPhaseTwoListing is AaveV3Payload {
   constructor(address configEngine) AaveV3Payload(IEngine(configEngine)) {}
@@ -40,9 +41,9 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
 
     listingsCustom[0] = IEngine.ListingWithCustomImpl(
       IEngine.Listing({
-        asset: AaveV3HorizonEthereum.VBILL_ADDRESS,
+        asset: AaveV3EthereumHorizonCustom.VBILL_ADDRESS,
         assetSymbol: 'VBILL',
-        priceFeed: AaveV3HorizonEthereum.VBILL_PRICE_FEED,
+        priceFeed: AaveV3EthereumHorizonCustom.VBILL_PRICE_FEED,
         rateStrategyParams: IEngine.InterestRateInputData({
           optimalUsageRatio: 99_00,
           baseVariableBorrowRate: 0,
@@ -63,8 +64,8 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
         liqProtocolFee: 0
       }),
       IEngine.TokenImplementations({
-        aToken: AaveV3HorizonEthereum.RWA_ATOKEN_IMPLEMENTATION,
-        vToken: AaveV3HorizonEthereum.VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+        aToken: AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPLEMENTATION,
+        vToken: AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION
       })
     );
 
@@ -78,13 +79,13 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
 
     // USTB GHO
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
-      asset: AaveV3HorizonEthereum.VBILL_ADDRESS,
+      asset: AaveV3EthereumHorizonCustom.VBILL_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.ENABLED,
       borrowable: EngineFlags.DISABLED
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
-      asset: AaveV3HorizonEthereum.GHO_ADDRESS,
+      asset: AaveV3EthereumHorizonCustom.GHO_ADDRESS,
       eModeCategory: 1,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED
