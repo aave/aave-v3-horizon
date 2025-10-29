@@ -47,11 +47,11 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     _loadDeployment();
 
     _whitelistVbillRwa(alice);
-    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_ADDRESS));
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
   }
 
   function test_listing_VBILL() public {
-    test_listing(AaveV3EthereumHorizonCustom.VBILL_ADDRESS, VBILL_TOKEN_LISTING_PARAMS);
+    test_listing(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, VBILL_TOKEN_LISTING_PARAMS);
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual override {
@@ -61,9 +61,9 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
         token,
         params,
         _toDynamicAddressArray(
-          AaveV3EthereumHorizonCustom.USDC_ADDRESS,
-          AaveV3EthereumHorizonCustom.RLUSD_ADDRESS,
-          AaveV3EthereumHorizonCustom.GHO_ADDRESS
+          AaveV3EthereumHorizonAssets.USDC_UNDERLYING,
+          AaveV3EthereumHorizonAssets.RLUSD_UNDERLYING,
+          AaveV3EthereumHorizonAssets.GHO_UNDERLYING
         )
       );
     }
@@ -88,22 +88,22 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   }
 
   function _whitelistVbillRwa(address addressToWhitelist) internal virtual {
-    (bool success, bytes memory data) = AaveV3EthereumHorizonCustom.VBILL_ADDRESS.call(
+    (bool success, bytes memory data) = AaveV3EthereumHorizonCustom.VBILL_UNDERLYING.call(
       abi.encodeWithSignature('REGISTRY_SERVICE()')
     );
     require(success, 'Failed to call REGISTRY_SERVICE()');
-    (success, data) = AaveV3EthereumHorizonCustom.VBILL_ADDRESS.call(
+    (success, data) = AaveV3EthereumHorizonCustom.VBILL_UNDERLYING.call(
       abi.encodeWithSignature('getDSService(uint256)', abi.decode(data, (uint256)))
     );
     require(success, 'Failed to call getDSService()');
     address registryService = abi.decode(data, (address));
 
     address admin = 0xDA8e2d926D28a86aeE933d928357583aae5D3b85; // retrieved onchain
-    (success, data) = AaveV3EthereumHorizonCustom.VBILL_ADDRESS.call(
+    (success, data) = AaveV3EthereumHorizonCustom.VBILL_UNDERLYING.call(
       abi.encodeWithSignature('TRUST_SERVICE()')
     );
     require(success, 'Failed to call TRUST_SERVICE()');
-    (success, data) = AaveV3EthereumHorizonCustom.VBILL_ADDRESS.call(
+    (success, data) = AaveV3EthereumHorizonCustom.VBILL_UNDERLYING.call(
       abi.encodeWithSignature('getDSService(uint256)', abi.decode(data, (uint256)))
     );
     address trustService = abi.decode(data, (address));
@@ -133,7 +133,7 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
     _loadDeployment();
 
     _whitelistVbillRwa(alice);
-    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_ADDRESS));
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
   }
 
   function _loadDeployment() internal virtual override {
@@ -165,7 +165,7 @@ contract HorizonPhaseTwoListingPostExecutionForkTest is HorizonPhaseTwoListingTe
     _loadDeployment();
 
     _whitelistVbillRwa(alice);
-    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_ADDRESS));
+    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
   }
 
   function _loadDeployment() internal virtual override {}
