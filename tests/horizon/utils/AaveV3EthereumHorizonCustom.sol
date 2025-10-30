@@ -6,7 +6,6 @@ library AaveV3EthereumHorizonCustom {
   address public constant HORIZON_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   // horizon deployments
-  // address internal constant CONFIG_ENGINE = 0x366D1e3F41Ad5CC699bb8FC0B41323C68d895E2c;
   address internal constant RWA_ATOKEN_IMPLEMENTATION = 0x8CA2a49c7Df42E67F9A532F0d383D648fB7Fe4C9;
 
   // horizon assets

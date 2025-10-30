@@ -78,6 +78,15 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     });
   }
 
+  function test_param_registry_VBILL() public {
+    (bool success, bytes memory returnData) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
+      abi.encodeWithSignature('assetExists(address)', AaveV3EthereumHorizonCustom.VBILL_UNDERLYING)
+    );
+    require(success, 'Failed to call assetExists()');
+    bool exists = abi.decode(returnData, (bool));
+    assertEq(exists, true, 'assetExists');
+  }
+
   // fund accounts by transferring existing VBILL, as `deal` causes issues on token contract accounting
   function _transferVBILLTo(address user, uint256 amount) internal virtual {
     vm.prank(0x5E6c2AD8376A9E5E857B1d91643399E9aB65ff8c); // on-chain holder, ~25M VBILL balance
