@@ -8,8 +8,9 @@ import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 
-import {AaveV3EthereumHorizon, AaveV3EthereumHorizonAssets} from 'aave-address-book/AaveV3EthereumHorizon.sol';
-import {AaveV3EthereumHorizonCustom} from 'tests/horizon/utils/AaveV3EthereumHorizonCustom.sol';
+import {AaveV3HorizonEthereum} from './utils/AaveV3HorizonEthereum.sol';
+
+import {IParameterRegistry} from './dependencies/IParameterRegistry.sol';
 
 abstract contract OracleDynamicBoundsTestBase is Test {
   address constant USTB_NEW_AGGREGATOR = 0x267D0DD05fbc989565C521e0B8882f61027FF32A;
@@ -38,6 +39,10 @@ abstract contract OracleDynamicBoundsTestBase is Test {
   mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator
 
   IAaveOracle internal aaveOracle;
+  IParameterRegistry internal parameterRegistry;
+  function setUp() public virtual {
+    parameterRegistry = IParameterRegistry(AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY);
+  }
 
   function test_asset(address asset, address oracleSource, bool isAdapter) internal {
     oracleSource = test_horizon_adapter(asset, oracleSource, isAdapter);
@@ -61,21 +66,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // test param registry params are configured properly
   function test_registry_params(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('assetExists(address)', asset)
-    );
-    require(success, 'Failed to call assetExists()');
-    bool exists = abi.decode(data, (bool));
-    assertEq(exists, true, 'assetExists');
-
-    (success, data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getParametersForAsset(address)', asset)
-    );
-    require(success, 'Failed to call getParametersForAsset()');
-
+    assertEq(parameterRegistry.assetExists(asset), true, 'assetExists');
     (
       uint64 maxExpectedApy,
       uint32 upperBoundTolerance,
@@ -85,7 +76,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
       bool isUpperBoundEnabled,
       bool isLowerBoundEnabled,
       bool isActionTakingEnabled
-    ) = abi.decode(data, (uint64, uint32, uint32, uint32, uint80, bool, bool, bool));
+    ) = parameterRegistry.getParametersForAsset(asset);
 
     ExpectedParams memory expectedParam = expectedParams[asset];
 
@@ -121,22 +112,13 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // test look back data from param registry is valid
   function test_lookback_data(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getLookbackData(address)', asset)
-    );
-    require(success, 'Failed to call getLookbackData()');
-
-    // reads from old aggregator data
     (
       uint80 roundId,
       int256 answer,
       uint256 startedAt,
       uint256 updatedAt,
       uint80 answeredInRound
-    ) = abi.decode(data, (uint80, int256, uint256, uint256, uint80));
+    ) = parameterRegistry.getLookbackData(asset);
 
     assertGt(roundId, 0, 'lookback roundId');
     assertGt(answer, 0, 'lookback answer');
@@ -179,17 +161,14 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // read oracle address from param registry
   function _getParamRegistryOracle(address asset) internal returns (address) {
-    (bool success, bytes memory data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getOracle(address)', asset)
-    );
-    require(success, 'Failed to call getOracle()');
-    return abi.decode(data, (address));
+    return parameterRegistry.getOracle(asset);
   }
 }
 
 /// forge-config: default.evm_version = "cancun"
 contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
-  function setUp() public virtual {
+  function setUp() public virtual override {
+    super.setUp();
     vm.createSelectFork('mainnet', 23478406);
     _initEnvironment();
   }
@@ -262,142 +241,115 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
     });
 
   function _initEnvironment() internal virtual {
-    expectedParams[AaveV3EthereumHorizonAssets.USTB_UNDERLYING] = USTB_EXPECTED_PARAMS;
-    expectedParams[AaveV3EthereumHorizonAssets.USCC_UNDERLYING] = USCC_EXPECTED_PARAMS;
-    expectedParams[AaveV3EthereumHorizonAssets.USYC_UNDERLYING] = USYC_EXPECTED_PARAMS;
-    expectedParams[AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING] = JTRSY_EXPECTED_PARAMS;
-    expectedParams[AaveV3EthereumHorizonAssets.JAAA_UNDERLYING] = JAAA_EXPECTED_PARAMS;
-    expectedParams[AaveV3EthereumHorizonCustom.VBILL_UNDERLYING] = VBILL_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.USTB_ADDRESS] = USTB_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.USCC_ADDRESS] = USCC_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.USYC_ADDRESS] = USYC_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.JTRSY_ADDRESS] = JTRSY_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.JAAA_ADDRESS] = JAAA_EXPECTED_PARAMS;
+    expectedParams[AaveV3HorizonEthereum.VBILL_ADDRESS] = VBILL_EXPECTED_PARAMS;
 
-    newAggregators[AaveV3EthereumHorizonAssets.USTB_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.USTB_ADDRESS] = NewAggregator({
       aggregator: USTB_NEW_AGGREGATOR
     });
-    newAggregators[AaveV3EthereumHorizonAssets.USCC_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.USCC_ADDRESS] = NewAggregator({
       aggregator: USCC_NEW_AGGREGATOR
     });
-    newAggregators[AaveV3EthereumHorizonAssets.USYC_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.USYC_ADDRESS] = NewAggregator({
       aggregator: USYC_NEW_AGGREGATOR
     });
-    newAggregators[AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.JTRSY_ADDRESS] = NewAggregator({
       aggregator: JTRSY_NEW_AGGREGATOR
     });
-    newAggregators[AaveV3EthereumHorizonAssets.JAAA_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.JAAA_ADDRESS] = NewAggregator({
       aggregator: JAAA_NEW_AGGREGATOR
     });
-    newAggregators[AaveV3EthereumHorizonCustom.VBILL_UNDERLYING] = NewAggregator({
+    newAggregators[AaveV3HorizonEthereum.VBILL_ADDRESS] = NewAggregator({
       aggregator: VBILL_NEW_AGGREGATOR
     });
 
     aaveOracle = IAaveOracle(
-      IPool(address(AaveV3EthereumHorizon.POOL)).ADDRESSES_PROVIDER().getPriceOracle()
+      IPool(AaveV3HorizonEthereum.POOL).ADDRESSES_PROVIDER().getPriceOracle()
     );
   }
 
   // check that param registry admin are set properly
   function test_registry_admin() external {
-    (bool success, bytes memory data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('owner()')
-    );
-    require(success, 'Failed to call owner()');
-    address owner = abi.decode(data, (address));
-    assertEq(owner, AaveV3EthereumHorizonCustom.HORIZON_OPS, 'owner');
-
-    (success, data) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('updater()')
-    );
-    require(success, 'Failed to call owner()');
-    address updater = abi.decode(data, (address));
-    assertEq(updater, AaveV3EthereumHorizonCustom.HORIZON_OPS, 'updater');
+    assertEq(parameterRegistry.owner(), AaveV3HorizonEthereum.HORIZON_OPS, 'owner');
+    assertEq(parameterRegistry.updater(), AaveV3HorizonEthereum.HORIZON_OPS, 'updater');
   }
 
   function test_ustb() external virtual {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USTB_UNDERLYING);
-    test_asset(AaveV3EthereumHorizonAssets.USTB_UNDERLYING, oracleSource, true);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USTB_ADDRESS);
+    test_asset(AaveV3HorizonEthereum.USTB_ADDRESS, oracleSource, true);
   }
 
   function test_uscc() external virtual {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USCC_UNDERLYING);
-    test_asset(AaveV3EthereumHorizonAssets.USCC_UNDERLYING, oracleSource, true);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USCC_ADDRESS);
+    test_asset(AaveV3HorizonEthereum.USCC_ADDRESS, oracleSource, true);
   }
 
   function test_usyc() external virtual {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USYC_UNDERLYING);
-    test_asset(AaveV3EthereumHorizonAssets.USYC_UNDERLYING, oracleSource, false);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USYC_ADDRESS);
+    test_asset(AaveV3HorizonEthereum.USYC_ADDRESS, oracleSource, false);
   }
 
   function test_jtrsy() external virtual {
-    address oracleSource = aaveOracle.getSourceOfAsset(
-      AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING
-    );
-    test_asset(AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING, oracleSource, true);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JTRSY_ADDRESS);
+    test_asset(AaveV3HorizonEthereum.JTRSY_ADDRESS, oracleSource, true);
   }
 
   function test_jaaa() external virtual {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.JAAA_UNDERLYING);
-    test_asset(AaveV3EthereumHorizonAssets.JAAA_UNDERLYING, oracleSource, true);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JAAA_ADDRESS);
+    test_asset(AaveV3HorizonEthereum.JAAA_ADDRESS, oracleSource, true);
   }
 
   function test_vbill() external virtual {
     // VBILL not deployed yet, get price feed directly from lib
-    test_asset(
-      AaveV3EthereumHorizonCustom.VBILL_UNDERLYING,
-      AaveV3EthereumHorizonCustom.VBILL_PRICE_FEED,
-      false
-    );
+    test_asset(AaveV3HorizonEthereum.VBILL_ADDRESS, AaveV3HorizonEthereum.VBILL_PRICE_FEED, false);
   }
 }
 
 /// forge-config: default.evm_version = "cancun"
 contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
   function setUp() public virtual override {
+    super.setUp();
     vm.createSelectFork('mainnet', 23483206);
     _initEnvironment();
   }
 
   function test_ustb() public virtual override {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USTB_UNDERLYING);
-    _printAssetPrice(AaveV3EthereumHorizonAssets.USTB_UNDERLYING, oracleSource);
-    test_aggregator_from_registry(AaveV3EthereumHorizonAssets.USTB_UNDERLYING, USTB_NEW_AGGREGATOR);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USTB_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USTB_ADDRESS, oracleSource);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USTB_ADDRESS, USTB_NEW_AGGREGATOR);
   }
 
   function test_uscc() public virtual override {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USCC_UNDERLYING);
-    _printAssetPrice(AaveV3EthereumHorizonAssets.USCC_UNDERLYING, oracleSource);
-    test_aggregator_from_registry(AaveV3EthereumHorizonAssets.USCC_UNDERLYING, USCC_NEW_AGGREGATOR);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USCC_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USCC_ADDRESS, oracleSource);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USCC_ADDRESS, USCC_NEW_AGGREGATOR);
   }
 
   function test_usyc() public virtual override {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.USYC_UNDERLYING);
-    _printAssetPrice(AaveV3EthereumHorizonAssets.USYC_UNDERLYING, oracleSource);
-    test_aggregator_from_registry(AaveV3EthereumHorizonAssets.USYC_UNDERLYING, USYC_NEW_AGGREGATOR);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.USYC_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.USYC_ADDRESS, oracleSource);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.USYC_ADDRESS, USYC_NEW_AGGREGATOR);
   }
 
   function test_jtrsy() public virtual override {
-    address oracleSource = aaveOracle.getSourceOfAsset(
-      AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING
-    );
-    _printAssetPrice(AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING, oracleSource);
-    test_aggregator_from_registry(
-      AaveV3EthereumHorizonAssets.JTRSY_UNDERLYING,
-      JTRSY_NEW_AGGREGATOR
-    );
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JTRSY_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.JTRSY_ADDRESS, oracleSource);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.JTRSY_ADDRESS, JTRSY_NEW_AGGREGATOR);
   }
 
   function test_jaaa() public virtual override {
-    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3EthereumHorizonAssets.JAAA_UNDERLYING);
-    _printAssetPrice(AaveV3EthereumHorizonAssets.JAAA_UNDERLYING, oracleSource);
-    test_aggregator_from_registry(AaveV3EthereumHorizonAssets.JAAA_UNDERLYING, JAAA_NEW_AGGREGATOR);
+    address oracleSource = aaveOracle.getSourceOfAsset(AaveV3HorizonEthereum.JAAA_ADDRESS);
+    _printAssetPrice(AaveV3HorizonEthereum.JAAA_ADDRESS, oracleSource);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.JAAA_ADDRESS, JAAA_NEW_AGGREGATOR);
   }
 
   function test_vbill() public virtual override {
-    _printAssetPrice(
-      AaveV3EthereumHorizonCustom.VBILL_UNDERLYING,
-      AaveV3EthereumHorizonCustom.VBILL_PRICE_FEED
-    );
-    test_aggregator_from_registry(
-      AaveV3EthereumHorizonCustom.VBILL_UNDERLYING,
-      VBILL_NEW_AGGREGATOR
-    );
+    _printAssetPrice(AaveV3HorizonEthereum.VBILL_ADDRESS, AaveV3HorizonEthereum.VBILL_PRICE_FEED);
+    test_aggregator_from_registry(AaveV3HorizonEthereum.VBILL_ADDRESS, VBILL_NEW_AGGREGATOR);
   }
 
   function _printAssetPrice(address asset, address oracleSource) internal {
