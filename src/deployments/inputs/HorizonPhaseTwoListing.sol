@@ -63,8 +63,8 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
         liqProtocolFee: 0
       }),
       IEngine.TokenImplementations({
-        aToken: AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPLEMENTATION,
-        vToken: AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+        aToken: AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPL,
+        vToken: AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPL
       })
     );
 

@@ -17,8 +17,8 @@ contract DeployHorizonPhaseTwoPayload is Script {
       AaveV3EthereumHorizonCustom.AAVE_ORACLE,
       AaveV3EthereumHorizonCustom.REWARDS_CONTROLLER,
       AaveV3EthereumHorizonCustom.REVENUE_SPLITTER,
-      AaveV3EthereumHorizonCustom.ATOKEN_IMPLEMENTATION,
-      AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION
+      AaveV3EthereumHorizonCustom.ATOKEN_IMPL,
+      AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPL
     );
 
     HorizonPhaseTwoListing horizonPhaseTwoListing = new HorizonPhaseTwoListing(

@@ -76,7 +76,7 @@ abstract contract HorizonBaseTest is Test {
     bool flashloanable;
     uint256 ltv;
     uint256 liquidationThreshold;
-    uint256 liquidationBonus;
+    uint256 liquidationBonus; // includes 100_00 base, so 103_00 = 3_00 bonus
     uint256 debtCeiling;
     uint256 liqProtocolFee;
     IDefaultInterestRateStrategyV2.InterestRateDataRay interestRateData;
@@ -98,9 +98,9 @@ abstract contract HorizonBaseTest is Test {
     defaultInterestRateStrategy = IDefaultInterestRateStrategyV2(
       AaveV3EthereumHorizonCustom.DEFAULT_INTEREST_RATE_STRATEGY
     );
-    aTokenImpl = AaveV3EthereumHorizonCustom.ATOKEN_IMPLEMENTATION;
-    variableDebtTokenImpl = AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION;
-    rwaATokenImpl = AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPLEMENTATION;
+    aTokenImpl = AaveV3EthereumHorizonCustom.ATOKEN_IMPL;
+    variableDebtTokenImpl = AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPL;
+    rwaATokenImpl = AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPL;
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual {
