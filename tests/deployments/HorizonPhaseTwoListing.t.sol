@@ -54,7 +54,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   uint8 internal constant VBILL_GHO_EMODE_CATEGORY = 1;
 
   function setUp() public virtual {
-    vm.createSelectFork('mainnet');
+    vm.createSelectFork('mainnet', 23690478);
 
     initEnvironment();
     _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
