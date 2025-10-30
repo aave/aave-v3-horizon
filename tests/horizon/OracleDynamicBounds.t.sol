@@ -10,7 +10,7 @@ import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/Ag
 
 import {AaveV3EthereumHorizonCustom} from './utils/AaveV3EthereumHorizonCustom.sol';
 
-import {IParameterRegistry} from './dependencies/IParameterRegistry.sol';
+import {IRwaOracleParameterRegistry} from './dependencies/IRwaOracleParameterRegistry.sol';
 
 abstract contract OracleDynamicBoundsTestBase is Test {
   address constant USTB_NEW_AGGREGATOR = 0x267D0DD05fbc989565C521e0B8882f61027FF32A;
@@ -39,9 +39,11 @@ abstract contract OracleDynamicBoundsTestBase is Test {
   mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator
 
   IAaveOracle internal aaveOracle;
-  IParameterRegistry internal parameterRegistry;
+  IRwaOracleParameterRegistry internal parameterRegistry;
   function setUp() public virtual {
-    parameterRegistry = IParameterRegistry(AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY);
+    parameterRegistry = IRwaOracleParameterRegistry(
+      AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY
+    );
   }
 
   function test_asset(address asset, address oracleSource, bool isAdapter) internal {

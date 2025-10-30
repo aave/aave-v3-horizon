@@ -80,9 +80,8 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
 
   function test_param_registry_VBILL() public {
     assertEq(
-      IParameterRegistry(AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY).assetExists(
-        AaveV3EthereumHorizonCustom.VBILL_UNDERLYING
-      ),
+      IRwaOracleParameterRegistry(AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY)
+        .assetExists(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING),
       true,
       'assetExists'
     );
