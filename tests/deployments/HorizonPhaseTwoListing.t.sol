@@ -199,8 +199,7 @@ contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingTest {
   function setUp() public virtual override {
-    vm.skip(true, 'post payload deployment');
-    vm.createSelectFork('mainnet');
+    vm.createSelectFork('mainnet', 23693075);
 
     initEnvironment();
     _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
@@ -213,7 +212,7 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
   }
 
   function _loadDeployment() internal virtual override {
-    address horizonPhaseTwoListing = address(0); // fill in with deployed payload address
+    address horizonPhaseTwoListing = 0xA9ce8c46F6119410BBF5C797233f5494C7b3E7E5; // fill in with deployed payload address
 
     vm.startPrank(AaveV3EthereumHorizonCustom.HORIZON_EMERGENCY);
     (bool success, bytes memory returnData) = AaveV3EthereumHorizonCustom.HORIZON_EXECUTOR.call(

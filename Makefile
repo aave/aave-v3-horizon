@@ -92,7 +92,7 @@ deploy-liquidation-data-provider :;
 		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
-# Deploys payload to update phase two assets. `make deploy-phase-two-payload CHAIN=mainnet ACCOUNT=<account>`
+# Deploys payload to list phase two assets. `make deploy-phase-two-payload CHAIN=mainnet ACCOUNT=<account>`
 deploy-phase-two-payload :;
 	FOUNDRY_PROFILE=${CHAIN} forge script scripts/misc/DeployHorizonPhaseTwoPayload.sol:DeployHorizonPhaseTwoPayload \
 		--rpc-url ${CHAIN} --account ${ACCOUNT} --slow --gas-estimate-multiplier 150 \

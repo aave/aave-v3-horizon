@@ -6,6 +6,7 @@ library AaveV3EthereumHorizonCustom {
   address public constant HORIZON_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   // horizon deployments
+  address internal constant CONFIG_ENGINE = 0x30dA3a613c5b492BB4277Aa2a5D81f4759Ba83Af;
   address internal constant POOL_ADDRESSES_PROVIDER = 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0;
   address internal constant POOL = 0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8;
   address internal constant POOL_CONFIGURATOR = 0x83Cb1B4af26EEf6463aC20AFbAC9c0e2E017202F;
