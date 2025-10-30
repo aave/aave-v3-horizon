@@ -274,10 +274,8 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
 
   // check that param registry admin are set properly
   function test_registry_admin() external {
-    address owner = parameterRegistry.owner();
-    assertEq(owner, AaveV3HorizonEthereum.HORIZON_OPS, 'owner');
-    address updater = parameterRegistry.owner();
-    assertEq(updater, AaveV3HorizonEthereum.HORIZON_OPS, 'updater');
+    assertEq(parameterRegistry.owner(), AaveV3HorizonEthereum.HORIZON_OPS, 'owner');
+    assertEq(parameterRegistry.updater(), AaveV3HorizonEthereum.HORIZON_OPS, 'updater');
   }
 
   function test_ustb() external virtual {
