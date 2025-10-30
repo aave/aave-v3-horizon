@@ -51,9 +51,13 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
       borrowableAssets: _toDynamicAddressArray(AaveV3EthereumHorizonAssets.GHO_UNDERLYING)
     });
 
+  uint8 internal constant VBILL_GHO_EMODE_CATEGORY = 1;
+
   function setUp() public virtual {
     vm.createSelectFork('mainnet');
+
     initEnvironment();
+    _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
     _loadDeployment();
 
     _whitelistVbillRwa(alice);
@@ -67,7 +71,11 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   }
 
   function test_eMode_VBILL_GHO() public {
-    test_eMode({eModeCategory: 1, params: VBILL_GHO_EMODE_PARAMS, dealCollateral: false});
+    test_eMode({
+      eModeCategory: VBILL_GHO_EMODE_CATEGORY,
+      params: VBILL_GHO_EMODE_PARAMS,
+      dealCollateral: false
+    });
   }
 
   // fund accounts by transferring existing VBILL, as `deal` causes issues on token contract accounting
@@ -148,9 +156,11 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
   function setUp() public virtual override {
+    vm.skip(true, 'vtestnet with VBILL listed');
     vm.createSelectFork('vtestnet');
 
     initEnvironment();
+    _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
 
     _whitelistVbillRwa(alice);
     _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
@@ -184,6 +194,7 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
     vm.createSelectFork('mainnet');
 
     initEnvironment();
+    _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
     _loadDeployment();
 
     _whitelistVbillRwa(alice);

@@ -403,6 +403,14 @@ abstract contract HorizonBaseTest is Test {
     assertEq(abi.encode(a), abi.encode(b), 'assertEq(interestRateData): all fields');
   }
 
+  // check current emode category label is empty so it can be overridden
+  function _checkExistingEModeCategory(uint8 eModeCategory) internal virtual {
+    DataTypes.EModeCategoryLegacy memory eModeCategoryData = pool.getEModeCategoryData(
+      eModeCategory
+    );
+    assertEq(eModeCategoryData.label, '', 'EMode category does not exist');
+  }
+
   function _toDynamicAddressArray(address a) internal pure returns (address[] memory) {
     address[] memory array = new address[](1);
     array[0] = a;
