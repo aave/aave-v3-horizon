@@ -79,12 +79,13 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   }
 
   function test_param_registry_VBILL() public {
-    (bool success, bytes memory returnData) = AaveV3EthereumHorizonCustom.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('assetExists(address)', AaveV3EthereumHorizonCustom.VBILL_UNDERLYING)
+    assertEq(
+      IParameterRegistry(AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY).assetExists(
+        AaveV3EthereumHorizonCustom.VBILL_UNDERLYING
+      ),
+      true,
+      'assetExists'
     );
-    require(success, 'Failed to call assetExists()');
-    bool exists = abi.decode(returnData, (bool));
-    assertEq(exists, true, 'assetExists');
   }
 
   // fund accounts by transferring existing VBILL, as `deal` causes issues on token contract accounting

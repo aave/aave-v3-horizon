@@ -25,7 +25,7 @@ import {IPool} from '../../src/contracts/interfaces/IPool.sol';
 import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
-
+import {IParameterRegistry} from '../horizon/dependencies/IParameterRegistry.sol';
 import {AaveV3EthereumHorizonCustom} from '../horizon/utils/AaveV3EthereumHorizonCustom.sol';
 import {AaveV3EthereumHorizon, AaveV3EthereumHorizonAssets} from 'aave-address-book/AaveV3EthereumHorizon.sol';
 

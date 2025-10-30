@@ -5,8 +5,7 @@ library AaveV3HorizonEthereum {
   address public constant HORIZON_EMERGENCY = 0x13B57382c36BAB566E75C72303622AF29E27e1d3;
 
   // horizon deployments
-  // address internal constant CONFIG_ENGINE = 0x366D1e3F41Ad5CC699bb8FC0B41323C68d895E2c;
-  address internal constant POOL_ADDRESSES_PROVIDER = 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0;
+  address internal constant POOL_UNDERLYINGES_PROVIDER = 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0;
   address internal constant POOL = 0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8;
   address internal constant POOL_CONFIGURATOR = 0x83Cb1B4af26EEf6463aC20AFbAC9c0e2E017202F;
   address internal constant ACL_MANAGER = 0xEFD5df7b87d2dCe6DD454b4240b3e0A4db562321;
@@ -23,22 +22,22 @@ library AaveV3HorizonEthereum {
   address internal constant AAVE_ORACLE = 0x985BcfAB7e0f4EF2606CC5b64FC1A16311880442;
 
   // horizon assets
-  address public constant USTB_ADDRESS = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
+  address public constant USTB_UNDERLYING = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
   address public constant USTB_PRICE_FEED_ADAPTER = 0x5Ae4D93B9b9626Dc3289e1Afb14b821FD3C95F44;
 
-  address public constant USCC_ADDRESS = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
+  address public constant USCC_UNDERLYING = 0x14d60E7FDC0D71d8611742720E4C50E7a974020c;
   address public constant USCC_PRICE_FEED_ADAPTER = 0x14CB2E810Eb93b79363f489D45a972b609E47230;
 
-  address public constant USYC_ADDRESS = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
+  address public constant USYC_UNDERLYING = 0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b;
   address public constant USYC_PRICE_FEED = 0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9;
 
-  address public constant JTRSY_ADDRESS = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
+  address public constant JTRSY_UNDERLYING = 0x8c213ee79581Ff4984583C6a801e5263418C4b86;
   address public constant JTRSY_PRICE_FEED_ADAPTER = 0xfAB6790E399f0481e1303167c655b3c39ee6e7A0;
 
-  address public constant JAAA_ADDRESS = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
+  address public constant JAAA_UNDERLYING = 0x5a0F93D040De44e78F251b03c43be9CF317Dcf64;
   address public constant JAAA_PRICE_FEED_ADAPTER = 0xF77f2537dba4ffD60f77fACdfB2c1706364fA03d;
 
-  address public constant VBILL_ADDRESS = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
+  address public constant VBILL_UNDERLYING = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
   // oracle param registry
