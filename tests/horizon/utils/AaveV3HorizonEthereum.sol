@@ -42,5 +42,5 @@ library AaveV3HorizonEthereum {
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
   // oracle param registry
-  address public constant PARAM_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
+  address public constant RWA_ORACLE_PARAMS_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
 }

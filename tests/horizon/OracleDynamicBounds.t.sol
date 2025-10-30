@@ -10,6 +10,8 @@ import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/Ag
 
 import {AaveV3HorizonEthereum} from './utils/AaveV3HorizonEthereum.sol';
 
+import {IParameterRegistry} from './dependencies/IParameterRegistry.sol';
+
 abstract contract OracleDynamicBoundsTestBase is Test {
   address constant USTB_NEW_AGGREGATOR = 0x267D0DD05fbc989565C521e0B8882f61027FF32A;
   address constant USCC_NEW_AGGREGATOR = 0x2d7Cd12f24bD28684847bF3e4317899a4Db53c58;
@@ -37,6 +39,10 @@ abstract contract OracleDynamicBoundsTestBase is Test {
   mapping(address => NewAggregator) internal newAggregators; // asset => new aggregator
 
   IAaveOracle internal aaveOracle;
+  IParameterRegistry internal parameterRegistry;
+  function setUp() public virtual {
+    parameterRegistry = IParameterRegistry(AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY);
+  }
 
   function test_asset(address asset, address oracleSource, bool isAdapter) internal {
     oracleSource = test_horizon_adapter(asset, oracleSource, isAdapter);
@@ -63,14 +69,14 @@ abstract contract OracleDynamicBoundsTestBase is Test {
     bool success;
     bytes memory data;
 
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+    (success, data) = AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY.call(
       abi.encodeWithSignature('assetExists(address)', asset)
     );
     require(success, 'Failed to call assetExists()');
     bool exists = abi.decode(data, (bool));
     assertEq(exists, true, 'assetExists');
 
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
+    (success, data) = AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY.call(
       abi.encodeWithSignature('getParametersForAsset(address)', asset)
     );
     require(success, 'Failed to call getParametersForAsset()');
@@ -120,22 +126,13 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // test look back data from param registry is valid
   function test_lookback_data(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getLookbackData(address)', asset)
-    );
-    require(success, 'Failed to call getLookbackData()');
-
-    // reads from old aggregator data
     (
       uint80 roundId,
       int256 answer,
       uint256 startedAt,
       uint256 updatedAt,
       uint80 answeredInRound
-    ) = abi.decode(data, (uint80, int256, uint256, uint256, uint80));
+    ) = parameterRegistry.getLookbackData(asset);
 
     assertGt(roundId, 0, 'lookback roundId');
     assertGt(answer, 0, 'lookback answer');
@@ -178,17 +175,14 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // read oracle address from param registry
   function _getParamRegistryOracle(address asset) internal returns (address) {
-    (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('getOracle(address)', asset)
-    );
-    require(success, 'Failed to call getOracle()');
-    return abi.decode(data, (address));
+    return parameterRegistry.getOracle(asset);
   }
 }
 
 /// forge-config: default.evm_version = "cancun"
 contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
-  function setUp() public virtual {
+  function setUp() public virtual override {
+    super.setUp();
     vm.createSelectFork('mainnet', 23478406);
     _initEnvironment();
   }
@@ -294,18 +288,9 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
 
   // check that param registry admin are set properly
   function test_registry_admin() external {
-    (bool success, bytes memory data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('owner()')
-    );
-    require(success, 'Failed to call owner()');
-    address owner = abi.decode(data, (address));
+    address owner = parameterRegistry.owner();
     assertEq(owner, AaveV3HorizonEthereum.HORIZON_OPS, 'owner');
-
-    (success, data) = AaveV3HorizonEthereum.PARAM_REGISTRY.call(
-      abi.encodeWithSignature('updater()')
-    );
-    require(success, 'Failed to call owner()');
-    address updater = abi.decode(data, (address));
+    address updater = parameterRegistry.owner();
     assertEq(updater, AaveV3HorizonEthereum.HORIZON_OPS, 'updater');
   }
 
@@ -343,6 +328,7 @@ contract OracleDynamicBoundsTest is OracleDynamicBoundsTestBase {
 /// forge-config: default.evm_version = "cancun"
 contract OracleDynamicBoundsPostMigrationTest is OracleDynamicBoundsTest {
   function setUp() public virtual override {
+    super.setUp();
     vm.createSelectFork('mainnet', 23483206);
     _initEnvironment();
   }
