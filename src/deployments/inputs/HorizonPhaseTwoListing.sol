@@ -5,7 +5,6 @@ import {IAaveV3ConfigEngine as IEngine} from '../../contracts/extensions/v3-conf
 import {EngineFlags} from '../../contracts/extensions/v3-config-engine/EngineFlags.sol';
 import {AaveV3Payload} from '../../contracts/extensions/v3-config-engine/AaveV3Payload.sol';
 
-import {AaveV3EthereumHorizon, AaveV3EthereumHorizonAssets} from 'aave-address-book/AaveV3EthereumHorizon.sol';
 import {AaveV3EthereumHorizonCustom} from 'tests/horizon/utils/AaveV3EthereumHorizonCustom.sol';
 
 contract HorizonPhaseTwoListing is AaveV3Payload {
@@ -65,7 +64,7 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
       }),
       IEngine.TokenImplementations({
         aToken: AaveV3EthereumHorizonCustom.RWA_ATOKEN_IMPLEMENTATION,
-        vToken: AaveV3EthereumHorizon.DEFAULT_VARIABLE_DEBT_TOKEN_IMPL
+        vToken: AaveV3EthereumHorizonCustom.VARIABLE_DEBT_TOKEN_IMPLEMENTATION
       })
     );
 
@@ -85,7 +84,7 @@ contract HorizonPhaseTwoListing is AaveV3Payload {
       borrowable: EngineFlags.DISABLED
     });
     assetsEMode[index++] = IEngine.AssetEModeUpdate({
-      asset: AaveV3EthereumHorizonAssets.GHO_UNDERLYING,
+      asset: AaveV3EthereumHorizonCustom.GHO_UNDERLYING,
       eModeCategory: 1,
       collateral: EngineFlags.DISABLED,
       borrowable: EngineFlags.ENABLED

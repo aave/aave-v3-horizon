@@ -48,7 +48,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
       liquidationBonus: 100_00 + 3_00,
       label: 'VBILL GHO',
       collateralAssets: _toDynamicAddressArray(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING),
-      borrowableAssets: _toDynamicAddressArray(AaveV3EthereumHorizonAssets.GHO_UNDERLYING)
+      borrowableAssets: _toDynamicAddressArray(AaveV3EthereumHorizonCustom.GHO_UNDERLYING)
     });
 
   uint8 internal constant VBILL_GHO_EMODE_CATEGORY = 1;
@@ -101,8 +101,8 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
         token: token,
         params: params,
         borrowableAssets: _toDynamicAddressArray(
-          AaveV3EthereumHorizonAssets.USDC_UNDERLYING,
-          AaveV3EthereumHorizonAssets.GHO_UNDERLYING
+          AaveV3EthereumHorizonCustom.USDC_UNDERLYING,
+          AaveV3EthereumHorizonCustom.GHO_UNDERLYING
         ),
         dealCollateral: false
       });
@@ -192,7 +192,7 @@ contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
     vm.startPrank(user);
     IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).approve(address(pool), 100e6);
     pool.supply(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, 100e6, user, 0);
-    pool.borrow(AaveV3EthereumHorizonAssets.USDC_UNDERLYING, 50e6, 2, 0, user);
+    pool.borrow(AaveV3EthereumHorizonCustom.USDC_UNDERLYING, 50e6, 2, 0, user);
     vm.stopPrank();
   }
 }

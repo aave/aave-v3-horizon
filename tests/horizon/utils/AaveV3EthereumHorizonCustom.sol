@@ -41,6 +41,12 @@ library AaveV3EthereumHorizonCustom {
   address public constant VBILL_UNDERLYING = 0x2255718832bC9fD3bE1CaF75084F4803DA14FF01;
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
+  address public constant GHO_UNDERLYING = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
+
+  address public constant USDC_UNDERLYING = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
+  address public constant RLUSD_UNDERLYING = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
+
   // oracle param registry
   address public constant RWA_ORACLE_PARAMS_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
 }
