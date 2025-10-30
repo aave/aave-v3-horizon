@@ -6,7 +6,7 @@ library AaveV3EthereumHorizonCustom {
   address public constant HORIZON_EXECUTOR = 0x09e8E1408a68778CEDdC1938729Ea126710E7Dda;
 
   // horizon deployments
-  address internal constant POOL_UNDERLYINGES_PROVIDER = 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0;
+  address internal constant POOL_ADDRESSES_PROVIDER = 0x5D39E06b825C1F2B80bf2756a73e28eFAA128ba0;
   address internal constant POOL = 0xAe05Cd22df81871bc7cC2a04BeCfb516bFe332C8;
   address internal constant POOL_CONFIGURATOR = 0x83Cb1B4af26EEf6463aC20AFbAC9c0e2E017202F;
   address internal constant ACL_MANAGER = 0xEFD5df7b87d2dCe6DD454b4240b3e0A4db562321;
@@ -41,10 +41,13 @@ library AaveV3EthereumHorizonCustom {
   address public constant VBILL_PRICE_FEED = 0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4;
 
   address public constant GHO_UNDERLYING = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f;
+  address public constant GHO_PRICE_FEED = 0xD110cac5d8682A3b045D5524a9903E031d70FCCd;
 
   address public constant USDC_UNDERLYING = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+  address public constant USDC_PRICE_FEED = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
 
   address public constant RLUSD_UNDERLYING = 0x8292Bb45bf1Ee4d140127049757C2E0fF06317eD;
+  address public constant RLUSD_PRICE_FEED = 0x26C46B7aD0012cA71F2298ada567dC9Af14E7f2A;
 
   // oracle param registry
   address public constant RWA_ORACLE_PARAMS_REGISTRY = 0x69D55D504BC9556E377b340D19818E736bbB318b;
