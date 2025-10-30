@@ -66,21 +66,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
 
   // test param registry params are configured properly
   function test_registry_params(address asset) internal {
-    bool success;
-    bytes memory data;
-
-    (success, data) = AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY.call(
-      abi.encodeWithSignature('assetExists(address)', asset)
-    );
-    require(success, 'Failed to call assetExists()');
-    bool exists = abi.decode(data, (bool));
-    assertEq(exists, true, 'assetExists');
-
-    (success, data) = AaveV3HorizonEthereum.RWA_ORACLE_PARAMS_REGISTRY.call(
-      abi.encodeWithSignature('getParametersForAsset(address)', asset)
-    );
-    require(success, 'Failed to call getParametersForAsset()');
-
+    assertEq(parameterRegistry.assetExists(asset), true, 'assetExists');
     (
       uint64 maxExpectedApy,
       uint32 upperBoundTolerance,
@@ -90,7 +76,7 @@ abstract contract OracleDynamicBoundsTestBase is Test {
       bool isUpperBoundEnabled,
       bool isLowerBoundEnabled,
       bool isActionTakingEnabled
-    ) = abi.decode(data, (uint64, uint32, uint32, uint32, uint80, bool, bool, bool));
+    ) = parameterRegistry.getParametersForAsset(asset);
 
     ExpectedParams memory expectedParam = expectedParams[asset];
 
