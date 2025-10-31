@@ -78,7 +78,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     });
   }
 
-  function test_param_registry_VBILL() public {
+  function test_param_registry_VBILL() public view {
     assertEq(
       IRwaOracleParameterRegistry(AaveV3EthereumHorizonCustom.RWA_ORACLE_PARAMS_REGISTRY)
         .assetExists(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING),
@@ -160,6 +160,14 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     );
     require(success, 'Failed to call addWallet()');
   }
+
+  function _supplyAndBorrow(address user) internal virtual {
+    vm.startPrank(user);
+    IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).approve(address(pool), 100e6);
+    pool.supply(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, 100e6, user, 0);
+    pool.borrow(AaveV3EthereumHorizonCustom.USDC_UNDERLYING, 50e6, 2, 0, user);
+    vm.stopPrank();
+  }
 }
 
 /// forge-config: default.evm_version = "cancun"
@@ -178,6 +186,7 @@ contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
   }
 
   function test_actions() public {
+    // test users from tenderly vtestnet, already whitelisted and seeded with VBILL
     address testUser1 = 0xabCa9b6E08dC6C031880f515Ec0cf9e395D0d6B8;
     address testUser2 = 0x66C1d4c6195D587C99aCc4256EbaC0a8D0AB9f64;
     address testUser3 = 0xd22eefD49B81e078f576Dbb4A804aa250cB3A291;
@@ -185,14 +194,6 @@ contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
     _supplyAndBorrow(testUser1);
     _supplyAndBorrow(testUser2);
     _supplyAndBorrow(testUser3);
-  }
-
-  function _supplyAndBorrow(address user) internal virtual {
-    vm.startPrank(user);
-    IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).approve(address(pool), 100e6);
-    pool.supply(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING, 100e6, user, 0);
-    pool.borrow(AaveV3EthereumHorizonCustom.USDC_UNDERLYING, 50e6, 2, 0, user);
-    vm.stopPrank();
   }
 }
 
