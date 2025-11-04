@@ -177,11 +177,8 @@ contract HorizonPhaseTwoListingVTestnetTest is HorizonPhaseTwoListingTest {
     vm.createSelectFork('vtestnet');
 
     initEnvironment();
-    _checkExistingEModeCategory(VBILL_GHO_EMODE_CATEGORY);
 
     _whitelistVbillRwa(alice);
-    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
-
     _transferVBILLTo(alice, 1_000_000e6);
   }
 
@@ -234,14 +231,11 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseTwoListingPostExecutionForkTest is HorizonPhaseTwoListingTest {
   function setUp() public virtual override {
-    vm.skip(true, 'post payload execution');
-    vm.createSelectFork('mainnet');
+    vm.createSelectFork('mainnet', 23726548);
 
     initEnvironment();
 
     _whitelistVbillRwa(alice);
-    _whitelistVbillRwa(pool.getReserveAToken(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING));
-
     _transferVBILLTo(alice, 1_000_000e6);
   }
 }
