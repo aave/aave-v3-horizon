@@ -5,6 +5,7 @@ import 'tests/horizon/ParameterRegistryUpdateBase.t.sol';
 
 contract ParameterRegistryUpdateTest is ParameterRegistryUpdateBaseTest {
   function setUp() public override {
+    vm.skip('post tx execution');
     super.setUp();
     vm.createSelectFork('mainnet');
   }
