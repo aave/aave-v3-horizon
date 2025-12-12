@@ -6,15 +6,27 @@ import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.
 import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
 import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
-import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {EModeConfiguration} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
+import {
+  ReserveConfiguration
+} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {
+  EModeConfiguration
+} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
-import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
-import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
+import {
+  IDefaultInterestRateStrategyV2
+} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
+import {
+  IERC20Detailed
+} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {
+  IAccessControl
+} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
+import {
+  AggregatorInterface
+} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {IScaledPriceAdapter} from '../../src/contracts/interfaces/IScaledPriceAdapter.sol';
 import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {IACLManager} from '../../src/contracts/interfaces/IACLManager.sol';
@@ -317,7 +329,7 @@ abstract contract HorizonListingBaseTest is Test {
   function test_eMode_configuration(
     uint8 eModeCategory,
     EModeCategoryParams memory params
-  ) private view {
+  ) internal view {
     assertEq(pool.getEModeCategoryCollateralConfig(eModeCategory).ltv, params.ltv, 'emode.ltv');
     assertEq(
       pool.getEModeCategoryCollateralConfig(eModeCategory).liquidationThreshold,
@@ -441,6 +453,24 @@ abstract contract HorizonListingBaseTest is Test {
       'assertEq(interestRateData): variableRateSlope2'
     );
     assertEq(abi.encode(a), abi.encode(b), 'assertEq(interestRateData): all fields');
+  }
+
+  function _toDynamicAddressArray(address a) internal pure returns (address[] memory) {
+    address[] memory array = new address[](1);
+    array[0] = a;
+    return array;
+  }
+
+  function _toDynamicAddressArray(
+    address a,
+    address b,
+    address c
+  ) internal pure returns (address[] memory) {
+    address[] memory array = new address[](3);
+    array[0] = a;
+    array[1] = b;
+    array[2] = c;
+    return array;
   }
 }
 
@@ -901,24 +931,6 @@ abstract contract HorizonListingMainnetTest is HorizonListingBaseTest {
 
   function test_eMode_JAAA_GHO() public {
     test_eMode(10, JAAA_GHO_EMODE_PARAMS);
-  }
-
-  function _toDynamicAddressArray(address a) private pure returns (address[] memory) {
-    address[] memory array = new address[](1);
-    array[0] = a;
-    return array;
-  }
-
-  function _toDynamicAddressArray(
-    address a,
-    address b,
-    address c
-  ) internal pure returns (address[] memory) {
-    address[] memory array = new address[](3);
-    array[0] = a;
-    array[1] = b;
-    array[2] = c;
-    return array;
   }
 }
 

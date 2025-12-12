@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 import './HorizonPhaseOneListing.t.sol';
-import {DeployHorizonPhaseOneUpdatePayload} from '../../scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol';
+import {
+  DeployHorizonPhaseOneUpdatePayload
+} from '../../scripts/misc/DeployHorizonPhaseOneUpdatePayload.sol';
 
 /// forge-config: default.evm_version = "cancun"
 contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
@@ -20,7 +22,7 @@ contract HorizonPhaseOneUpdateTest is HorizonPhaseOneListingTest {
       aTokenImpl: 0x9B2e8Be7f365F4A51137A41Df5C2d5F27A5C243C,
       rwaATokenImpl: 0x1d0Da70de08987b1888befECe0024443Bf3c2450,
       variableDebtTokenImpl: 0x15F03E5dE87c12cb2e2b8e5d6ECEf0a9E21ab269,
-      poolAdmin: AAVE_DAO_EXECUTOR
+      poolAdmin: 0x5300A1a15135EA4dc7aD5a167152C01EFc9b192A
     });
 
   function loadDeployment() internal virtual override returns (DeploymentInfo memory) {

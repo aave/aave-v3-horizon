@@ -21,6 +21,7 @@ library AaveV3EthereumHorizonCustom {
   address internal constant REVENUE_SPLITTER = 0x70CC725B8f05e0f230B05C4e91ABc651E121354f;
   address internal constant REWARDS_CONTROLLER = 0x1D5D386a90CEA8AcEa9fa75389e97CF5F1AE21D3;
   address internal constant AAVE_ORACLE = 0x985BcfAB7e0f4EF2606CC5b64FC1A16311880442;
+  address internal constant RWA_ATOKEN_MANAGER = 0x803e5Db3E26e88AD0a682A46c3E04cdd053D0EB9;
 
   // horizon assets
   address public constant USTB_UNDERLYING = 0x43415eB6ff9DB7E26A15b704e7A3eDCe97d31C4e;
