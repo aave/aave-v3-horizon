@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.7.5 <0.9.0;
 
-import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
-import {IERC20Detailed} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {
+  AggregatorInterface
+} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
+import {
+  IERC20Detailed
+} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {
+  IDefaultInterestRateStrategyV2
+} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
+import {
+  ReserveConfiguration
+} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IPoolAddressesProvider} from '../../src/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IPoolDataProvider} from '../../src/contracts/interfaces/IPoolDataProvider.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
@@ -12,7 +20,7 @@ import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
 import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {ProxyHelpers} from './ProxyHelpers.sol';
-import {DiffUtils} from './DiffUtils.sol';
+import {Test} from 'forge-std/Test.sol';
 
 struct ReserveTokens {
   address aToken;
@@ -68,7 +76,7 @@ struct LocalVars {
 /**
  * only applicable to harmony at this point
  */
-contract ProtocolV3TestBase is DiffUtils {
+contract ProtocolV3TestBase is Test {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
 
   /**
