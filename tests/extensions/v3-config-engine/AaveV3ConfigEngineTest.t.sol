@@ -3,49 +3,30 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/Test.sol';
 import {VmSafe} from 'forge-std/Base.sol';
-import {
-  IAaveV3ConfigEngine
-} from '../../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
+import {IAaveV3ConfigEngine} from '../../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
 import {AaveV3MockListing} from './mocks/AaveV3MockListing.sol';
 import {AaveV3MockListingCustom} from './mocks/AaveV3MockListingCustom.sol';
 import {AaveV3MockCapUpdate} from './mocks/AaveV3MockCapUpdate.sol';
 import {AaveV3MockCollateralUpdate} from './mocks/AaveV3MockCollateralUpdate.sol';
 import {AaveV3MockCollateralUpdateNoChange} from './mocks/AaveV3MockCollateralUpdateNoChange.sol';
-import {
-  AaveV3MockCollateralUpdateWrongBonus,
-  AaveV3MockCollateralUpdateCorrectBonus
-} from './mocks/AaveV3MockCollateralUpdateWrongBonus.sol';
+import {AaveV3MockCollateralUpdateWrongBonus, AaveV3MockCollateralUpdateCorrectBonus} from './mocks/AaveV3MockCollateralUpdateWrongBonus.sol';
 import {AaveV3MockBorrowUpdate} from './mocks/AaveV3MockBorrowUpdate.sol';
 import {AaveV3MockBorrowUpdateNoChange} from './mocks/AaveV3MockBorrowUpdateNoChange.sol';
 import {AaveV3MockRatesUpdate} from './mocks/AaveV3MockRatesUpdate.sol';
 import {AaveV3MockPriceFeedUpdate} from './mocks/AaveV3MockPriceFeedUpdate.sol';
-import {
-  AaveV3MockEModeCategoryUpdate,
-  AaveV3MockEModeCategoryUpdateEdgeBonus
-} from './mocks/AaveV3MockEModeCategoryUpdate.sol';
-import {
-  AaveV3MockEModeCategoryUpdateNoChange
-} from './mocks/AaveV3MockEModeCategoryUpdateNoChange.sol';
+import {AaveV3MockEModeCategoryUpdate, AaveV3MockEModeCategoryUpdateEdgeBonus} from './mocks/AaveV3MockEModeCategoryUpdate.sol';
+import {AaveV3MockEModeCategoryUpdateNoChange} from './mocks/AaveV3MockEModeCategoryUpdateNoChange.sol';
 import {AaveV3MockAssetEModeUpdate} from './mocks/AaveV3MockAssetEModeUpdate.sol';
 
 import {ATokenInstance} from '../../../src/contracts/instances/ATokenInstance.sol';
-import {
-  EModeConfiguration
-} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
-import {
-  VariableDebtTokenInstance
-} from '../../../src/contracts/instances/VariableDebtTokenInstance.sol';
+import {EModeConfiguration} from '../../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
+import {VariableDebtTokenInstance} from '../../../src/contracts/instances/VariableDebtTokenInstance.sol';
 import {TestnetProcedures, AaveV3ConfigEngine} from '../../utils/TestnetProcedures.sol';
 import {TestnetERC20} from '../../../src/contracts/mocks/testnet-helpers/TestnetERC20.sol';
 import {MockAggregator} from '../../../src/contracts/mocks/oracle/CLAggregators/MockAggregator.sol';
 import {IPool, IPoolAddressesProvider} from '../../utils/ProtocolV3TestBase.sol';
 import {DataTypes} from '../../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {
-  ProtocolV3TestBase,
-  IDefaultInterestRateStrategyV2,
-  ReserveConfig,
-  ReserveTokens
-} from '../../utils/ProtocolV3TestBase.sol';
+import {ProtocolV3TestBase, IDefaultInterestRateStrategyV2, ReserveConfig, ReserveTokens} from '../../utils/ProtocolV3TestBase.sol';
 
 contract AaveV3ConfigEngineTest is TestnetProcedures, ProtocolV3TestBase {
   using stdStorage for StdStorage;
