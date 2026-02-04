@@ -1,14 +1,14 @@
-# Horizon RWA Instance
+# Aave Horizon RWA Instance
 
 ## Context
 
-- Horizon is an initiative by Aave Labs focused on creating Real-World Asset (RWA) products tailored for institutions.
-- Horizon will launch a licensed, separate instance of the Aave Protocol (initially a fork of v3.3) to accommodate regulatory compliance requirements associated with RWA products.
-- Horizon will have a dual role setup with responsibilities split between Aave DAO (Operational role) and Aave Labs (Executive role).
+- Aave Horizon is an initiative by Aave Labs focused on creating Real-World Asset (RWA) products tailored for institutions.
+- Aave Horizon will launch a licensed, separate instance of the Aave Protocol (initially a fork of v3.3) to accommodate regulatory compliance requirements associated with RWA products.
+- Aave Horizon will have a dual role setup with responsibilities split between Aave DAO (Operational role) and Aave Labs (Executive role).
 
 ## Overview
 
-The Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins (or other permissionless non-RWA assets). Permissioning occurs at the asset level, with each RWA Token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
+The Aave Horizon Instance will introduce permissioned (RWA) assets. The Aave Pool will remain the same, except that RWA assets can be used as collateral in order to borrow stablecoins (or other permissionless non-RWA assets). Permissioning occurs at the asset level, with each RWA Token issuer enforcing asset-specific restrictions directly into their ERC-20 token. The Aave Pool is agnostic to each specific RWA implementation and its asset-level permissioning.
 
 From an Issuer perspective, RwaATokens are an extension of the RWA Tokens, which are securities. These RWA-specific aTokens (which are themselves not securities) will simply signify receipt of ownership of the supplied underlying RWA Token, but holders retain control over their RWA Token and can withdraw them as desired within collateralization limits.
 
@@ -16,7 +16,7 @@ However, holding an RwaAToken is purposefully more restrictive than merely holdi
 
 For added security and robustness, a protocol-wide RWA aToken Transfer Admin is also added, allowing Issuers the ability to forcibly transfer RWA aTokens on behalf of end users (without needing approval). These transfers will still enforce collateralization and health factor requirements as in existing Aave peer-to-peer aToken transfers.
 
-As with the standard Aave instance, an asset can be listed in Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins (or other non-RWA assets) to be borrowed by RWA holders.
+As with the standard Aave instance, an asset can be listed in Aave Horizon through the usual configuration process. This instance is primarily aimed at onboarding stablecoins (or other non-RWA assets) to be borrowed by RWA holders.
 
 ## Implementation
 
@@ -101,7 +101,7 @@ Stablecoins, or other non-RWA permissionless assets, may also be configured as c
 
 ## Edge Cases of Note
 
-Consider the following scenarios involving the example permissioned `RWA_1` token. Flashloans may be utilized from other protocols if disabled in Horizon.
+Consider the following scenarios involving the example permissioned `RWA_1` token. Flashloans may be utilized from other protocols if disabled in Aave Horizon.
 
 ### RWA Holder Loses Private Keys to Wallet
 
@@ -134,7 +134,7 @@ At the conclusion, `RWA_1_ISSUER` will have migrated both `ALICE`'s initial debt
 
 #### Limitations
 
-There may not be ample liquidity in the Horizon Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to provide liquidity or resolve as needed.
+There may not be ample liquidity in the Aave Horizon Pool to cover via flashloan the debt position to migrate. Under those circumstances, it is the responsibility of the Issuer to provide liquidity or resolve as needed.
 
 ### RWA Holder Becomes Sanctioned After Creating a Debt Position
 
@@ -142,7 +142,7 @@ If a user creates a debt position but then becomes sanctioned, their actions may
 
 #### Assumptions
 
-- `RWA_1` has a `80% LTV` in Horizon.
+- `RWA_1` has a `80% LTV` in Aave Horizon.
 
 #### Context
 
@@ -176,7 +176,7 @@ This theoretically allows recipients to open stablecoin debt positions without o
 Assumptions:
 
 - `RWA_1_ISSUER` has been granted `AUTHORIZED_TRANSFER_ROLE` in the RwaATokenManager contract for `aRWA_1`..
-- `ALICE` is allowlisted to hold `RWA_1` and has supplied `100 RWA_1` to Horizon, receiving `100 aRWA_1`.
+- `ALICE` is allowlisted to hold `RWA_1` and has supplied `100 RWA_1` to Aave Horizon, receiving `100 aRWA_1`.
 - `BOB` is not allowlisted to hold `RWA_1`.
 
 1. `RWA_1_ISSUER` executes `authorizedTransfer` from `ALICE` to `BOB` for `100 aRWA_1`.
@@ -251,7 +251,7 @@ Assumptions:
 
 - `BOB` and `ALICE` are allowlisted to hold `RWA_1`.
 - `ALICE` has an off-chain legal agreement with `RWA_1_ISSUER` to be able to be a liquidator.
-- `LTV` of `RWA_1` is `>80%` in Horizon.
+- `LTV` of `RWA_1` is `>80%` in Aave Horizon.
 - `RWA_1` and `aRWA_1` have decimals of 8.
 
 Consider the following scenario:
@@ -322,7 +322,7 @@ Exact configuration details for eMode, isolated mode, flashloan fees, and liquid
 
 Unlike crypto-native assets priced by decentralized exchange markets, RWAs rely on a Net Asset Value (NAV) reported directly by the asset issuer. This introduces a critical risk vector: the potential for delayed, inaccurate, or malicious price reporting. A simple operational error or a malicious act could lead to an incorrect NAV being published on-chain, which could trigger faulty liquidations across the market. While an emergency steward can reactively freeze the reserve, this process introduces operational delays, creating a window where whitelisted liquidators could exploit a faulty price and cause irreparable harm to borrowers.
 
-Horizon implements a robust, automated safeguard directly at the Oracle level to mitigate this risk. In partnership with Chainlink and LlamaRisk, pre-defined upper and lower price bounds are configured for each RWA price feed at the Decentralized Oracle Network (DON) level. When an issuer reports a new NAV, the Chainlink DON validates it against these bounds before publishing it on-chain. If the reported NAV is within the bounds, the update is accepted. If it is outside the bounds, the DON rejects the update, and the oracle continues to report the last known valid price. This proactive mechanism prevents a faulty price from ever reaching the Horizon protocol, eliminating the risk of erroneous liquidations. Furthermore, any breach of these price bounds is paired with a time-sensitive reaction from Horizon's emergency steward to prevent new debt originations and additional exposure until the root cause analysis is performed.
+Aave Horizon implements a robust, automated safeguard directly at the Oracle level to mitigate this risk. In partnership with Chainlink and LlamaRisk, pre-defined upper and lower price bounds are configured for each RWA price feed at the Decentralized Oracle Network (DON) level. When an issuer reports a new NAV, the Chainlink DON validates it against these bounds before publishing it on-chain. If the reported NAV is within the bounds, the update is accepted. If it is outside the bounds, the DON rejects the update, and the oracle continues to report the last known valid price. This proactive mechanism prevents a faulty price from ever reaching the Aave Horizon protocol, eliminating the risk of erroneous liquidations. Furthermore, any breach of these price bounds is paired with a time-sensitive reaction from Aave Horizon's emergency steward to prevent new debt originations and additional exposure until the root cause analysis is performed.
 
 ## References
 
