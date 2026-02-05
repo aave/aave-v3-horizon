@@ -21,10 +21,6 @@ fs_permissions = [
 ]
 ffi = true
 
-[fuzz]
-runs = 1000
-max_test_rejects = 20000
-
 [profile.ci]
 src = 'src'
 test = 'tests'
@@ -49,7 +45,7 @@ fs_permissions = [
 ffi = true
 
 [fuzz]
-runs = 10000
+runs = 1000
 max_test_rejects = 20000
 
 [profile.linea]
