@@ -21,22 +21,27 @@ jobs:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
   test:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
+    with:
+      compareLcov: false
   codecov:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
         with:
-          name: lcov-report
-          path: lcov
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Generate coverage
+        run: forge coverage --fuzz-runs 1 --report lcov --no-match-coverage "(test|script|.t.sol|.s.sol|deployment|mock)"
 
       - name: Cleanup lcov
         run: |
           sudo apt-get -y install lcov
-          lcov --remove ./lcov/lcov.info -o ./lcov/lcov.info \
+          lcov --remove ./lcov.info -o ./lcov.info \
           'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
           'src/contracts/helpers/UiPoolDataProviderV3.sol' \
           'src/contracts/helpers/WalletBalanceProvider.sol' \
@@ -47,7 +52,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: ${{ github.repository }}
-          files: ./lcov/lcov.info
+          files: ./lcov.info
 # only when the repo has zksync code
 #  test-zk:
 #    uses: bgd-labs/github-workflows/.github/workflows/foundry-test-zk.yml@main
