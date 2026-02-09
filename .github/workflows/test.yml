@@ -21,27 +21,33 @@ jobs:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-lint-prettier.yml@main
   test:
     uses: bgd-labs/github-workflows/.github/workflows/foundry-test.yml@main
-  debug-coverage:
+  codecov:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
         with:
-          submodules: recursive
+          name: lcov-report
+          path: lcov
 
-      - name: Setup RPC env
-        uses: bgd-labs/action-rpc-env@f56d90aa2505822c6c81a9242625551b68b4859f
+      - name: Cleanup lcov
+        run: |
+          sudo apt-get -y install lcov
+          lcov --remove ./lcov/lcov.info -o ./lcov/lcov.info \
+          'src/contracts/helpers/UiIncentiveDataProviderV3.sol' \
+          'src/contracts/helpers/UiPoolDataProviderV3.sol' \
+          'src/contracts/helpers/WalletBalanceProvider.sol' \
+          'src/contracts/dependencies/*'
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@ea99328d1c4d5f39fda7cbffe104afd6906c50b0
         with:
-          ALCHEMY_API_KEY: ${{ secrets.ALCHEMY_API_KEY }}
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
-
-      - name: Debug - Run forge coverage directly with FOUNDRY_PROFILE=ci
-        run: forge coverage --fuzz-runs 1 --report lcov --no-match-coverage "(test|script|.t.sol|.s.sol|deployment|mock)"
-        env:
-          FOUNDRY_PROFILE: ci
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+          files: ./lcov/lcov.info
 # only when the repo has zksync code
 #  test-zk:
 #    uses: bgd-labs/github-workflows/.github/workflows/foundry-test-zk.yml@main
