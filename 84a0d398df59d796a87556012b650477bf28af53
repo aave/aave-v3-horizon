@@ -1,0 +1,23 @@
+Makefile
+  f54a66cedc4846e8 61-62,65-68,71-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "84a0d398df59d796a87556012b650477bf28af53",
+  "prompts": {
+    "f54a66cedc4846e8": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "e4d256a1-204b-4be5-b5aa-8a976b829ece",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "YBM",
+      "messages": [],
+      "total_additions": 52,
+      "total_deletions": 11,
+      "accepted_lines": 8,
+      "overriden_lines": 4
+    }
+  }
+}
