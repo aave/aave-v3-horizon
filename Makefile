@@ -92,15 +92,9 @@ deploy-liquidation-data-provider :;
 		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
-# Deploy AToken implementation. `make deploy-atoken-impl chain=mainnet account=<account>`
-deploy-atoken-impl :;
-	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenInstance \
-		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
-		--chain ${chain} --verifier-url ${verifier_url}
-
-# Deploy RwaAToken implementation. `make deploy-rwa-atoken-impl chain=mainnet account=<account>`
-deploy-rwa-atoken-impl :;
-	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployRwaATokenInstance \
+# Deploy AToken implementations. `make deploy-atoken-impls chain=mainnet account=<account>`
+deploy-atoken-impls :;
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenImplementations \
 		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
 		--chain ${chain} --verifier-url ${verifier_url}
 

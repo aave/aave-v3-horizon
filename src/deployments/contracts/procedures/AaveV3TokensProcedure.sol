@@ -3,9 +3,13 @@ pragma solidity ^0.8.0;
 
 import {ATokenInstance} from '../../../contracts/instances/ATokenInstance.sol';
 import {RwaATokenInstance} from '../../../contracts/instances/RwaATokenInstance.sol';
-import {VariableDebtTokenInstance} from '../../../contracts/instances/VariableDebtTokenInstance.sol';
+import {
+  VariableDebtTokenInstance
+} from '../../../contracts/instances/VariableDebtTokenInstance.sol';
 import {IPool} from '../../../contracts/interfaces/IPool.sol';
-import {IAaveIncentivesController} from '../../../contracts/interfaces/IAaveIncentivesController.sol';
+import {
+  IAaveIncentivesController
+} from '../../../contracts/interfaces/IAaveIncentivesController.sol';
 
 contract AaveV3TokensProcedure {
   struct TokensReport {
@@ -20,9 +24,32 @@ contract AaveV3TokensProcedure {
     TokensReport memory tokensReport;
     bytes memory empty;
 
+    VariableDebtTokenInstance variableDebtToken = new VariableDebtTokenInstance(IPool(poolProxy));
+
+    variableDebtToken.initialize(
+      IPool(poolProxy), // initializingPool
+      address(0), // underlyingAsset
+      IAaveIncentivesController(address(0)), // incentivesController
+      0, // debtTokenDecimals
+      'VARIABLE_DEBT_TOKEN_IMPL', // debtTokenName
+      'VARIABLE_DEBT_TOKEN_IMPL', // debtTokenSymbol
+      empty // params
+    );
+
+    (tokensReport.aToken, tokensReport.rwaAToken) = _deployAaveV3ATokensImplementations(poolProxy);
+    tokensReport.variableDebtToken = address(variableDebtToken);
+
+    return tokensReport;
+  }
+
+  /// @return aToken impl address
+  /// @return rwaAToken impl address
+  function _deployAaveV3ATokensImplementations(
+    address poolProxy
+  ) internal returns (address, address) {
+    bytes memory empty;
     ATokenInstance aToken = new ATokenInstance(IPool(poolProxy));
     RwaATokenInstance rwaAToken = new RwaATokenInstance(IPool(poolProxy));
-    VariableDebtTokenInstance variableDebtToken = new VariableDebtTokenInstance(IPool(poolProxy));
 
     aToken.initialize(
       IPool(poolProxy), // pool proxy
@@ -46,20 +73,6 @@ contract AaveV3TokensProcedure {
       empty // params
     );
 
-    variableDebtToken.initialize(
-      IPool(poolProxy), // initializingPool
-      address(0), // underlyingAsset
-      IAaveIncentivesController(address(0)), // incentivesController
-      0, // debtTokenDecimals
-      'VARIABLE_DEBT_TOKEN_IMPL', // debtTokenName
-      'VARIABLE_DEBT_TOKEN_IMPL', // debtTokenSymbol
-      empty // params
-    );
-
-    tokensReport.aToken = address(aToken);
-    tokensReport.rwaAToken = address(rwaAToken);
-    tokensReport.variableDebtToken = address(variableDebtToken);
-
-    return tokensReport;
+    return (address(aToken), address(rwaAToken));
   }
 }
