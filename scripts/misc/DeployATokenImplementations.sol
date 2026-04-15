@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-  AaveV3TokensProcedure
-} from '../../src/deployments/contracts/procedures/AaveV3TokensProcedure.sol';
+import {AaveV3TokensProcedure} from '../../src/deployments/contracts/procedures/AaveV3TokensProcedure.sol';
 import {ATokenInstance} from '../../src/contracts/instances/ATokenInstance.sol';
 import {RwaATokenInstance} from '../../src/contracts/instances/RwaATokenInstance.sol';
 import {AaveV3HorizonEthereum} from '../../tests/horizon/utils/AaveV3HorizonEthereum.sol';
