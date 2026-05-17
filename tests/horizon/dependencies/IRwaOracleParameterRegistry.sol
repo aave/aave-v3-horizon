@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @dev minimal interface for the Llama Risk RWA Oracle parameter registry
-interface IParameterRegistry {
+interface IRwaOracleParameterRegistry {
   function assetExists(address asset) external view returns (bool);
 
   function getParametersForAsset(

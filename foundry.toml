@@ -43,6 +43,7 @@ base = "${RPC_BASE}"
 metis = "${RPC_METIS}"
 linea = "${RPC_LINEA}"
 sepolia = "${RPC_SEPOLIA}"
+vtestnet = "${RPC_VTESTNET}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_API_KEY}", chainId = 1 }
