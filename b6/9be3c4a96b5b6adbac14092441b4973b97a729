@@ -1,0 +1,41 @@
+src/contracts/instances/RwaATokenInstance.sol
+  s_2bc10e7d26489f::t_f70d1548af4e6a 8
+scripts/misc/DeployATokenImplementations.sol
+  s_2bc10e7d26489f::t_f70d1548af4e6a 1-6,8-14,16-20
+  s_2bc10e7d26489f::t_180a06f0478214 7,15
+src/contracts/instances/ATokenInstance.sol
+  s_2bc10e7d26489f::t_f70d1548af4e6a 7
+README.md
+  s_2bc10e7d26489f::t_f70d1548af4e6a 98
+foundry.toml
+  s_2bc10e7d26489f::t_f70d1548af4e6a 59
+Makefile
+  s_2bc10e7d26489f::t_e14bb141d77e8f 95,97-99,101-102
+  s_2bc10e7d26489f::t_f70d1548af4e6a 46-48,50-52,56-58,68-70,74-76,81-83,87,89-91,103-107
+docs/Horizon/Aave_Horizon_overview.md
+  s_2bc10e7d26489f::t_f70d1548af4e6a 1-330
+.env.example
+  s_2bc10e7d26489f::t_f70d1548af4e6a 2-4
+tests/utils/ProtocolV3TestBase.sol
+  s_2bc10e7d26489f::t_f70d1548af4e6a 15,71
+src/deployments/contracts/procedures/AaveV3TokensProcedure.sol
+  s_2bc10e7d26489f::t_f70d1548af4e6a 23-46,72
+package-lock.json
+  s_2bc10e7d26489f::t_84ef6a933171a2 407-409,412-416,431,440,492-493,567,587,721,772-777,779-782,785-792,795-800,806,894,1177-1178,1221,1258-1259,1265,1300
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b69be3c4a96b5b6adbac14092441b4973b97a729",
+  "prompts": {},
+  "sessions": {
+    "s_2bc10e7d26489f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c17fbce8-c529-4890-a816-221a667180e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
