@@ -106,6 +106,12 @@ deploy-atoken-impls :;
 		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
 		--chain ${chain} --verifier-url ${verifier_url}
 
+# Deploy config engine. `make deploy-config-engine chain=mainnet account=<account>`
+deploy-config-engine :;
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployConfigEngine.sol:DeployConfigEngine \
+		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url}
+
 # Invariants
 echidna:
 	echidna tests/invariants/Tester.t.sol --contract Tester --config ./tests/invariants/_config/echidna_config.yaml --corpus-dir ./tests/invariants/_corpus/echidna/default/_data/corpus
