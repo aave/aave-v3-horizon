@@ -1,0 +1,27 @@
+tests/horizon/utils/AaveV3EthereumHorizonCustom.sol
+  s_2bc10e7d26489f::t_f8356a5c2207bf 18-19
+  s_2bc10e7d26489f::t_a3f5ab33ae132b 24
+scripts/misc/DeployConfigEngine.sol
+  s_2bc10e7d26489f::t_388f3220e0a7f4 1-55
+tests/deployments/DeployConfigEngine.t.sol
+  s_2bc10e7d26489f::t_5af977d9c00c45 1-186,191-226,228-242
+  s_2bc10e7d26489f::t_522ffaac63214d 187-190,227
+Makefile
+  s_2bc10e7d26489f::t_33e5a581bd9695 109-114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "393cb421bfc3b0f7f68faeec7033945eb2b61792",
+  "prompts": {},
+  "sessions": {
+    "s_2bc10e7d26489f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c17fbce8-c529-4890-a816-221a667180e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
