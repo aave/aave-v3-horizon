@@ -117,7 +117,7 @@ abstract contract HorizonBaseTest is Test {
     bool dealCollateral
   ) internal {
     test_eMode_configuration(eModeCategory, params);
-    test_eMode_collateralization(eModeCategory, params, true);
+    test_eMode_collateralization(eModeCategory, params, dealCollateral);
   }
 
   function test_getConfiguration(address token, TokenListingParams memory params) internal view {
