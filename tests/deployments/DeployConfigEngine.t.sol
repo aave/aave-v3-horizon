@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Test} from 'forge-std/Test.sol';
+import {VmSafe} from 'forge-std/Vm.sol';
 import {DeployConfigEngine} from '../../scripts/misc/DeployConfigEngine.sol';
 import {AaveV3ConfigEngine} from '../../src/contracts/extensions/v3-config-engine/AaveV3ConfigEngine.sol';
 import {IAaveV3ConfigEngine as IEngine} from '../../src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol';
@@ -127,6 +128,8 @@ contract DeployConfigEngineTest is Test {
   AaveV3ConfigEngine internal configEngine;
 
   function setUp() public {
+    // coverage disables the optimizer, so the sub-engine CREATE2 addresses don't match the deployed ones
+    if (vm.isContext(VmSafe.ForgeContext.Coverage)) vm.skip(true);
     vm.createSelectFork('mainnet', 26250907);
     configEngine = AaveV3ConfigEngine(new DeployConfigEngine().run());
   }
