@@ -1,0 +1,26 @@
+.github/workflows/test.yml
+  s_2bc10e7d26489f::t_aaa6e9d918e551 21,23,53
+.github/workflows/release.yml
+  s_2bc10e7d26489f::t_aaa6e9d918e551 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2370e282a94dc6072c8672c657ae120fd0f49367",
+  "prompts": {},
+  "humans": {
+    "h_0f977de3f043fc": {
+      "author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_2bc10e7d26489f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c17fbce8-c529-4890-a816-221a667180e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
