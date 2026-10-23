@@ -1,0 +1,24 @@
+tests/deployments/HorizonBase.t.sol
+  s_69472ea3a2d72a::t_f14bce792a70b1 120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "10959d5bf1dbc484575086a1583f3e1a14c12093",
+  "prompts": {},
+  "humans": {
+    "h_71908bb6884da4": {
+      "author": "YBM <31329384+yan-man@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_69472ea3a2d72a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3e1ab534-f679-4703-8662-11b59f162d49",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "YBM <31329384+yan-man@users.noreply.github.com>"
+    }
+  }
+}
