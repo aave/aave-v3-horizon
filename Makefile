@@ -92,6 +92,14 @@ deploy-liquidation-data-provider :;
 		--sig "run(address,address)" ${pool} ${addressesProvider} \
 		--verify --broadcast
 
+# Deploys payload to list phase two assets. `make deploy-phase-two-payload chain=mainnet account=<account>`
+deploy-phase-two-payload :;
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployHorizonPhaseTwoPayload.sol:DeployHorizonPhaseTwoPayload \
+		--rpc-url ${chain} --account ${account} --slow --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url} \
+		--sig "run()" \
+		--verify --broadcast
+
 # Deploy AToken implementations. `make deploy-atoken-impls chain=mainnet account=<account>`
 deploy-atoken-impls :;
 	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenImplementations \
