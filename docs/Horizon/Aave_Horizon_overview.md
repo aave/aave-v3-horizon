@@ -22,7 +22,7 @@ As with the standard Aave instance, an asset can be listed in Aave Horizon throu
 
 ### RWA Asset (Collateral Asset)
 
-RWA assets can be listed by utilizing a newly developed aToken contract, `RwaAToken`, which restricts the functionality of the underlying asset within the Aave Pool. These RWA assets are intended to be used as collateral only, which is achieved through proper Pool configuration (ie setting `Liquidation Threshold` for RWA Tokens to `0`).
+RWA assets can be listed by utilizing a newly developed aToken contract, `RwaAToken`, which restricts the functionality of the underlying asset within the Aave Pool. These RWA assets are intended to be used as collateral only. Collateral use requires a non-zero Liquidation Threshold, with borrowing power determined by the applicable LTV. Borrowing and flashborrowing of the RWA asset itself are disabled through reserve configuration (`borrowingEnabled: false` and `flashloanable: false`); `RwaAToken.transferUnderlyingTo` also reverts.
 
 - RwaAToken transfers
   - users cannot transfer their own RwaATokens (transfer, allowance, and permit related methods will revert).
@@ -73,6 +73,20 @@ RWA assets can be listed by utilizing a newly developed aToken contract, `RwaATo
 - borrowCap: 0 (signifies no borrow cap, but cannot be borrowed due to borrowingEnabled set to false)
 - debtCeiling: non-zero if the RWA asset is in isolation
 - liquidationProtocolFee: 0 (must be 0, otherwise liquidations will revert in RwaAToken due to `transferOnLiquidation`)
+
+#### Collateral and Borrowing Configuration
+
+Collateral eligibility and whether an asset can be borrowed are separate reserve settings. The phase-one listing configuration uses the following distinction:
+
+| Setting | RWA collateral assets | Stablecoin liquidity assets |
+| --- | --- | --- |
+| Reserve LTV and Liquidation Threshold | Non-zero, asset-specific | Both `0` |
+| borrowingEnabled | `false` | `true` |
+| flashloanable | `false` | `false` |
+
+Applicable eMode categories can provide different LTV and Liquidation Threshold values for eligible RWA collateral. These parameters determine borrowing power and health-factor calculations; they do not enable borrowing of the RWA asset itself. Values are deployment- and category-specific. Consult the relevant reserve and eMode configuration rather than treating this overview as a source of live risk parameters.
+
+See the [phase-one listing configuration](../../src/deployments/inputs/HorizonPhaseOneListing.sol), [account-data calculations](../../src/contracts/protocol/libraries/logic/GenericLogic.sol), and [`RwaAToken` implementation](../../src/contracts/protocol/tokenization/RwaAToken.sol).
 
 ### Stablecoins / Permissionless Non-RWA Assets (Borrowable Asset)
 
