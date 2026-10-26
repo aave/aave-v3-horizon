@@ -115,7 +115,7 @@ contract DeployConfigEngineTest is Test {
     0x87593272C06f4FC49EC2942eBda0972d2F1Ab521;
 
   // https://etherscan.io/address/0x30dA3a613c5b492BB4277Aa2a5D81f4759Ba83Af
-  AaveV3ConfigEngine internal constant PREV_CONFIG_ENGINE =
+  AaveV3ConfigEngine internal constant DEPRECATED_CONFIG_ENGINE =
     AaveV3ConfigEngine(0x30dA3a613c5b492BB4277Aa2a5D81f4759Ba83Af);
   address internal constant LISTING_ENGINE = 0x4e48debC1aDE8011A185Db7792299432d19AA017;
   address internal constant EMODE_ENGINE = 0xC45E60E50b0dFbb4e3bb768EEfa65245E6a3cB3b;
@@ -154,13 +154,13 @@ contract DeployConfigEngineTest is Test {
     assertEq(configEngine.RATE_ENGINE(), RATE_ENGINE);
     assertEq(configEngine.CAPS_ENGINE(), CAPS_ENGINE);
 
-    assertEq(configEngine.LISTING_ENGINE(), PREV_CONFIG_ENGINE.LISTING_ENGINE());
-    assertEq(configEngine.EMODE_ENGINE(), PREV_CONFIG_ENGINE.EMODE_ENGINE());
-    assertEq(configEngine.BORROW_ENGINE(), PREV_CONFIG_ENGINE.BORROW_ENGINE());
-    assertEq(configEngine.COLLATERAL_ENGINE(), PREV_CONFIG_ENGINE.COLLATERAL_ENGINE());
-    assertEq(configEngine.PRICE_FEED_ENGINE(), PREV_CONFIG_ENGINE.PRICE_FEED_ENGINE());
-    assertEq(configEngine.RATE_ENGINE(), PREV_CONFIG_ENGINE.RATE_ENGINE());
-    assertEq(configEngine.CAPS_ENGINE(), PREV_CONFIG_ENGINE.CAPS_ENGINE());
+    assertEq(configEngine.LISTING_ENGINE(), DEPRECATED_CONFIG_ENGINE.LISTING_ENGINE());
+    assertEq(configEngine.EMODE_ENGINE(), DEPRECATED_CONFIG_ENGINE.EMODE_ENGINE());
+    assertEq(configEngine.BORROW_ENGINE(), DEPRECATED_CONFIG_ENGINE.BORROW_ENGINE());
+    assertEq(configEngine.COLLATERAL_ENGINE(), DEPRECATED_CONFIG_ENGINE.COLLATERAL_ENGINE());
+    assertEq(configEngine.PRICE_FEED_ENGINE(), DEPRECATED_CONFIG_ENGINE.PRICE_FEED_ENGINE());
+    assertEq(configEngine.RATE_ENGINE(), DEPRECATED_CONFIG_ENGINE.RATE_ENGINE());
+    assertEq(configEngine.CAPS_ENGINE(), DEPRECATED_CONFIG_ENGINE.CAPS_ENGINE());
   }
 
   function test_expectedAddresses_matchOnChain() public view {
