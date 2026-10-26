@@ -1,0 +1,23 @@
+tests/deployments/HorizonBase.t.sol
+  s_2bc10e7d26489f::t_a8b146e42acafd 4
+tests/deployments/HorizonPhaseTwoListing.t.sol
+  s_2bc10e7d26489f::t_a8b146e42acafd 93-96,118,216,219
+tests/horizon/ParameterRegistryUpdateBase.t.sol
+  s_2bc10e7d26489f::t_a8b146e42acafd 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cef931e63cfaec257dcaa1d4d23a3fc2ef46f193",
+  "prompts": {},
+  "sessions": {
+    "s_2bc10e7d26489f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c17fbce8-c529-4890-a816-221a667180e8",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Alexandru Niculae <43644109+avniculae@users.noreply.github.com>"
+    }
+  }
+}
