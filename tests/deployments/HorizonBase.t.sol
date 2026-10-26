@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {console2 as console} from 'forge-std/console2.sol';
-
-import {Test, Vm} from 'forge-std/Test.sol';
+import {Test} from 'forge-std/Test.sol';
 import {DataTypes} from '../../src/contracts/protocol/libraries/types/DataTypes.sol';
-import {MarketReport} from '../../src/deployments/interfaces/IMarketReportTypes.sol';
-import {Default} from '../../scripts/DeployAaveV3MarketBatched.sol';
-import {DeployHorizonPhaseOnePayload} from '../../scripts/misc/DeployHorizonPhaseOnePayload.sol';
 import {ReserveConfiguration} from '../../src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {EModeConfiguration} from '../../src/contracts/protocol/libraries/configuration/EModeConfiguration.sol';
 import {PercentageMath} from '../../src/contracts/protocol/libraries/math/PercentageMath.sol';
-import {IMetadataReporter} from '../../src/deployments/interfaces/IMetadataReporter.sol';
 import {IRevenueSplitter} from '../../src/contracts/treasury/IRevenueSplitter.sol';
 import {IDefaultInterestRateStrategyV2} from '../../src/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import {IERC20Detailed, IERC20} from '../../src/contracts/dependencies/openzeppelin/contracts/IERC20Detailed.sol';
-import {IAccessControl} from '../../src/contracts/dependencies/openzeppelin/contracts/IAccessControl.sol';
 import {AggregatorInterface} from '../../src/contracts/dependencies/chainlink/AggregatorInterface.sol';
 import {IScaledPriceAdapter} from '../../src/contracts/interfaces/IScaledPriceAdapter.sol';
 import {IAaveOracle} from '../../src/contracts/interfaces/IAaveOracle.sol';
-import {IACLManager} from '../../src/contracts/interfaces/IACLManager.sol';
 import {IAToken} from '../../src/contracts/interfaces/IAToken.sol';
 import {IPool} from '../../src/contracts/interfaces/IPool.sol';
-import {IPoolConfigurator} from '../../src/contracts/interfaces/IPoolConfigurator.sol';
 import {Errors} from '../../src/contracts/protocol/libraries/helpers/Errors.sol';
 import {ProxyHelpers} from '../utils/ProxyHelpers.sol';
 import {IRwaOracleParameterRegistry} from '../horizon/dependencies/IRwaOracleParameterRegistry.sol';
@@ -36,27 +27,12 @@ abstract contract HorizonBaseTest is Test {
   IPool internal pool;
   IRevenueSplitter internal revenueSplitter;
   IDefaultInterestRateStrategyV2 internal defaultInterestRateStrategy;
-  address internal rwaATokenManager;
   address internal aTokenImpl;
   address internal rwaATokenImpl;
   address internal variableDebtTokenImpl;
-  address internal poolAdmin;
 
   address internal alice = makeAddr('alice');
   address internal bob = makeAddr('bob');
-
-  bytes32 internal constant ATOKEN_ADMIN_ROLE = keccak256('ATOKEN_ADMIN');
-
-  struct DeploymentInfo {
-    address pool;
-    address revenueSplitter;
-    address defaultInterestRateStrategy;
-    address rwaATokenManager;
-    address aTokenImpl;
-    address rwaATokenImpl;
-    address variableDebtTokenImpl;
-    address poolAdmin;
-  }
 
   struct TokenListingParams {
     bool isRwa;
@@ -267,8 +243,6 @@ abstract contract HorizonBaseTest is Test {
     EModeCategoryParams memory params,
     bool dealCollateral
   ) internal {
-    address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
-
     vm.prank(alice);
     pool.setUserEMode(eModeCategory);
 
@@ -327,8 +301,6 @@ abstract contract HorizonBaseTest is Test {
     address[] memory borrowableAssets,
     bool dealCollateral
   ) internal {
-    address poolConfigurator = pool.ADDRESSES_PROVIDER().getPoolConfigurator();
-
     IAaveOracle oracle = IAaveOracle(pool.ADDRESSES_PROVIDER().getPriceOracle());
     uint256 amountInBaseCurrency = 1e5 * 1e8;
 

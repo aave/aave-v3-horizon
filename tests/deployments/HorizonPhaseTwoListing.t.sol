@@ -90,7 +90,10 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
   // fund accounts by transferring existing VBILL, as `deal` causes issues on token contract accounting
   function _transferVBILLTo(address user, uint256 amount) internal virtual {
     vm.prank(0x5E6c2AD8376A9E5E857B1d91643399E9aB65ff8c); // on-chain holder, ~25M VBILL balance
-    IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).transfer(user, amount);
+    require(
+      IERC20(AaveV3EthereumHorizonCustom.VBILL_UNDERLYING).transfer(user, amount),
+      'VBILL transfer failed'
+    );
   }
 
   function test_listing(address token, TokenListingParams memory params) internal virtual override {
@@ -112,7 +115,7 @@ contract HorizonPhaseTwoListingTest is HorizonBaseTest {
     (, address horizonPhaseTwoListing) = new DeployHorizonPhaseTwoPayload().run();
 
     vm.startPrank(AaveV3EthereumHorizonCustom.HORIZON_EMERGENCY);
-    (bool success, bytes memory returnData) = AaveV3EthereumHorizonCustom.HORIZON_EXECUTOR.call(
+    (bool success, ) = AaveV3EthereumHorizonCustom.HORIZON_EXECUTOR.call(
       abi.encodeWithSignature(
         'executeTransaction(address,uint256,string,bytes,bool)',
         address(horizonPhaseTwoListing), // target
@@ -210,10 +213,10 @@ contract HorizonPhaseTwoListingPostDeploymentForkTest is HorizonPhaseTwoListingT
   }
 
   function _loadDeployment() internal virtual override {
-    address horizonPhaseTwoListing = 0xA9ce8c46F6119410BBF5C797233f5494C7b3E7E5; // fill in with deployed payload address
+    address horizonPhaseTwoListing = 0xA9ce8c46F6119410BBF5C797233f5494C7b3E7E5; // deployed payload
 
     vm.startPrank(AaveV3EthereumHorizonCustom.HORIZON_EMERGENCY);
-    (bool success, bytes memory returnData) = AaveV3EthereumHorizonCustom.HORIZON_EXECUTOR.call(
+    (bool success, ) = AaveV3EthereumHorizonCustom.HORIZON_EXECUTOR.call(
       abi.encodeWithSignature(
         'executeTransaction(address,uint256,string,bytes,bool)',
         address(horizonPhaseTwoListing), // target
