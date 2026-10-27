@@ -1,6 +1,8 @@
 # include .env file and export its env vars
 # (-include to ignore error if it does not exist)
 -include .env
+export
+verifier_url ?= ${VERIFIER_URL}
 
 # deps
 update:; forge update
@@ -103,6 +105,12 @@ deploy-phase-two-payload :;
 # Deploy AToken implementations. `make deploy-atoken-impls chain=mainnet account=<account>`
 deploy-atoken-impls :;
 	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployATokenImplementations.sol:DeployATokenImplementations \
+		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
+		--chain ${chain} --verifier-url ${verifier_url}
+
+# Deploy config engine. `make deploy-config-engine chain=mainnet account=<account>`
+deploy-config-engine :;
+	FOUNDRY_PROFILE=${chain} forge script scripts/misc/DeployConfigEngine.sol:DeployConfigEngine \
 		--rpc-url ${chain} --account ${account} --slow $(if $(dry),,--broadcast --verify) --gas-estimate-multiplier 150 \
 		--chain ${chain} --verifier-url ${verifier_url}
 

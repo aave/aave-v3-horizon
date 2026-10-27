@@ -221,6 +221,7 @@ contract ATokenHorizonTests is TestnetProcedures {
     uint256 amount
   ) public {
     vm.assume(sender != rwaATokenTransferAdmin);
+    vm.assume(sender != report.rwaATokenManager);
     vm.assume(sender != report.poolConfiguratorProxy); // otherwise the proxy will not fallback
 
     vm.expectRevert(bytes(Errors.CALLER_NOT_ATOKEN_TRANSFER_ADMIN));
